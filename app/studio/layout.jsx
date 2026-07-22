@@ -15,7 +15,7 @@ export default async function StudioLayout({ children }) {
   if (!user) redirect('/giris');
 
   const { data: profile } = await supabase
-    .from('profiles').select('plan, credits, email, settings').eq('id', user.id).maybeSingle();
+    .from('profiles').select('plan, credits, email, settings, role').eq('id', user.id).maybeSingle();
 
   const p = profile || { plan: 'free', credits: 0, email: user.email, settings: {} };
 

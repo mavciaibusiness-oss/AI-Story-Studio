@@ -11,7 +11,6 @@ function GirisFormu() {
   const t = useT();
   const params = useSearchParams();
   const next = params.get('next') || '/studio';
-  const pathChoice = params.get('path') || '';  // 'ai' veya 'own' — landing'den gelen yol seçimi
 
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
@@ -52,9 +51,9 @@ function GirisFormu() {
           if ((error.message || '').toLowerCase().includes('email not confirmed')) setOnaySiz(true);
           throw error;
         }
-        // Oturum çerezleri yazıldı; sunucunun görmesi için tam sayfa geçişi yap
-        const dest = pathChoice ? next + '?path=' + pathChoice : next;
-        window.location.assign(dest);
+        // Oturum çerezleri yazıldı; sunucunun görmesi için tam sayfa geçişi yap.
+        // Yol seçimi artık /studio giriş ekranında yapılıyor, sorgu taşınmaz.
+        window.location.assign(next);
       } else {
         const { data, error } = await supabase.auth.signUp({
           email,

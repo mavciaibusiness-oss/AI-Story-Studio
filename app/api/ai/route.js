@@ -1,97 +1,169 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseServer } from '@/lib/supabase-server';
+import { requireAdmin, getServiceClient, VIP_CREDITS } from '@/lib/admin-auth';
 
 export const dynamic = 'force-dynamic';
 
-const COST = {
-  outline: 6, scene: 4, script: 10, prompts: 6, character: 4,
-  translate: 6, seo: 5, titles: 3, assistant: 4, rewrite: 6
-};
+/*
+  POST /api/admin/user
+  Tek kullanıcı üzerinde işlem. Gövde: { action, userId, ... }
 
-/* Model 404 verirse sıradakine düşer. İlk sıradakini env ile değiştirebilirsin. */
-const MODELS = [
-  process.env.ANTHROPIC_MODEL,
-  'claude-sonnet-4-6',
-  'claude-sonnet-4-5-20241022',
-  'claude-haiku-4-5-20251001'
-].filter(Boolean);
+  Desteklenen action değerleri:
+    addCredits   { userId, amount }        kredi ekle/çıkar
+    setCredits   { userId, amount }        krediyi sabitle
+    setPlan      { userId, plan }          free | pro | vip
+    setRole      { userId, role }          user | admin
+    setPassword  { userId, password }      doğrudan şifre ata
+    resetEmail   { userId }                sıfırlama e-postası gönder
+    createUser   { email, password, plan } yeni kullanıcı
+    deleteUser   { userId }                kullanıcıyı ve verisini sil
 
-export async function POST(request) {
+  Her işlem requireAdmin() kapısından geçer. Admin kendini
+  silemez ve kendi admin rolünü düşüremez — kilitlenmeyi önler.
+*/
+
+const PLANS = ['free', 'pro', 'vip'];
+const ROLES = ['user', 'admin'];
+
+/* Plan değişince kredi de mantıklı bir değere çekilir. */
+function creditsForPlan(plan, current) {
+  if (plan === 'vip') return VIP_CREDITS;
+  if (plan === 'pro') return Math.max(current || 0, 5000);
+  // free'ye düşerken VIP'in sahte sonsuzu kalmasın
+  return current >= VIP_CREDITS ? 100 : (current || 100);
+}
+
+export async function POST(req) {
   try {
-    const supabase = getSupabaseServer();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: 'Oturum bulunamadı. Tekrar giriş yap.' }, { status: 401 });
-
-    const { task, prompt, system, maxTokens } = await request.json();
-    if (!prompt) return NextResponse.json({ error: 'İstek boş.' }, { status: 400 });
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return NextResponse.json({ error: 'ANTHROPIC_API_KEY tanımlı değil. .env.local dosyasına ekle ve sunucuyu yeniden başlat.' }, { status: 500 });
+    const gate = await requireAdmin();
+    if (gate.error) {
+      return NextResponse.json({ error: gate.error }, { status: gate.status });
     }
 
-    /* Profil yoksa oluştur. Eskiden burada 404 dönüyordu: trigger'dan önce
-       açılmış hesaplarda profil satırı olmadığı için tüm AI çağrıları düşüyordu. */
-    let { data: profile } = await supabase
-      .from('profiles').select('credits, plan').eq('id', user.id).maybeSingle();
-
-    if (!profile) {
-      const { data: created, error: insErr } = await supabase
-        .from('profiles')
-        .upsert({ id: user.id, email: user.email }, { onConflict: 'id' })
-        .select('credits, plan').single();
-      if (insErr) return NextResponse.json({ error: 'Profil oluşturulamadı: ' + insErr.message }, { status: 500 });
-      profile = created;
+    const body = await req.json().catch(() => ({}));
+    const { action, userId } = body;
+    if (!action) {
+      return NextResponse.json({ error: 'action gerekli.' }, { status: 400 });
     }
 
-    const cost = COST[task] || 5;
-    if (profile.credits < cost) {
-      return NextResponse.json({ error: 'Kredi yetersiz. Ayarlar sayfasından Pro\'ya geçebilirsin.' }, { status: 402 });
-    }
+    const svc = getServiceClient();
+    const isSelf = userId && userId === gate.user.id;
 
-    let lastDetail = '';
-    for (const model of MODELS) {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': process.env.ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01'
-        },
-        body: JSON.stringify({
-          model,
-          max_tokens: Math.min(8192, maxTokens || 1000),
-          ...(system ? { system } : {}),
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
+    switch (action) {
 
-      if (res.ok) {
-        const data = await res.json();
-        const text = (data.content || []).filter(i => i.type === 'text').map(i => i.text).join('');
-        await supabase.from('profiles').update({ credits: profile.credits - cost }).eq('id', user.id);
-        return NextResponse.json({ text, creditsLeft: profile.credits - cost, model });
+      /* ---------- KREDİ ---------- */
+      case 'addCredits': {
+        const amount = Number(body.amount);
+        if (!userId || !Number.isFinite(amount)) {
+          return NextResponse.json({ error: 'userId ve amount gerekli.' }, { status: 400 });
+        }
+        const { data: p } = await svc.from('profiles').select('credits').eq('id', userId).single();
+        const next = Math.max(0, (p?.credits || 0) + amount);
+        const { error } = await svc.from('profiles').update({ credits: next }).eq('id', userId);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true, credits: next });
       }
 
-      lastDetail = await res.text();
+      case 'setCredits': {
+        const amount = Number(body.amount);
+        if (!userId || !Number.isFinite(amount) || amount < 0) {
+          return NextResponse.json({ error: 'Geçerli bir kredi değeri gerekli.' }, { status: 400 });
+        }
+        const { error } = await svc.from('profiles').update({ credits: Math.floor(amount) }).eq('id', userId);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true, credits: Math.floor(amount) });
+      }
 
-      // 404 = model bulunamadı → sıradaki modeli dene
-      if (res.status === 404) continue;
+      /* ---------- PLAN ---------- */
+      case 'setPlan': {
+        const plan = String(body.plan || '');
+        if (!userId || !PLANS.includes(plan)) {
+          return NextResponse.json({ error: 'Geçersiz plan.' }, { status: 400 });
+        }
+        const { data: p } = await svc.from('profiles').select('credits').eq('id', userId).single();
+        const credits = creditsForPlan(plan, p?.credits || 0);
+        const { error } = await svc.from('profiles').update({ plan, credits }).eq('id', userId);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true, plan, credits });
+      }
 
-      // Diğer hataları anlaşılır çevir
-      const map = {
-        401: 'ANTHROPIC_API_KEY geçersiz. Anahtarı kontrol et.',
-        429: 'Anthropic hız sınırı. Birkaç saniye bekleyip tekrar dene.',
-        529: 'Anthropic aşırı yüklü. Birazdan tekrar dene.'
-      };
-      return NextResponse.json(
-        { error: map[res.status] || ('AI servisi yanıt vermedi (' + res.status + ')'), detail: lastDetail.slice(0, 500) },
-        { status: 502 }
-      );
+      /* ---------- ROL ---------- */
+      case 'setRole': {
+        const role = String(body.role || '');
+        if (!userId || !ROLES.includes(role)) {
+          return NextResponse.json({ error: 'Geçersiz rol.' }, { status: 400 });
+        }
+        if (isSelf && role !== 'admin') {
+          return NextResponse.json(
+            { error: 'Kendi admin yetkini kaldıramazsın.' }, { status: 400 });
+        }
+        const { error } = await svc.from('profiles').update({ role }).eq('id', userId);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true, role });
+      }
+
+      /* ---------- ŞİFRE (admin doğrudan atar) ---------- */
+      case 'setPassword': {
+        const password = String(body.password || '');
+        if (!userId || password.length < 8) {
+          return NextResponse.json(
+            { error: 'Şifre en az 8 karakter olmalı.' }, { status: 400 });
+        }
+        const { error } = await svc.auth.admin.updateUserById(userId, { password });
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true });
+      }
+
+      /* ---------- ŞİFRE (kullanıcıya e-posta) ---------- */
+      case 'resetEmail': {
+        if (!userId) return NextResponse.json({ error: 'userId gerekli.' }, { status: 400 });
+        const { data: p } = await svc.from('profiles').select('email').eq('id', userId).single();
+        if (!p?.email) return NextResponse.json({ error: 'E-posta bulunamadı.' }, { status: 404 });
+        const site = process.env.NEXT_PUBLIC_SITE_URL || '';
+        const { error } = await svc.auth.resetPasswordForEmail(p.email, {
+          redirectTo: site ? site + '/auth/callback?next=/studio/ayarlar' : undefined
+        });
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true, email: p.email });
+      }
+
+      /* ---------- KULLANICI OLUŞTUR ---------- */
+      case 'createUser': {
+        const email = String(body.email || '').trim().toLowerCase();
+        const password = String(body.password || '');
+        const plan = PLANS.includes(body.plan) ? body.plan : 'free';
+        if (!email || password.length < 8) {
+          return NextResponse.json(
+            { error: 'E-posta ve en az 8 karakterlik şifre gerekli.' }, { status: 400 });
+        }
+        const { data, error } = await svc.auth.admin.createUser({
+          email, password, email_confirm: true
+        });
+        if (error) throw new Error(error.message);
+
+        // Trigger profili oluşturur; plan/kredi burada ayarlanır
+        const credits = creditsForPlan(plan, 100);
+        await svc.from('profiles')
+          .upsert({ id: data.user.id, email, plan, credits }, { onConflict: 'id' });
+
+        return NextResponse.json({ ok: true, userId: data.user.id });
+      }
+
+      /* ---------- KULLANICI SİL ---------- */
+      case 'deleteUser': {
+        if (!userId) return NextResponse.json({ error: 'userId gerekli.' }, { status: 400 });
+        if (isSelf) {
+          return NextResponse.json(
+            { error: 'Kendi hesabını buradan silemezsin.' }, { status: 400 });
+        }
+        // auth.users silinince profiles/projects/episodes cascade ile gider
+        const { error } = await svc.auth.admin.deleteUser(userId);
+        if (error) throw new Error(error.message);
+        return NextResponse.json({ ok: true });
+      }
+
+      default:
+        return NextResponse.json({ error: 'Bilinmeyen action: ' + action }, { status: 400 });
     }
-
-    return NextResponse.json(
-      { error: 'Hiçbir model adı kabul edilmedi. ANTHROPIC_MODEL ortam değişkenine geçerli bir model yaz.', detail: lastDetail.slice(0, 500) },
-      { status: 502 }
-    );
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }

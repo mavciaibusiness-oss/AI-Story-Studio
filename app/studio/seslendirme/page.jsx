@@ -28,6 +28,7 @@ export default function Seslendirme() {
   const [err, setErr] = useState(null);
   const [playing, setPlaying] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [reupload, setReupload] = useState(false);   // tamamlanmış sesi baştan yükleme niyeti
 
   const sb = storyboard;
 
@@ -142,6 +143,7 @@ export default function Seslendirme() {
   }
 
   const withVoice = sb.scenes.filter(s => s.voice).length;
+  const allVoiced = sb.scenes.length > 0 && withVoice === sb.scenes.length;
   const total = sb.scenes.reduce((a, s) => a + (s.voiceDuration || 0), 0);
   const maxDur = Math.max(1, ...sb.scenes.map(s => s.voiceDuration || 0));
 
@@ -178,16 +180,40 @@ export default function Seslendirme() {
         )}
       </div>
 
-      {/* Toplu seçim: tek dosya, çoklu seçim ya da sürükle-bırak — hepsi aynı yolu kullanır */}
-      <label className={'dropzone' + (dragOver ? ' over' : '')}
-        onDragEnter={e => { e.preventDefault(); setDragOver(true); }}
-        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-        onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
-        onDrop={onFiles}>
-        <div className="dz-big">{t('vo.drop')}</div>
-        <div className="dz-small">{t('vo.dropHint')}</div>
-        <input type="file" accept="audio/*" multiple hidden onChange={onFiles} />
-      </label>
+      {/* Ses zaten yüklüyse (çoğunlukla Senaryo adımında tek dosya verilip
+          paragraflara hizalandığında) kullanıcıdan ikinci kez dosya isteme.
+          Tamamlandı durumunu göster, yükleme alanını isteğe bağlı hâle getir. */}
+      {allVoiced && !reupload ? (
+        <div className="card vo-done">
+          <div className="vo-done-meta">
+            <div className="vo-done-title">{t('vo.doneTitle')}</div>
+            <div className="vo-done-sub">
+              {t('vo.doneSub', { n: sb.scenes.length, d: formatDur(total) })}
+            </div>
+          </div>
+          <button className="btn btn-mini" onClick={() => setReupload(true)}>
+            {t('vo.replaceAll')}
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* Toplu seçim: tek dosya, çoklu seçim ya da sürükle-bırak — hepsi aynı yolu kullanır */}
+          <label className={'dropzone' + (dragOver ? ' over' : '')}
+            onDragEnter={e => { e.preventDefault(); setDragOver(true); }}
+            onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={e => { e.preventDefault(); setDragOver(false); }}
+            onDrop={onFiles}>
+            <div className="dz-big">{t('vo.drop')}</div>
+            <div className="dz-small">{t('vo.dropHint')}</div>
+            <input type="file" accept="audio/*" multiple hidden onChange={onFiles} />
+          </label>
+          {allVoiced && reupload && (
+            <button className="btn btn-mini" style={{ marginTop: 8 }} onClick={() => setReupload(false)}>
+              {t('common.cancel')}
+            </button>
+          )}
+        </>
+      )}
 
       {busy && <div className="progress"><span>{t('vo.measuring')}</span><div className="track"><i className="fill" style={{ width: prog + '%' }} /></div><span className="count">%{prog}</span></div>}
       {!busy && info && <span className="okmsg">{info}</span>}

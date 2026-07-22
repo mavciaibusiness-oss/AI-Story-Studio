@@ -1,29 +1,32 @@
 'use client';
-import Link from 'next/link';
 import { useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useT, useI18n } from '@/lib/i18n';
 import { progressOf, FORMATS, emptyStoryboard } from '@/lib/storyboard';
+import { WIZARD_STEPS, computeWizard } from '@/lib/wizard';
 import { useStudio } from '@/lib/store';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
+import PathChoice from '@/lib/PathChoice';
+import Link from 'next/link';
 
 /*
   Studio ana ekranı — iki durumlu:
-  1) Hiç episode açık değil → "Nasıl başlamak istersin?" yol seçimi kartları +
-     mevcut projeler listesi. Yol seçilince otomatik proje+video oluşur ve
-     ilgili akışa yönlendirilir. İlk kez kullanan biri burada başlar.
+  1) Hiç episode açık değil → sihirbaz giriş ekranı: hero, kaldığın yerden
+     devam kartı, yol seçimi ve üretim hattı önizlemesi. Yol seçilince
+     otomatik proje+video oluşur ve senaryo akışına yönlendirilir.
   2) Episode açık → klasik dashboard (istatistik + son projeler).
+
+  Yol seçimi YALNIZCA burada ve senaryo modülünde yapılır; landing sayfası
+  pazarlama içindir ve seçim barındırmaz. Kartların kendisi lib/PathChoice.jsx
+  içinde tek kaynaktan gelir.
 */
 export default function DashboardView({ counts, eps }) {
   const t = useT();
   const { locale } = useI18n();
   const { episodeId, openEpisode, profile } = useStudio();
   const router = useRouter();
-  const params = useSearchParams();
-  const pathFromLanding = params.get('path') || '';  // 'ai' veya 'own'
   const [creating, setCreating] = useState(null);
   const [err, setErr] = useState(null);
-  const [showPricing, setShowPricing] = useState(!!pathFromLanding);  // landing'den geldiyse önce fiyatlandırma
 
   /* Yol seçildiğinde: arka planda otomatik proje + video oluştur,
      storyboard'a scratch.mode yaz, senaryo sayfasına yönlendir. */
@@ -69,90 +72,98 @@ export default function DashboardView({ counts, eps }) {
     setCreating(null);
   }
 
-  /* ----- DURUM 1: Episode açık değil → Fiyatlandırma (varsa) + Yol seçimi ----- */
-  if (!episodeId) {
-    /* Landing'den path=ai/own ile geldiyse önce plan seçimi göster,
-       kullanıcı "Ücretsiz Başla" veya "Pro'ya Geç" deyince yola girer. */
-    if (showPricing) {
-      return (
-        <>
-          <h1 className="page-title">{t('plan.title')}</h1>
-          <p className="page-sub">{t('plan.sub')}</p>
-
-          <div className="pricing" style={{ marginTop: 10, marginBottom: 28 }}>
-            <div className="card price-card">
-              <div style={{ fontSize: 13, color: 'var(--muted)' }}>{t('plan.starter')}</div>
-              <div className="amount">{t('plan.free')}</div>
-              <div className="per">{t('plan.noCard')}</div>
-              <ul>
-                <li>{t('plan.f1')}</li><li>{t('plan.f2')}</li><li>{t('plan.f3')}</li>
-                <li>{t('plan.f4')}</li><li>{t('plan.f5')}</li>
-              </ul>
-              <button className="btn" style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => { setShowPricing(false); if (pathFromLanding) startPath(pathFromLanding); }}>
-                {t('plan.startFree')}
-              </button>
-            </div>
-            <div className="card price-card pro">
-              <div style={{ fontSize: 13, color: 'var(--lamp)' }}>Pro</div>
-              <div className="amount">₺499</div>
-              <div className="per">{t('plan.monthly')}</div>
-              <ul>
-                <li>{t('plan.p1')}</li><li>{t('plan.p2')}</li><li>{t('plan.p3')}</li>
-                <li>{t('plan.p4')}</li><li>{t('plan.p5')}</li>
-              </ul>
-              <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }}
-                onClick={() => { setShowPricing(false); if (pathFromLanding) startPath(pathFromLanding); }}>
-                {t('plan.goPro')}
-              </button>
-            </div>
-          </div>
-        </>
-      );
+  /* Var olan bir videoyu aç ve sihirbazın kaldığı adıma götür.
+     Hangi adımda kalındığı storyboard verisinden hesaplanır (computeWizard),
+     böylece kullanıcı listeye dönüp adım aramak zorunda kalmaz. */
+  async function resume(ep) {
+    setCreating('resume'); setErr(null);
+    try {
+      await openEpisode({ id: ep.id, title: ep.title, storyboard: ep.sb });
+      const w = computeWizard(ep.sb, { episodeId: ep.id });
+      const step = WIZARD_STEPS.find(s => s.key === w.activeKey);
+      router.push(step ? step.href : '/studio/senaryo');
+    } catch (e) {
+      setErr(e.message || 'Video açılamadı.');
+      setCreating(null);
     }
+  }
+
+  /* ----- DURUM 1: Episode açık değil → Sihirbaz giriş ekranı ----- */
+  if (!episodeId) {
+    const last = eps[0] || null;                 // en son güncellenen video (sunucu sıralı gönderiyor)
+    const lastPct = last ? progressOf(last.sb).pct : 0;
 
     return (
       <>
-        <h1 className="page-title">{t('wchoose.title')}</h1>
-        <p className="page-sub">{t('wchoose.sub')}</p>
+        {/* Hero — ürünün ne yaptığını tek bakışta anlatır */}
+        <section className="entry-hero">
+          <div className="entry-eyebrow">{t('entry.eyebrow')}</div>
+          <h1>{t('entry.heroTitle')}</h1>
+          <p>{t('entry.heroSub')}</p>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 8, marginBottom: 28 }}>
-          <button className="path-card" onClick={() => startPath('ai')} disabled={!!creating}>
-            <div className="path-icon">✨</div>
-            <div className="path-name">{t('wchoose.aiTitle')}</div>
-            <p className="path-desc">{t('wchoose.aiDesc')}</p>
-            <span className="btn btn-primary" style={{ marginTop: 14 }}>
-              {creating === 'ai' ? '…' : t('wchoose.aiPick')}
-            </span>
-          </button>
-          <button className="path-card" onClick={() => startPath('own')} disabled={!!creating}>
-            <div className="path-icon">🎬</div>
-            <div className="path-name">{t('wchoose.ownTitle')}</div>
-            <p className="path-desc">{t('wchoose.ownDesc')}</p>
-            <span className="btn btn-primary" style={{ marginTop: 14 }}>
-              {creating === 'own' ? '…' : t('wchoose.ownPick')}
-            </span>
-          </button>
-        </div>
+          {/* Dönen kullanıcı: kaldığı yerden devam birincil eylem */}
+          {last && (
+            <div className="entry-resume">
+              <div className="entry-resume-meta">
+                <div className="entry-resume-label">{t('entry.resumeTitle')}</div>
+                <div className="entry-resume-name">{last.sb.title || last.title}</div>
+                <div className="entry-resume-sub">
+                  {FORMATS.find(f => f.k === (last.format || last.sb.format))?.l} · {last.sb.genre}
+                  {' · ' + lastPct + '% ' + t('entry.progress')}
+                </div>
+                <div className="entry-bar" aria-hidden="true"><i style={{ width: lastPct + '%' }} /></div>
+              </div>
+              <button className="btn btn-primary" onClick={() => resume(last)} disabled={!!creating}>
+                {creating === 'resume' ? t('entry.creating') : t('entry.resumeBtn')}
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Yol seçimi */}
+        <h2 className="entry-label">{last ? t('entry.startNew') : t('entry.chooseTitle')}</h2>
+        <p className="entry-hint">{t('entry.chooseSub')}</p>
+
+        <PathChoice onPick={startPath} busy={creating} />
+
         {err && <span className="err">{err}</span>}
 
-        {eps.length > 0 && (
+        {/* Üretim hattı önizlemesi — kullanıcı sırada ne olduğunu baştan görsün */}
+        <section className="entry-pipeline">
+          <h2 className="entry-label">{t('entry.pipelineTitle')}</h2>
+          <p className="entry-hint">{t('entry.pipelineSub')}</p>
+          <div className="entry-flow">
+            {WIZARD_STEPS.map(st => (
+              <span key={st.key} className={'entry-step' + (st.optional ? ' is-optional' : '')}>
+                <b>{String(st.n).padStart(2, '0')}</b>
+                {t('wiz.step.' + st.key)}
+                {st.optional && <em>· {t('entry.optional')}</em>}
+              </span>
+            ))}
+          </div>
+        </section>
+
+        {/* Son videolar — ilerleme çubuklu, doğrudan devam edilebilir */}
+        {eps.length > 1 && (
           <>
-            <h2 className="section-title">{t('dash.recent')}</h2>
+            <h2 className="entry-label">{t('dash.recent')}</h2>
             <div className="row-list">
-              {eps.map(e => {
+              {eps.slice(1).map(e => {
                 const p = progressOf(e.sb);
                 const fmt = FORMATS.find(f => f.k === (e.format || e.sb.format))?.l;
                 return (
                   <div className="row" key={e.id}>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <div className="r-name">{e.sb.title || e.title}</div>
                       <div className="r-meta">
                         {fmt} · {e.sb.genre} · {p.scenes} {t('common.scenes')}
                         {' · ' + new Date(e.updated_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB')}
                       </div>
+                      <div className="entry-bar" aria-hidden="true"><i style={{ width: p.pct + '%' }} /></div>
                     </div>
-                    <Link href="/studio/projeler" className="btn btn-mini">{t('common.open')}</Link>
+                    <button className="btn btn-mini" onClick={() => resume(e)} disabled={!!creating}>
+                      {t('common.open')}
+                    </button>
                   </div>
                 );
               })}

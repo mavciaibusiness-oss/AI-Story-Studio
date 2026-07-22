@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useStudio, callAI, parseJSONLoose } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import EpisodeBar from '@/lib/EpisodeBar';
+import PathChoice from '@/lib/PathChoice';
 import {
   GENRES, DURATIONS, FORMATS, STYLES, LANGUAGES, ASPECTS,
   emptyScene, renumber, suggestSceneCount
@@ -233,20 +234,7 @@ export default function Senaryo() {
         <h1 className="page-title">{t('wchoose.title')}</h1>
         <p className="page-sub">{t('wchoose.sub')}</p>
         <EpisodeBar />
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 16, marginTop: 8 }}>
-          <button className="path-card" onClick={() => chooseMode('ai')}>
-            <div className="path-icon">✨</div>
-            <div className="path-name">{t('wchoose.aiTitle')}</div>
-            <p className="path-desc">{t('wchoose.aiDesc')}</p>
-            <span className="btn btn-primary" style={{ marginTop: 14 }}>{t('wchoose.aiPick')}</span>
-          </button>
-          <button className="path-card" onClick={() => chooseMode('own')}>
-            <div className="path-icon">🎬</div>
-            <div className="path-name">{t('wchoose.ownTitle')}</div>
-            <p className="path-desc">{t('wchoose.ownDesc')}</p>
-            <span className="btn btn-primary" style={{ marginTop: 14 }}>{t('wchoose.ownPick')}</span>
-          </button>
-        </div>
+        <PathChoice onPick={chooseMode} busy={null} />
       </>
     );
   }

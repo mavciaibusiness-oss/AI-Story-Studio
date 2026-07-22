@@ -95,7 +95,9 @@ export default function Atolye() {
 
   const sb = storyboard;
   const isPro = profile?.plan === 'pro';
-  const watermark = (isPro || removeWatermark) ? null : 'AI Content Studio';
+  /* Filigran şimdilik kapalı — ücretsiz kullanımda da temiz çıktı veriyoruz.
+     Anahtar duruyor; ileride plana bağlamak istenirse tek satır geri açılır. */
+  const watermark = null;
 
   const say = (msg, cls) => setLog(l => [...l, { msg, cls }]);
   const upd = (msg, cls) => setLog(l => [...l.slice(0, -1), { msg, cls }]);
@@ -407,8 +409,11 @@ export default function Atolye() {
         </div>
         <p className="hint" style={{ marginTop: 6, fontSize: 11 }}>{L.crossfadeNote}</p>
 
-        {/* WATERMARK — pazarlama: ücretsizde açık, tek tikle kaldırılabilir */}
-        {!isPro && (
+        {/* WATERMARK — şimdilik tamamen kapalı: ücretsiz kullanımda da temiz
+            çıktı veriyoruz. Ayar arayüzü de gizlendi, çünkü artık bir şeyi
+            değiştirmiyordu. Plana bağlamak istenirse `false &&` kaldırılıp
+            watermark satırı geri açılır. */}
+        {false && !isPro && (
           <div className="field" style={{ marginTop: 14 }}>
             <label>{t('ed.wmTitle')}</label>
             <label className={'chip' + (removeWatermark ? ' on' : '')}>

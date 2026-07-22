@@ -3,8 +3,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { useStudio } from '@/lib/store';
-import { useI18n, LOCALES } from '@/lib/i18n';
+import { useI18n } from '@/lib/i18n';
 import { computeWizard, WIZARD_STEPS } from '@/lib/wizard';
+import LangSwitch from '@/lib/LangSwitch';
 
 /* Etiketler çeviri anahtarı olarak tutulur, render sırasında çözülür */
 const LINKS = [
@@ -27,12 +28,15 @@ const LINKS = [
   { href: '/studio/youtube', key: 'nav.publish', icon: '↗' },
   { sep: 'nav.account' },
   { href: '/studio/ayarlar', key: 'nav.settings', icon: '⚙' },
+  /* Yalnızca admin görür — render sırasında rol kontrolüyle elenir.
+     Gizlemek güvenlik sınırı değildir; sayfa ve API kendi kapılarını tutar. */
+  { href: '/studio/admin', key: 'nav.admin', icon: '⛨', adminOnly: true },
 ];
 
 export default function Sidebar() {
   const path = usePathname();
   const { profile, storyboard, episodeId, finalVideo } = useStudio();
-  const { t, locale, setLocale } = useI18n();
+  const { t } = useI18n();
 
   /* Adım no + durum (yeşil ✓ / turuncu / gri) href üzerinden eşlenir */
   const wiz = episodeId ? computeWizard(storyboard, { episodeId, finalVideo }) : null;
@@ -48,10 +52,12 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <Link href="/studio" className="logo">AI Content <em>Studio</em></Link>
+      <LangSwitch />
 
       {episodeId && <div className="wiz-guide">{t('wiz.hint')}</div>}
 
       {LINKS.map((l, i) => {
+        if (l.adminOnly && profile?.role !== 'admin') return null;
         if (l.sep) return <div className="nav-sep" key={'s' + i}>{t(l.sep)}</div>;
         const st = stepByHref[l.href];
         const statusClass = st ? ' nav-' + st.status : '';
@@ -66,17 +72,6 @@ export default function Sidebar() {
       })}
 
       <div className="sidebar-foot">
-        {/* Hızlı dil değiştirici — Ayarlar'a gitmeden */}
-        <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
-          {LOCALES.map(l => (
-            <button key={l.k} onClick={() => setLocale(l.k)}
-              title={l.l}
-              className={'chip' + (locale === l.k ? ' on' : '')}
-              style={{ flex: 1, justifyContent: 'center', fontSize: 11, padding: '4px 6px' }}>
-              {l.flag} {l.k.toUpperCase()}
-            </button>
-          ))}
-        </div>
         <div style={{ marginBottom: 8 }}>
           {profile?.plan === 'pro' ? 'Pro' : 'Free'} · {profile?.credits ?? 0} {t('nav.credits')}
         </div>

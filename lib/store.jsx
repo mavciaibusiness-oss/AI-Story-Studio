@@ -20,7 +20,10 @@ export function StudioProvider({ children, initialProfile }) {
   const [finalVideo, setFinalVideo] = useState(null);
   const timer = useRef(null);
 
+  /* VIP'te sunucu creditsLeft:null döner — kredi düşülmediği için
+     yerel sayacı da olduğu gibi bırak. */
   const spendCredits = useCallback((left) => {
+    if (left === null || left === undefined) return;
     setProfile(p => (p ? { ...p, credits: left } : p));
   }, []);
 

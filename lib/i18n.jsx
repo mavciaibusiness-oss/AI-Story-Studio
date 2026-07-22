@@ -103,12 +103,66 @@ const DICT = {
     'wchoose.aiPick': 'AI ile Oluştur',
     'wchoose.ownTitle': 'Kendi İçeriğim Hazır',
     'wchoose.ownDesc': 'Seslendirme metnin hazırsa yapıştır; uygulama sahnelere bölsün. Bir video editörü gibi çalış.',
+
+    // --- açılış sayfası (landing) ---
+    'nav.admin': 'Yönetim',
+    'vo.doneTitle': 'Seslendirme hazır',
+    'vo.doneSub': '{n} sahnenin sesi yüklü · toplam {d}. Aşağıdan tek tek değiştirebilirsin.',
+    'vo.replaceAll': 'Baştan yükle',
+    'sub.sourceLocked': 'Orijinal dil — her zaman üretilir',
+    'sub.sourceNote': 'Orijinal dil ({lang}) her zaman üretilir; listede işaretli ve kilitlidir.',
+    'lp.nav.how': 'Nasıl çalışır', 'lp.nav.price': 'Fiyatlar', 'lp.nav.login': 'Giriş Yap',
+    'lp.heroSub': 'Senaryo, storyboard, prompt, görsel, ses ve kurgu aynı veri üzerinde çalışır. Video, ses ve görsel işleme senin bilgisayarında yapılır.',
+    'lp.ctaPrimary': 'Ücretsiz Başla', 'lp.ctaSecondary': 'Nasıl çalışır',
+    'lp.ctaNote': 'Kredi kartı istemez. Ayda 100 AI kredisi.',
+    'lp.howTitle': 'Nasıl çalışır', 'lp.pipelineAria': 'Üretim hattı adımları',
+    'lp.p1n': 'Senaryo', 'lp.p1d': 'sahnelere bölünmüş',
+    'lp.p2n': 'Storyboard', 'lp.p2d': 'tek veri modeli',
+    'lp.p3n': 'Prompt', 'lp.p3d': 'yedi katman',
+    'lp.p4n': 'Görsel', 'lp.p4d': 'kolaj ya da tek tek',
+    'lp.p5n': 'Ses', 'lp.p5d': 'sahne başına',
+    'lp.p6n': 'Kurgu', 'lp.p6d': 'sese kilitli',
+    'lp.p7n': 'Yayın', 'lp.p7d': 'başlık, etiket, SRT',
+    'lp.whatTitle': 'Ne yapar',
+    'lp.f1t': 'Sese kilitli kurgu', 'lp.f1d': 'Her sahnenin kendi ses dosyası var. Ses bitince sahne değişir. Sabit süre yok, tahmin yok, kayma yok.',
+    'lp.f2t': 'Kolaj ya da tek tek', 'lp.f2d': '3×3, 4×4, 5×5 ızgarayı tanır ve böler. Ya da tek tek ürettiğin görselleri doğrudan sahnelere bağla.',
+    'lp.f3t': 'Karakterler kaymaz', 'lp.f3d': 'İnsan, robot, anime, uzaylı — kartı bir kez doldur, kilitle. Her sahnenin promptu aynı tanımı taşır.',
+    'lp.f4t': 'On iki dilde altyazı', 'lp.f4d': 'Altyazı senaryonun kendisinden çıkar, sesin sınırlarına oturur. SRT, VTT, TXT.',
+    'lp.f5t': 'Her format', 'lp.f5d': 'YouTube 16:9, Shorts ve TikTok 9:16, Reels, kare podcast klibi. En boy oranı senaryoyla birlikte seçilir.',
+    'lp.f6t': 'Sahneyi tek tek düzelt', 'lp.f6d': '17. sahne tutmadıysa yalnızca onu yeniden üret. Gerisi olduğu gibi kalır.',
+    'lp.priceTitle': 'Fiyat',
+    'lp.privacyNote': 'Video, ses ve görsel işleme senin bilgisayarında yapılır. Dosyaların sunucuya yüklenmez.',
+    'lp.footPrivacy': 'Gizlilik', 'lp.footTerms': 'Kullanım Koşulları',
+    'lp.footKvkk': 'KVKK Aydınlatma', 'lp.footContact': 'İletişim',
     'wchoose.ownPick': 'Kendi İçeriğimle Başla',
     'wchoose.back': '← Yol seçimine dön',
+
+    // --- sihirbaz giriş ekranı (Sprint 3) ---
+    'entry.eyebrow': 'AI Content Studio',
+    'entry.heroTitle': 'Fikirden yayına, tek pencerede.',
+    'entry.heroSub': 'Senaryo, storyboard, prompt, görsel, ses ve kurgu aynı veri üzerinde çalışır. Her adımda ne yapacağını uygulama söyler.',
+    'entry.resumeTitle': 'Kaldığın yerden devam et',
+    'entry.resumeBtn': 'Devam et',
+    'entry.startNew': 'Yeni video başlat',
+    'entry.chooseTitle': 'Nasıl başlamak istersin?',
+    'entry.chooseSub': 'İki yol da aynı üretim hattına çıkar. İstediğin an diğerine geçebilirsin.',
+    'entry.aiBadge': 'En hızlı yol',
+    'entry.ownBadge': 'Tam kontrol',
+    'entry.aiF1': 'Bir cümlelik fikirden senaryo',
+    'entry.aiF2': 'Sahnelere otomatik bölme',
+    'entry.aiF3': 'Yedi katmanlı prompt üretimi',
+    'entry.ownF1': 'Hazır metnini yapıştır',
+    'entry.ownF2': 'Sahne sınırlarını sen belirle',
+    'entry.ownF3': 'Kendi görsel ve seslerinle çalış',
+    'entry.creating': 'Hazırlanıyor…',
+    'entry.pipelineTitle': 'Üretim hattı',
+    'entry.pipelineSub': 'On iki adım. Dört tanesi isteğe bağlı.',
+    'entry.optional': 'isteğe bağlı',
+    'entry.progress': 'tamamlandı',
     'plan.title': 'Planını Seç', 'plan.sub': 'Hemen başla, dilediğin zaman yükselt.',
     'plan.starter': 'Başlangıç', 'plan.free': 'Ücretsiz', 'plan.noCard': 'kredi kartı istemez',
     'plan.f1': '2 proje', 'plan.f2': 'Ayda 100 AI kredisi', 'plan.f3': 'Kolaj bölme sınırsız',
-    'plan.f4': 'Video ve altyazı dışa aktarma', 'plan.f5': 'Filigranlı çıktı',
+    'plan.f4': 'Video ve altyazı dışa aktarma', 'plan.f5': 'Filigransız çıktı',
     'plan.startFree': 'Ücretsiz Başla',
     'plan.monthly': 'aylık, KDV dahil',
     'plan.p1': 'Sınırsız proje ve bölüm', 'plan.p2': 'Ayda 5.000 AI kredisi',
@@ -135,7 +189,7 @@ const DICT = {
     'script.ownTextHint': 'Metni yapıştır — boş satırla ayrılmış her paragraf bir sahne olur. İstersen bu metni okuduğun TEK bir ses dosyasını da ekle; sistem sesi paragrafların uzunluğuna göre otomatik olarak sahnelere böler.',
     'script.split': 'Sahnelere böl',
     'script.attachVoice': 'Bu metni okuduğun ses dosyası (isteğe bağlı)',
-    'script.attachVoiceHint': 'Tek dosya — mp3 / wav. Eklersen sahneler hem metin hem sesle birlikte oluşur.',
+    'script.attachVoiceHint': 'Tek dosya — mp3 / wav. Eklersen sahnelere otomatik bölünür ve Seslendirme adımını tekrar yapman gerekmez.',
     'script.attachVoicePh': 'Ses dosyası seç ya da sürükle bırak',
     'script.aligning': 'Ses paragraflara hizalanıyor…',
     'script.alignDone': '{n} sahne oluşturuldu, sesler otomatik bölündü ({snapped}/{total} kesim doğal duraklamaya yapıştı) · toplam {d}',
@@ -436,12 +490,66 @@ const DICT = {
     'wchoose.aiPick': 'Create with AI',
     'wchoose.ownTitle': 'I Have My Own Content',
     'wchoose.ownDesc': 'If your voiceover text is ready, paste it and the app splits it into scenes. Work like a video editor.',
+
+    // --- landing page ---
+    'nav.admin': 'Admin',
+    'vo.doneTitle': 'Voiceover ready',
+    'vo.doneSub': '{n} scenes have audio · {d} total. You can still replace individual scenes below.',
+    'vo.replaceAll': 'Upload again',
+    'sub.sourceLocked': 'Source language — always produced',
+    'sub.sourceNote': 'The source language ({lang}) is always produced; it is checked and locked in the list.',
+    'lp.nav.how': 'How it works', 'lp.nav.price': 'Pricing', 'lp.nav.login': 'Sign In',
+    'lp.heroSub': 'Script, storyboard, prompts, visuals, voice and editing all run on the same data. Video, audio and image processing happen on your own machine.',
+    'lp.ctaPrimary': 'Start Free', 'lp.ctaSecondary': 'How it works',
+    'lp.ctaNote': 'No credit card. 100 AI credits per month.',
+    'lp.howTitle': 'How it works', 'lp.pipelineAria': 'Production pipeline steps',
+    'lp.p1n': 'Script', 'lp.p1d': 'split into scenes',
+    'lp.p2n': 'Storyboard', 'lp.p2d': 'one data model',
+    'lp.p3n': 'Prompt', 'lp.p3d': 'seven layers',
+    'lp.p4n': 'Visuals', 'lp.p4d': 'collage or one by one',
+    'lp.p5n': 'Voice', 'lp.p5d': 'per scene',
+    'lp.p6n': 'Editing', 'lp.p6d': 'locked to voice',
+    'lp.p7n': 'Publish', 'lp.p7d': 'title, tags, SRT',
+    'lp.whatTitle': 'What it does',
+    'lp.f1t': 'Editing locked to voice', 'lp.f1d': 'Every scene has its own audio file. The scene changes when the audio ends. No fixed durations, no guessing, no drift.',
+    'lp.f2t': 'Collage or one by one', 'lp.f2d': 'Detects and splits 3×3, 4×4 and 5×5 grids. Or attach individually generated images straight to scenes.',
+    'lp.f3t': 'Characters stay consistent', 'lp.f3d': 'Human, robot, anime, alien — fill the card once and lock it. Every scene prompt carries the same description.',
+    'lp.f4t': 'Subtitles in twelve languages', 'lp.f4d': 'Subtitles come from the script itself and sit inside the audio boundaries. SRT, VTT, TXT.',
+    'lp.f5t': 'Every format', 'lp.f5d': 'YouTube 16:9, Shorts and TikTok 9:16, Reels, square podcast clips. Aspect ratio is chosen alongside the script.',
+    'lp.f6t': 'Fix one scene at a time', 'lp.f6d': "If scene 17 didn't land, regenerate only that one. Everything else stays put.",
+    'lp.priceTitle': 'Pricing',
+    'lp.privacyNote': 'Video, audio and image processing happen on your own machine. Your files are never uploaded to a server.',
+    'lp.footPrivacy': 'Privacy', 'lp.footTerms': 'Terms of Service',
+    'lp.footKvkk': 'KVKK Notice', 'lp.footContact': 'Contact',
     'wchoose.ownPick': 'Start with My Content',
     'wchoose.back': '← Back to path selection',
+
+    // --- wizard entry screen (Sprint 3) ---
+    'entry.eyebrow': 'AI Content Studio',
+    'entry.heroTitle': 'Idea to publish, in one window.',
+    'entry.heroSub': 'Script, storyboard, prompts, visuals, voice and edit all run on the same data. The app tells you what to do at every step.',
+    'entry.resumeTitle': 'Pick up where you left off',
+    'entry.resumeBtn': 'Continue',
+    'entry.startNew': 'Start a new video',
+    'entry.chooseTitle': 'How do you want to start?',
+    'entry.chooseSub': 'Both paths lead to the same pipeline. Switch anytime.',
+    'entry.aiBadge': 'Fastest route',
+    'entry.ownBadge': 'Full control',
+    'entry.aiF1': 'Script from a one-line idea',
+    'entry.aiF2': 'Automatic scene splitting',
+    'entry.aiF3': 'Seven-layer prompt generation',
+    'entry.ownF1': 'Paste your finished text',
+    'entry.ownF2': 'Set the scene breaks yourself',
+    'entry.ownF3': 'Work with your own visuals and audio',
+    'entry.creating': 'Setting up…',
+    'entry.pipelineTitle': 'Pipeline',
+    'entry.pipelineSub': 'Twelve steps. Four of them optional.',
+    'entry.optional': 'optional',
+    'entry.progress': 'complete',
     'plan.title': 'Choose Your Plan', 'plan.sub': 'Start now, upgrade anytime.',
     'plan.starter': 'Starter', 'plan.free': 'Free', 'plan.noCard': 'no credit card required',
     'plan.f1': '2 projects', 'plan.f2': '100 AI credits/month', 'plan.f3': 'Unlimited collage splitting',
-    'plan.f4': 'Video & subtitle export', 'plan.f5': 'Watermarked output',
+    'plan.f4': 'Video & subtitle export', 'plan.f5': 'No watermark',
     'plan.startFree': 'Start Free',
     'plan.monthly': 'monthly, tax included',
     'plan.p1': 'Unlimited projects & episodes', 'plan.p2': '5,000 AI credits/month',
@@ -468,7 +576,7 @@ const DICT = {
     'script.ownTextHint': 'Paste the text — each paragraph separated by a blank line becomes a scene. Optionally attach the ONE audio file where you read it out loud; the system splits it into scenes automatically based on paragraph length.',
     'script.split': 'Split into scenes',
     'script.attachVoice': 'The audio where you read this text (optional)',
-    'script.attachVoiceHint': 'One file — mp3 / wav. If attached, scenes are created with both text and voice already in place.',
+    'script.attachVoiceHint': 'One file — mp3 / wav. It is split across scenes automatically, so you can skip the Voiceover step.',
     'script.attachVoicePh': 'Choose or drop an audio file',
     'script.aligning': 'Aligning audio to paragraphs…',
     'script.alignDone': '{n} scenes created, audio auto-split ({snapped}/{total} cuts landed on a natural pause) · {d} total',
@@ -690,8 +798,10 @@ const DICT = {
 const I18nCtx = createContext(null);
 
 export function detectLocale() {
-  if (typeof navigator === 'undefined') return 'tr';
-  const langs = navigator.languages || [navigator.language || 'tr'];
+  /* Varsayılan İngilizce — küresel pazar önce. Türkçe tarayıcı diliyle
+     ya da kullanıcı seçimiyle gelir, seçim localStorage'da kalıcıdır. */
+  if (typeof navigator === 'undefined') return 'en';
+  const langs = navigator.languages || [navigator.language || 'en'];
   for (const l of langs) {
     const code = String(l).toLowerCase().slice(0, 2);
     if (DICT[code]) return code;
@@ -700,10 +810,10 @@ export function detectLocale() {
 }
 
 export function I18nProvider({ children, initial }) {
-  const [locale, setLocaleState] = useState(initial || 'tr');
+  const [locale, setLocaleState] = useState(initial || 'en');
   const [ready, setReady] = useState(false);
 
-  /* Sıra: kayıtlı tercih → tarayıcı dili → tr
+  /* Sıra: kayıtlı tercih → tarayıcı dili → en
      Hydration uyuşmazlığı olmasın diye ilk render sunucudakiyle aynı,
      tarayıcı tercihi mount sonrası uygulanır. */
   useEffect(() => {

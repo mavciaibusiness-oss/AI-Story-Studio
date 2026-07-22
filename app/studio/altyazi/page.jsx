@@ -115,14 +115,22 @@ export default function Altyazi() {
       <div className="field">
         <label>{t('sub.transLangs')}</label>
         <div className="chips">
-          {LANGUAGES.filter(l => l !== sb.language).map(l => (
-            <label key={l} className={'chip' + (langs.includes(l) ? ' on' : '')}>
-              <input type="checkbox" checked={langs.includes(l)}
-                onChange={e => setLangs(e.target.checked ? [...langs, l] : langs.filter(x => x !== l))} />{l}
-            </label>
-          ))}
+          {/* Orijinal dil de listede görünür ama kilitlidir: her zaman
+              üretildiği için kullanıcı onu arayıp bulamama derdine düşmesin.
+              Diğer on bir dil serbestçe seçilir. */}
+          {LANGUAGES.map(l => {
+            const isSource = l === sb.language;
+            return (
+              <label key={l}
+                className={'chip' + (isSource || langs.includes(l) ? ' on' : '') + (isSource ? ' chip-locked' : '')}
+                title={isSource ? t('sub.sourceLocked') : undefined}>
+                <input type="checkbox" checked={isSource || langs.includes(l)} disabled={isSource}
+                  onChange={e => setLangs(e.target.checked ? [...langs, l] : langs.filter(x => x !== l))} />{l}
+              </label>
+            );
+          })}
         </div>
-        <p className="hint">Orijinal dil ({sb.language}) her zaman üretilir.</p>
+        <p className="hint">{t('sub.sourceNote', { lang: sb.language })}</p>
       </div>
 
       <div className="field">
