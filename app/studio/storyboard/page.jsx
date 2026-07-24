@@ -4,6 +4,7 @@ import WizardFooter from '@/lib/WizardFooter';
 import Link from 'next/link';
 import { useStudio, callAI, parseJSONLoose } from '@/lib/store';
 import EpisodeBar from '@/lib/EpisodeBar';
+import VideoHealthPanel from '@/lib/VideoHealthPanel';
 import { emptyScene, renumber, PROMPT_KEYS } from '@/lib/storyboard';
 import { useT } from '@/lib/i18n';
 import { triggerDownload, formatDur } from '@/lib/engine';
@@ -82,6 +83,9 @@ export default function StoryboardPage() {
       <h1 className="page-title">{t('sb.title')}</h1>
       <p className="page-sub">{t('sb.sub')}</p>
       <EpisodeBar />
+
+      {/* Video Health özet + Timeline Preview — Sprint 4 / TASK-02 */}
+      <VideoHealthPanel storyboard={sb} />
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
         <Link href="/studio/promptlar" className="btn btn-mini">{t('sb.genPrompts')}</Link>

@@ -106,6 +106,24 @@ const DICT = {
 
     // --- açılış sayfası (landing) ---
 
+    // --- Timeline (Sprint 4 / TASK-02) ---
+    'tl.duration': 'Duration',
+    'tl.scenes': 'Scenes',
+    'tl.warnLong': 'Long',
+    'tl.warnShort': 'Short',
+    'tl.warnMissing': 'No text',
+    'tl.openHealth': 'Full health',
+    'tl.preview': 'Timeline preview',
+    'tl.estimatedHint': 'Some durations were estimated from text (no voiceover yet).',
+    // --- Timeline (Sprint 4 / TASK-02) ---
+    'tl.duration': 'Süre',
+    'tl.scenes': 'Sahne',
+    'tl.warnLong': 'Uzun',
+    'tl.warnShort': 'Kısa',
+    'tl.warnMissing': 'Metinsiz',
+    'tl.openHealth': 'Detaylı sağlık',
+    'tl.preview': 'Zaman çizelgesi önizlemesi',
+    'tl.estimatedHint': 'Bazı süreler seslendirme yokken metinden tahmin edildi.',
     // --- Video Health (Sprint 4 / TASK-01) ---
     'nav.intel': 'ZEKA', 'nav.health': 'Video Sağlığı',
     'vh.title': 'Video Sağlığı',
@@ -527,6 +545,15 @@ const DICT = {
 
     // --- landing page ---
 
+    // --- Timeline (Sprint 4 / TASK-02) ---
+    'tl.duration': 'Duration',
+    'tl.scenes': 'Scenes',
+    'tl.warnLong': 'Long',
+    'tl.warnShort': 'Short',
+    'tl.warnMissing': 'No text',
+    'tl.openHealth': 'Full health',
+    'tl.preview': 'Timeline preview',
+    'tl.estimatedHint': 'Some durations were estimated from text (no voiceover yet).',
     // --- Video Health (Sprint 4 / TASK-01) ---
     'nav.intel': 'INTELLIGENCE', 'nav.health': 'Video Health',
     'vh.title': 'Video Health',

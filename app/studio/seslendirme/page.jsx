@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useStudio } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import EpisodeBar from '@/lib/EpisodeBar';
+import VideoHealthPanel from '@/lib/VideoHealthPanel';
 import { measureAudio, naturalSortBy, formatDur, triggerDownload, alignVoiceToParagraphs, sliceAudioToWav } from '@/lib/engine';
 import Waveform from '@/lib/Waveform';
 
@@ -154,6 +155,11 @@ export default function Seslendirme() {
       <h1 className="page-title">{t('vo.title')}</h1>
       <p className="page-sub">{t('vo.sub')}</p>
       <EpisodeBar />
+
+      {/* Video Health özet + Timeline Preview — Sprint 4 / TASK-02.
+          Seslendirme yüklendikçe süreler gerçek zamana döner, panel
+          canlı olarak yeniden hesaplar. */}
+      <VideoHealthPanel storyboard={sb} />
 
       {/* NASIL KULLANILIR — sayfanın en görünür yeri, varsayılan açık */}
       <div className="card howto" style={{ marginBottom: 14 }}>

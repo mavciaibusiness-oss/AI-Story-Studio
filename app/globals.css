@@ -747,3 +747,63 @@ button { font-family: var(--body); }
   .vh-over-left { border-right: none; border-bottom: 1px solid var(--line);
     padding: 0 0 18px; padding-right: 0; }
 }
+
+
+/* ============================================================
+   VIDEO HEALTH PANEL (Sprint 4 / TASK-02)
+   Storyboard ve Seslendirme sayfalarının üstündeki özet + preview.
+   ============================================================ */
+.vh-panel { border: 1px solid var(--line); border-radius: 14px;
+  background: var(--panel); padding: 14px 16px 12px; margin-bottom: 22px; }
+.vh-panel-summary { display: flex; align-items: center; gap: 22px;
+  flex-wrap: wrap; margin-bottom: 12px; }
+.vh-panel-score { display: flex; flex-direction: column; padding-right: 20px;
+  border-right: 1px solid var(--line); }
+.vh-panel-score-label { font-family: var(--display); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+.vh-panel-score-value { font-family: var(--display); font-size: 28px; font-weight: 800;
+  letter-spacing: -1px; color: var(--cream); line-height: 1.1; margin-top: 2px; }
+.vh-panel-score-value span { font-size: 14px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.vh-panel-score-ok       .vh-panel-score-value { color: var(--ok); }
+.vh-panel-score-warn     .vh-panel-score-value { color: var(--lamp); }
+.vh-panel-score-critical .vh-panel-score-value { color: var(--err); }
+
+.vh-panel-metric { display: flex; flex-direction: column; }
+.vh-panel-metric-label { font-family: var(--display); font-size: 10.5px; font-weight: 700;
+  letter-spacing: 1.4px; text-transform: uppercase; color: var(--muted); }
+.vh-panel-metric-value { font-family: var(--display); font-size: 18px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.4px; margin-top: 2px;
+  font-variant-numeric: tabular-nums; }
+.vh-panel-metric-warn .vh-panel-metric-value { color: var(--lamp); }
+.vh-panel-est { color: var(--muted); font-weight: 500; margin-left: 2px; }
+
+.vh-panel-link { margin-left: auto; }
+
+/* Timeline şeridi */
+.vh-strip { display: flex; gap: 2px; height: 34px; border-radius: 8px; overflow: hidden;
+  background: var(--ink-2); border: 1px solid var(--line); padding: 3px; }
+.vh-strip-block { position: relative; min-width: 22px; border-radius: 5px;
+  display: flex; align-items: center; justify-content: center; padding: 0 6px;
+  font-family: var(--display); font-size: 10.5px; font-weight: 700;
+  color: rgba(0,0,0,.55); overflow: hidden; white-space: nowrap;
+  transition: filter .15s; cursor: default; }
+.vh-strip-block:hover { filter: brightness(1.12); }
+.vh-strip-ok      { background: linear-gradient(180deg, var(--ok), #64b877); }
+.vh-strip-tip     { background: linear-gradient(180deg, var(--lamp-soft), var(--lamp)); color: rgba(0,0,0,.7); }
+.vh-strip-warn    { background: linear-gradient(180deg, #ffa04a, #d67926); color: rgba(0,0,0,.7); }
+.vh-strip-missing { background: repeating-linear-gradient(45deg,
+  rgba(239,139,139,.2), rgba(239,139,139,.2) 6px,
+  rgba(239,139,139,.35) 6px, rgba(239,139,139,.35) 12px);
+  border: 1px dashed rgba(239,139,139,.6); color: var(--err); }
+.vh-strip-num { position: relative; z-index: 1; }
+.vh-strip-time { margin-left: 6px; font-weight: 500; opacity: .8; font-variant-numeric: tabular-nums; }
+
+.vh-panel-compact { padding: 12px 14px; }
+.vh-panel-compact .vh-panel-summary { gap: 16px; margin-bottom: 10px; }
+.vh-panel-compact .vh-strip { height: 26px; }
+
+@media (max-width: 720px) {
+  .vh-panel-score { border-right: none; padding-right: 0; padding-bottom: 8px;
+    border-bottom: 1px solid var(--line); width: 100%; }
+  .vh-panel-link { margin-left: 0; width: 100%; text-align: center; }
+}
