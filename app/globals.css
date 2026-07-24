@@ -631,3 +631,119 @@ button { font-family: var(--body); }
 .format-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px;
   padding: 5px 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--ink-2); color: var(--muted); }
 .format-badge em { color: var(--lamp); font-style: normal; font-weight: 600; }
+
+
+/* ============================================================
+   VIDEO SAĞLIĞI (Sprint 4 / TASK-01)
+   Yeni surface yaratmaz; mevcut card/stat dilini kullanır,
+   üstüne kategori barları, sorun kartları ve zaman çizelgesi ekler.
+   ============================================================ */
+.vh-layout { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 22px; align-items: start; }
+.vh-main { min-width: 0; }
+.vh-history { position: sticky; top: 20px; }
+
+/* Analiz çalıştırma satırı */
+.vh-runner { display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  flex-wrap: wrap; padding: 16px 18px; margin-bottom: 18px; }
+.vh-runner-opts { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Genel sağlık paneli */
+.vh-overall { display: grid; grid-template-columns: minmax(0, 220px) minmax(0, 1fr);
+  gap: 24px; padding: 22px 24px; margin-bottom: 18px; }
+.vh-over-left { border-right: 1px solid var(--line); padding-right: 22px; }
+.vh-score { font-family: var(--display); font-size: 56px; font-weight: 800;
+  letter-spacing: -2.2px; color: var(--cream); line-height: 1; margin: 4px 0 6px; }
+.vh-score span { font-size: 20px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.vh-stars { font-size: 18px; color: var(--line); letter-spacing: 2px; margin-bottom: 12px; }
+.vh-stars .on { color: var(--lamp); }
+.vh-stars .half { color: var(--lamp); opacity: .55; }
+.vh-band { display: inline-block; }
+.vh-band-ok       { color: var(--ok);   border-color: rgba(127,209,143,.4); background: rgba(127,209,143,.09); }
+.vh-band-warn     { color: var(--lamp); border-color: rgba(255,180,84,.4);  background: rgba(255,180,84,.09); }
+.vh-band-critical { color: var(--err);  border-color: rgba(239,139,139,.4); background: rgba(239,139,139,.09); }
+
+.vh-summary { font-size: 15px; color: var(--text-2); line-height: 1.65; margin: 0 0 10px; }
+.vh-projected { font-size: 14px; color: var(--text-2); margin: 6px 0 0; }
+.vh-projected b { color: var(--ok); font-weight: 700; }
+
+/* Kategori ızgarası */
+.vh-cats { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.vh-cat { padding: 14px 16px; position: relative; }
+.vh-cat-name { font-family: var(--display); font-size: 12px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+.vh-cat-score { font-family: var(--display); font-size: 26px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.8px; line-height: 1; }
+.vh-cat-proj { font-size: 13px; color: var(--ok); font-weight: 600; margin-left: 6px; letter-spacing: 0; }
+.vh-cat-bar { height: 4px; border-radius: 2px; background: rgba(244,241,234,.08);
+  overflow: hidden; margin-top: 10px; }
+.vh-cat-bar > i { display: block; height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp)); transition: width .4s ease; }
+.vh-cat-count { position: absolute; top: 12px; right: 14px;
+  font-size: 11px; font-weight: 700; color: var(--err); }
+
+/* Bulgular */
+.vh-issues { display: flex; flex-direction: column; gap: 12px; margin-bottom: 18px; }
+.vh-issue { padding: 16px 18px; border-left: 3px solid var(--line); }
+.vh-sev-critical { border-left-color: var(--err); }
+.vh-sev-warn     { border-left-color: var(--lamp); }
+.vh-sev-tip      { border-left-color: var(--ok); }
+.vh-sev-info     { border-left-color: var(--muted); }
+.vh-issue-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.vh-sev { font-family: var(--display); font-size: 10.5px; font-weight: 700; letter-spacing: 1.1px;
+  text-transform: uppercase; padding: 3px 9px; border-radius: 5px; }
+.vh-sev-tag-critical { color: var(--err);  background: rgba(239,139,139,.12); }
+.vh-sev-tag-warn     { color: var(--lamp); background: rgba(255,180,84,.12); }
+.vh-sev-tag-tip      { color: var(--ok);   background: rgba(127,209,143,.12); }
+.vh-sev-tag-info     { color: var(--muted); background: rgba(244,241,234,.06); }
+.vh-issue-cat, .vh-issue-scene { font-size: 12px; color: var(--muted); }
+.vh-issue-title { font-family: var(--display); font-size: 16px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.3px; margin-bottom: 4px; }
+.vh-issue-detail { font-size: 14px; color: var(--text-2); line-height: 1.55; margin: 0 0 10px; }
+.vh-issue-ai { font-size: 13.5px; color: var(--text-2); line-height: 1.55;
+  padding: 10px 12px; background: rgba(255,180,84,.05);
+  border: 1px solid rgba(255,180,84,.15); border-radius: 8px; margin: 0 0 10px;
+  display: flex; flex-direction: column; gap: 4px; }
+.vh-issue-rec { padding: 10px 12px; background: var(--panel-2); border-radius: 8px;
+  font-size: 13.5px; color: var(--text-2); line-height: 1.55; }
+.vh-issue-gain { display: inline-block; margin-left: 10px; font-size: 12px;
+  color: var(--ok); font-weight: 600; }
+
+/* Zaman çizelgesi */
+.vh-tl { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+.vh-tl-scene { border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  padding: 12px 14px; position: relative; overflow: hidden; }
+.vh-tl-scene::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%;
+  background: var(--line); }
+.vh-tl-r5::before { background: var(--ok); }
+.vh-tl-r4::before { background: var(--ok); opacity: .7; }
+.vh-tl-r3::before { background: var(--lamp); }
+.vh-tl-r2::before { background: var(--lamp); opacity: .7; }
+.vh-tl-r1::before { background: var(--err); }
+.vh-tl-scene-head { display: flex; justify-content: space-between; font-size: 12.5px;
+  color: var(--muted); margin-bottom: 6px; }
+.vh-tl-stars { color: var(--line); letter-spacing: 1px; }
+.vh-tl-stars .on { color: var(--lamp); }
+.vh-tl-note { font-size: 13.5px; color: var(--cream); font-weight: 500; line-height: 1.45; margin-bottom: 6px; }
+.vh-tl-meta { font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+/* Geçmiş sütunu */
+.vh-hist-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.vh-hist { border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  padding: 10px 12px; text-align: left; cursor: pointer; color: var(--text-2);
+  transition: border-color .18s, transform .18s; }
+.vh-hist:hover { border-color: rgba(255,180,84,.3); transform: translateY(-1px); }
+.vh-hist.on { border-color: rgba(255,180,84,.5); background: var(--panel-2); }
+.vh-hist-top { display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.vh-hist-ver { font-family: var(--display); font-weight: 700; }
+.vh-hist-score { font-family: var(--display); font-size: 22px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.6px; line-height: 1; }
+.vh-hist-date { font-size: 11px; color: var(--dim); margin-top: 2px; }
+
+@media (max-width: 900px) {
+  .vh-layout { grid-template-columns: 1fr; }
+  .vh-history { position: static; }
+  .vh-overall { grid-template-columns: 1fr; }
+  .vh-over-left { border-right: none; border-bottom: 1px solid var(--line);
+    padding: 0 0 18px; padding-right: 0; }
+}

@@ -26,6 +26,8 @@ const LINKS = [
   { href: '/studio/thumbnail', key: 'nav.thumbnail', icon: '▨' },
   { href: '/studio/shorts', key: 'nav.shorts', icon: '▮' },
   { href: '/studio/youtube', key: 'nav.publish', icon: '↗' },
+  { sep: 'nav.intel' },
+  { href: '/studio/saglik', key: 'nav.health', icon: '❤' },
   { sep: 'nav.account' },
   { href: '/studio/ayarlar', key: 'nav.settings', icon: '⚙' },
   /* Yalnızca admin görür — render sırasında rol kontrolüyle elenir.
