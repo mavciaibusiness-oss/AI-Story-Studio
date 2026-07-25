@@ -106,6 +106,24 @@ const DICT = {
 
     // --- açılış sayfası (landing) ---
 
+    // --- Prompt Quality (Sprint 4 / TASK-03) ---
+    'pq.badgeHint': 'Open the prompt quality report',
+    'pq.notMeasured': 'Categories that cannot be measured are excluded from the overall score.',
+    'pq.noIssues': 'No notable gaps. This prompt is production-ready.',
+    'pq.rewrite': 'Rewrite with AI',
+    'pq.rewriting': 'Rewriting…',
+    'pq.rewriteHint': 'The new prompt is scored by the same engine — the AI does not grade itself.',
+    'pq.rewriteFail': 'Rewrite failed.',
+    'pq.cost': '{n} credits',
+    'pq.before': 'Before',
+    'pq.after': 'After',
+    'pq.fixed': '{n} issues resolved.',
+    'pq.apply': 'Apply',
+    'pq.discard': 'Discard',
+    'pq.applied': 'Scene {n} prompt updated.',
+    'pq.sev.info': 'Info', 'pq.sev.tip': 'Tip', 'pq.sev.warn': 'Warning', 'pq.sev.critical': 'Critical',
+    'pq.cat.detail': 'Detail', 'pq.cat.consistency': 'Consistency', 'pq.cat.cinematic': 'Cinematic',
+    'pq.cat.emotion': 'Emotion', 'pq.cat.motion': 'Motion', 'pq.cat.compatibility': 'Compatibility',
     // --- Timeline (Sprint 4 / TASK-02) ---
     'tl.duration': 'Duration',
     'tl.scenes': 'Scenes',
@@ -115,6 +133,24 @@ const DICT = {
     'tl.openHealth': 'Full health',
     'tl.preview': 'Timeline preview',
     'tl.estimatedHint': 'Some durations were estimated from text (no voiceover yet).',
+    // --- Prompt Kalite (Sprint 4 / TASK-03) ---
+    'pq.badgeHint': 'Prompt kalite raporunu aç',
+    'pq.notMeasured': 'Ölçülemeyen kategoriler genel puana katılmaz.',
+    'pq.noIssues': 'Belirgin eksik yok. Prompt üretime hazır.',
+    'pq.rewrite': 'AI ile yeniden yaz',
+    'pq.rewriting': 'Yeniden yazılıyor…',
+    'pq.rewriteHint': 'Yeni prompt aynı motorla ölçülür; puanı AI belirlemez.',
+    'pq.rewriteFail': 'Yeniden yazım başarısız.',
+    'pq.cost': '{n} kredi',
+    'pq.before': 'Önce',
+    'pq.after': 'Sonra',
+    'pq.fixed': '{n} eksik giderildi.',
+    'pq.apply': 'Uygula',
+    'pq.discard': 'Vazgeç',
+    'pq.applied': 'Sahne {n} promptu güncellendi.',
+    'pq.sev.info': 'Bilgi', 'pq.sev.tip': 'Öneri', 'pq.sev.warn': 'Uyarı', 'pq.sev.critical': 'Kritik',
+    'pq.cat.detail': 'Detay', 'pq.cat.consistency': 'Tutarlılık', 'pq.cat.cinematic': 'Sinema',
+    'pq.cat.emotion': 'Duygu', 'pq.cat.motion': 'Hareket', 'pq.cat.compatibility': 'Uyumluluk',
     // --- Timeline (Sprint 4 / TASK-02) ---
     'tl.duration': 'Süre',
     'tl.scenes': 'Sahne',
@@ -545,6 +581,24 @@ const DICT = {
 
     // --- landing page ---
 
+    // --- Prompt Quality (Sprint 4 / TASK-03) ---
+    'pq.badgeHint': 'Open the prompt quality report',
+    'pq.notMeasured': 'Categories that cannot be measured are excluded from the overall score.',
+    'pq.noIssues': 'No notable gaps. This prompt is production-ready.',
+    'pq.rewrite': 'Rewrite with AI',
+    'pq.rewriting': 'Rewriting…',
+    'pq.rewriteHint': 'The new prompt is scored by the same engine — the AI does not grade itself.',
+    'pq.rewriteFail': 'Rewrite failed.',
+    'pq.cost': '{n} credits',
+    'pq.before': 'Before',
+    'pq.after': 'After',
+    'pq.fixed': '{n} issues resolved.',
+    'pq.apply': 'Apply',
+    'pq.discard': 'Discard',
+    'pq.applied': 'Scene {n} prompt updated.',
+    'pq.sev.info': 'Info', 'pq.sev.tip': 'Tip', 'pq.sev.warn': 'Warning', 'pq.sev.critical': 'Critical',
+    'pq.cat.detail': 'Detail', 'pq.cat.consistency': 'Consistency', 'pq.cat.cinematic': 'Cinematic',
+    'pq.cat.emotion': 'Emotion', 'pq.cat.motion': 'Motion', 'pq.cat.compatibility': 'Compatibility',
     // --- Timeline (Sprint 4 / TASK-02) ---
     'tl.duration': 'Duration',
     'tl.scenes': 'Scenes',

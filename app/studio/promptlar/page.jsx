@@ -7,6 +7,9 @@ import EpisodeBar from '@/lib/EpisodeBar';
 import { STYLES, flattenPrompt } from '@/lib/storyboard';
 import { useT } from '@/lib/i18n';
 import { triggerDownload } from '@/lib/engine';
+import PromptQualityBadge from '@/lib/PromptQualityBadge';
+import { analyzePrompt } from '@/lib/prompt/analyze';
+import { styleKeyFromLabel, generatorKeyFromLabel } from '@/lib/prompt/vocab';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +31,13 @@ export default function Promptlar() {
   const [ok, setOk] = useState(null);
   const [failedIdx, setFailedIdx] = useState([]);
   const [view, setView] = useState('image');
+
+  /* Prompt kalite analizi — Sprint 4 / TASK-03.
+     Puanlar kural motorundan gelir: ücretsiz, anında, AI'siz.
+     Yeniden yazım isteğe bağlı ve kredili. */
+  const [rewriting, setRewriting] = useState(null);      // işlenen sahne sırası
+  const [rewrites, setRewrites] = useState({});          // { [index]: sonuç }
+  const [pqErr, setPqErr] = useState(null);
 
   const sb = storyboard;
 
@@ -138,6 +148,73 @@ export default function Promptlar() {
     }
   }
 
+  /* Kalite analizi bağlamı: stil kilidi ve hedef üretici.
+     Etiketler Türkçe/kullanıcıya dönük; motor kısa anahtar bekliyor. */
+  const pqContext = {
+    style: styleKeyFromLabel(sb.style),
+    generator: generatorKeyFromLabel(target)
+  };
+
+  /* Bir sahnenin kalite raporu. Önceki sahnelerin karakter ipuçlarını
+     taşır ki tutarlılık kontrolü çalışsın. */
+  function reportFor(i) {
+    const scene = sb.scenes[i];
+    if (!scene) return null;
+    const previousChars = {};
+    for (let j = 0; j < i; j++) {
+      const r = analyzePrompt(sb.scenes[j], { ...pqContext, kind: 'image' });
+      for (const [k, v] of Object.entries(r.characterHints || {})) {
+        previousChars[k] = previousChars[k] || [];
+        for (const c of v) if (!previousChars[k].includes(c)) previousChars[k].push(c);
+      }
+    }
+    return analyzePrompt(scene, {
+      ...pqContext,
+      kind: scene.media === 'video' ? 'video' : 'image',
+      sceneIndex: i,
+      previousChars
+    });
+  }
+
+  async function rewriteScene(i) {
+    setRewriting(i); setPqErr(null);
+    try {
+      const res = await fetch('/api/prompt', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'rewrite', episodeId, sceneIndex: i,
+          style: pqContext.style, generator: pqContext.generator
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || t('pq.rewriteFail'));
+      setRewrites(r => ({ ...r, [i]: data }));
+      if (data.creditsLeft !== null && data.creditsLeft !== undefined) spendCredits(data.creditsLeft);
+    } catch (e) { setPqErr(e.message); }
+    finally { setRewriting(null); }
+  }
+
+  /* Onay: yeni katmanları sahneye yaz. Kullanıcı görmeden uygulanmaz. */
+  function applyRewrite(i, layers) {
+    patchScene(i, layers);
+    const rewriteId = rewrites[i]?.rewriteId;
+    setRewrites(r => { const n = { ...r }; delete n[i]; return n; });
+    setOk(t('pq.applied', { n: i + 1 }));
+    /* Geçmiş kaydını "uygulandı" işaretle. Başarısız olursa sessiz
+       geç: promptu zaten yazdık, kullanıcıyı ikincil bir hatayla meşgul
+       etmenin faydası yok. */
+    if (rewriteId) {
+      fetch('/api/prompt', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'markApplied', episodeId, rewriteId })
+      }).catch(() => {});
+    }
+  }
+
+  function discardRewrite(i) {
+    setRewrites(r => { const n = { ...r }; delete n[i]; return n; });
+  }
+
   function allText() {
     return sb.scenes.map(s =>
       String(s.scene).padStart(3, '0') + '\n' + flattenPrompt(s, view) + '\n'
@@ -213,6 +290,8 @@ export default function Promptlar() {
               new Blob([allText()], { type: 'text/plain;charset=utf-8' }), 'prompts-' + view + '.txt')}>TXT {t('common.download')}</button>
           </div>
 
+          {pqErr && <span className="err">{pqErr}</span>}
+
           {sb.scenes.map((s, i) => (
             <div className="card" key={i} style={{
               marginBottom: 8, padding: 14,
@@ -223,9 +302,19 @@ export default function Promptlar() {
                   {String(s.scene).padStart(3, '0')}
                   {failedIdx.includes(i) && <span style={{ marginLeft: 8 }}>⚠</span>}
                 </span>
-                <button className="btn btn-mini" onClick={() => navigator.clipboard.writeText(flattenPrompt(s, view))}>
-                  {t('common.copy')}
-                </button>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <PromptQualityBadge
+                    report={reportFor(i)}
+                    sceneIndex={i}
+                    onRewrite={rewriteScene}
+                    rewriting={rewriting === i}
+                    rewriteResult={rewrites[i]}
+                    onApply={applyRewrite}
+                    onDiscard={discardRewrite} />
+                  <button className="btn btn-mini" onClick={() => navigator.clipboard.writeText(flattenPrompt(s, view))}>
+                    {t('common.copy')}
+                  </button>
+                </div>
               </div>
               <p className="mono" style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'pre-wrap' }}>
                 {flattenPrompt(s, view) || <i>{t('pr.notYet')}</i>}

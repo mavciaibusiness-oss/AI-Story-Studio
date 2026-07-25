@@ -807,3 +807,98 @@ button { font-family: var(--body); }
     border-bottom: 1px solid var(--line); width: 100%; }
   .vh-panel-link { margin-left: 0; width: 100%; text-align: center; }
 }
+
+
+/* ============================================================
+   PROMPT KALİTE ROZETİ (Sprint 4 / TASK-03)
+   Prompt kartının başlık satırındaki küçük puan göstergesi ve
+   tıklanınca açılan ayrıntı paneli. Mevcut kart dilini bozmaz.
+   ============================================================ */
+.pq-badge { display: inline-flex; align-items: center; gap: 7px;
+  background: var(--panel-2); border: 1px solid var(--line); border-radius: 20px;
+  padding: 4px 10px; cursor: pointer; transition: border-color .18s;
+  font-family: var(--display); }
+.pq-badge:hover { border-color: var(--muted); }
+.pq-badge-ok       { border-color: rgba(127,209,143,.4); }
+.pq-badge-warn     { border-color: rgba(255,180,84,.4); }
+.pq-badge-critical { border-color: rgba(239,139,139,.45); }
+.pq-badge-score { font-size: 13px; font-weight: 800; letter-spacing: -.3px; color: var(--cream);
+  font-variant-numeric: tabular-nums; }
+.pq-badge-ok       .pq-badge-score { color: var(--ok); }
+.pq-badge-warn     .pq-badge-score { color: var(--lamp); }
+.pq-badge-critical .pq-badge-score { color: var(--err); }
+.pq-badge-stars { font-size: 9px; letter-spacing: .5px; color: var(--line); }
+.pq-badge-stars .on { color: var(--lamp); }
+.pq-badge-stars .half { color: var(--lamp); opacity: .5; }
+.pq-badge-count { font-size: 10px; font-weight: 700; color: var(--err);
+  background: rgba(239,139,139,.14); border-radius: 4px; padding: 1px 5px; }
+
+/* Ayrıntı paneli */
+.pq-panel { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+.pq-cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 10px; margin-bottom: 12px; }
+.pq-cat-name { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.pq-cat-val { font-family: var(--display); font-size: 17px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.4px; line-height: 1.2;
+  font-variant-numeric: tabular-nums; }
+.pq-cat-bar { height: 3px; border-radius: 2px; background: rgba(244,241,234,.08);
+  overflow: hidden; margin-top: 5px; }
+.pq-cat-bar > i { display: block; height: 100%; border-radius: 2px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp)); transition: width .35s ease; }
+
+/* Bulgular */
+.pq-issues { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.pq-issue { padding: 10px 12px; border-radius: 8px; background: var(--panel-2);
+  border-left: 2px solid var(--line); }
+.pq-sev-critical { border-left-color: var(--err); }
+.pq-sev-warn     { border-left-color: var(--lamp); }
+.pq-sev-tip      { border-left-color: var(--ok); }
+.pq-sev-info     { border-left-color: var(--muted); }
+.pq-issue-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+.pq-sev-tag { font-family: var(--display); font-size: 9px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; padding: 2px 6px; border-radius: 4px; }
+.pq-sev-tag-critical { color: var(--err);  background: rgba(239,139,139,.12); }
+.pq-sev-tag-warn     { color: var(--lamp); background: rgba(255,180,84,.12); }
+.pq-sev-tag-tip      { color: var(--ok);   background: rgba(127,209,143,.12); }
+.pq-sev-tag-info     { color: var(--muted); background: rgba(244,241,234,.06); }
+.pq-issue-title { font-family: var(--display); font-size: 13.5px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.2px; }
+.pq-issue-gain { margin-left: auto; font-size: 11px; font-weight: 700; color: var(--ok); }
+.pq-issue-detail { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0 0 4px; }
+.pq-issue-rec { font-size: 12.5px; color: var(--lamp-soft); line-height: 1.5; margin: 0; }
+
+.pq-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+
+/* Before / after karşılaştırma */
+.pq-compare { margin-top: 12px; padding: 14px; border-radius: 10px;
+  background: var(--ink-2); border: 1px solid var(--line); }
+.pq-compare-head { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-bottom: 10px; }
+.pq-compare-side { text-align: center; }
+.pq-compare-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.pq-compare-score { font-family: var(--display); font-size: 26px; font-weight: 800;
+  letter-spacing: -1px; color: var(--muted); line-height: 1.1;
+  font-variant-numeric: tabular-nums; }
+.pq-compare-after .pq-compare-score { color: var(--ok); }
+.pq-compare-stars { font-size: 10px; letter-spacing: 1px; color: var(--line); }
+.pq-compare-stars .on { color: var(--lamp); }
+.pq-compare-stars .half { color: var(--lamp); opacity: .5; }
+.pq-compare-arrow { font-size: 20px; color: var(--muted); }
+.pq-compare-delta { margin-left: auto; font-family: var(--display); font-size: 15px;
+  font-weight: 800; color: var(--ok); background: rgba(127,209,143,.12);
+  border-radius: 20px; padding: 4px 12px; }
+.pq-note { font-size: 13px; color: var(--text-2); line-height: 1.55; margin: 0 0 10px; }
+
+.pq-layers { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
+.pq-layer { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 10px;
+  padding: 7px 0; border-top: 1px solid var(--line); }
+.pq-layer-name { font-family: var(--mono, monospace); font-size: 11px; color: var(--muted); }
+.pq-layer-text { font-size: 12.5px; color: var(--text-2); line-height: 1.5;
+  word-break: break-word; }
+
+@media (max-width: 620px) {
+  .pq-layer { grid-template-columns: 1fr; gap: 2px; }
+  .pq-compare-delta { margin-left: 0; }
+}

@@ -110,7 +110,34 @@ export async function POST(req) {
       }
 
       const all = analyzeStoryboardPrompts(sb, ctx);
-      return NextResponse.json({ result: all });
+
+      /* Geçmişe kaydet — yalnızca istenirse.
+         Her rozet render'ında satır yazmak tabloyu şişirir; kayıt
+         kullanıcı bütün storyboard'u analiz ettiğinde anlamlı. */
+      let saved = null;
+      if (body.save === true) {
+        const row = {
+          episode_id: episodeId,
+          user_id: user.id,
+          overall: all.overall,
+          per_scene: all.perScene.map(x => ({
+            scene: x.scene,
+            overall: x.report.overall,
+            scores: x.report.scores,
+            issues: x.report.issues
+          })),
+          stats: all.stats,
+          style: ctx.style,
+          generator: ctx.generator
+        };
+        const { data, error } = await supabase
+          .from('prompt_reports').insert(row)
+          .select('id, version, created_at').single();
+        if (!error) saved = data;
+        // Kayıt hatası analizi geçersiz kılmaz; rapor yine döner.
+      }
+
+      return NextResponse.json({ result: all, saved });
     }
 
     /* ---------- YENİDEN YAZIM (kredili) ---------- */
@@ -168,7 +195,36 @@ export async function POST(req) {
         await supabase.from('profiles').update({ credits: creditsLeft }).eq('id', user.id);
       }
 
+      /* Yeniden yazımı geçmişe yaz. applied=false: kullanıcı henüz
+         onaylamadı. Onaylayınca arayüz 'applyRewrite' action'ıyla
+         bu satırı işaretler. Kayıt hatası yanıtı bozmaz. */
+      let rewriteId = null;
+      {
+        const { data } = await supabase.from('prompt_rewrites').insert({
+          episode_id: episodeId,
+          user_id: user.id,
+          scene_index: idx,
+          score_before: before.overall,
+          score_after: after.overall,
+          layers_before: {
+            imagePrompt: scene.imagePrompt || '',
+            videoPrompt: scene.videoPrompt || '',
+            negativePrompt: scene.negativePrompt || '',
+            stylePrompt: scene.stylePrompt || '',
+            cameraPrompt: scene.cameraPrompt || '',
+            motionPrompt: scene.motionPrompt || '',
+            lightingPrompt: scene.lightingPrompt || ''
+          },
+          layers_after: layers,
+          change_note: changeNote || '',
+          applied: false,
+          model
+        }).select('id').single();
+        rewriteId = data?.id || null;
+      }
+
       return NextResponse.json({
+        rewriteId,
         scene: idx + 1,
         before: { overall: before.overall, stars: before.stars, scores: before.scores },
         after:  { overall: after.overall,  stars: after.stars,  scores: after.scores },
@@ -179,6 +235,24 @@ export async function POST(req) {
         model,
         creditsLeft
       });
+    }
+
+    /* ---------- ONAY İŞARETİ (ücretsiz) ----------
+       Kullanıcı yeniden yazımı uyguladığında geçmiş kaydını işaretler.
+       Storyboard'a yazma işini istemci yapar (mevcut kayıt akışıyla);
+       burada yalnızca geçmiş güncellenir. */
+    if (action === 'markApplied') {
+      const rewriteId = String(body.rewriteId || '');
+      if (!rewriteId) {
+        return NextResponse.json({ error: 'rewriteId gerekli.' }, { status: 400 });
+      }
+      const { error } = await supabase
+        .from('prompt_rewrites')
+        .update({ applied: true })
+        .eq('id', rewriteId)
+        .eq('user_id', user.id);
+      if (error) throw new Error(error.message);
+      return NextResponse.json({ ok: true });
     }
 
     return NextResponse.json({ error: 'Bilinmeyen action: ' + action }, { status: 400 });
