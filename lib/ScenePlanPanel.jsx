@@ -42,6 +42,7 @@ export default function ScenePlanPanel({ episodeId, storyboard, onApplied, spend
   const [note, setNote] = useState(null);
   const [pickSplits, setPickSplits] = useState([]);   // sahne numaraları
   const [pickMerges, setPickMerges] = useState([]);   // "a-b" anahtarları
+  const [history, setHistory] = useState([]);        // uygulanmış planlar
 
   const scenes = storyboard?.scenes?.length || 0;
 
@@ -59,6 +60,11 @@ export default function ScenePlanPanel({ episodeId, storyboard, onApplied, spend
     finally { setBusy(null); }
   }
 
+  const loadHistory = useCallback(async () => {
+    const data = await call('history');
+    if (data) setHistory(data.history || []);
+  }, [episodeId]);
+
   const loadPlan = useCallback(async () => {
     const data = await call('plan');
     if (!data) return;
@@ -67,7 +73,8 @@ export default function ScenePlanPanel({ episodeId, storyboard, onApplied, spend
     // Varsayılan seçim: tüm öneriler işaretli (advanced modda kolaylık)
     setPickSplits(data.plan.splits.filter(s => s.pieces).map(s => s.scene));
     setPickMerges(data.plan.merges.map(m => m.scenes.join('-')));
-  }, [episodeId, locale]);
+    loadHistory();
+  }, [episodeId, locale, loadHistory]);
 
   async function refine() {
     const data = await call('refine');
@@ -94,7 +101,7 @@ export default function ScenePlanPanel({ episodeId, storyboard, onApplied, spend
       };
     }
 
-    const data = await call('apply', { plan, selection });
+    const data = await call('apply', { plan, selection, mode, aiNote: note || '' });
     if (!data) return;
     /* Sunucu storyboard'u yazdı. İstemcinin durumunu HEMEN eşitle:
        otomatik kayıt döngüsü eski haliyle üzerine yazmasın. */
@@ -256,6 +263,34 @@ export default function ScenePlanPanel({ episodeId, storyboard, onApplied, spend
                   </div>
                   {/* Dürüstlük: motor bunları henüz uygulamıyor */}
                   <p className="hint">{t('sp.transNote')}</p>
+                </div>
+              )}
+
+              {/* Geçmiş — uygulanmış planlar, geri alınabilir */}
+              {history.length > 0 && (
+                <div className="sp-group">
+                  <div className="entry-label">{t('sp.history')}</div>
+                  <div className="sp-hist">
+                    {history.map(h => (
+                      <div className="sp-hist-row" key={h.id}>
+                        <span className="sp-hist-ver">{t('sp.version', { n: h.version })}</span>
+                        <span className="sp-hist-change">
+                          {h.scenes_before} → {h.scenes_after}
+                        </span>
+                        <span className="sp-hist-mode">{t('sp.mode.' + h.mode)}</span>
+                        {h.source === 'rules+ai' && <span className="tag tag-admin">AI</span>}
+                        <span className="sp-hist-date">
+                          {new Date(h.created_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB')}
+                        </span>
+                        {h.canUndo ? (
+                          <button className="btn btn-mini" disabled={!!busy}
+                            onClick={() => undo(h.id)}>{t('sp.undo')}</button>
+                        ) : (
+                          <span className="hint">{t('sp.undone2')}</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 

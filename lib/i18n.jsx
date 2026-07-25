@@ -108,6 +108,12 @@ const DICT = {
 
     // --- Scene Plan (Sprint 4 / TASK-04) ---
     'sp.title': 'Scene Plan',
+    'sp.history': 'Applied plans',
+    'sp.version': 'v{n}',
+    'sp.undo': 'Undo',
+    'sp.undone': 'Undone: back to {n} scenes.',
+    'sp.undone2': 'undone',
+
     'sp.scenesUnit': 'scenes',
     'sp.loading': 'Calculating plan…',
     'sp.failed': 'Could not load the plan.',
@@ -178,6 +184,12 @@ const DICT = {
     'tl.estimatedHint': 'Some durations were estimated from text (no voiceover yet).',
     // --- Sahne Planı (Sprint 4 / TASK-04) ---
     'sp.title': 'Sahne Planı',
+    'sp.history': 'Uygulanan planlar',
+    'sp.version': 'v{n}',
+    'sp.undo': 'Geri al',
+    'sp.undone': 'Geri alındı: {n} sahneye dönüldü.',
+    'sp.undone2': 'geri alındı',
+
     'sp.scenesUnit': 'sahne',
     'sp.loading': 'Plan hesaplanıyor…',
     'sp.failed': 'Plan alınamadı.',
@@ -669,6 +681,12 @@ const DICT = {
 
     // --- Scene Plan (Sprint 4 / TASK-04) ---
     'sp.title': 'Scene Plan',
+    'sp.history': 'Applied plans',
+    'sp.version': 'v{n}',
+    'sp.undo': 'Undo',
+    'sp.undone': 'Undone: back to {n} scenes.',
+    'sp.undone2': 'undone',
+
     'sp.scenesUnit': 'scenes',
     'sp.loading': 'Calculating plan…',
     'sp.failed': 'Could not load the plan.',

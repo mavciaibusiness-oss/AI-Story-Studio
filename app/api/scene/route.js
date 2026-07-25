@@ -245,12 +245,46 @@ export async function POST(req) {
          hemen görsün, ikinci bir istek atmak zorunda kalmasın. */
       const after = planStoryboard(nextSb);
 
+      /*
+        Geçmişe kaydet — GERİ ALMA anlık görüntüsüyle birlikte.
+
+        snapshot alanı uygulama ÖNCESİ sahneleri taşır. Plan uygulaması
+        geri alınamaz bir işlemdi; bu kayıt sayesinde kullanıcı yanlış
+        plan uygulayıp çalışmasını kaybetmiyor.
+
+        Kayıt hatası uygulamayı geçersiz kılmaz — storyboard zaten
+        yazıldı. Sessiz geçip devam ediyoruz, ama can_undo false olur.
+      */
+      let planId = null;
+      try {
+        const { data: saved } = await supabase.from('scene_plans').insert({
+          episode_id: episodeId,
+          user_id: user.id,
+          scenes_before: scenes.length,
+          scenes_after: nextScenes.length,
+          total_duration: plan.current.total,
+          avg_duration: after.current.avgDur,
+          types: plan.types,
+          splits: plan.splits,
+          merges: plan.merges,
+          transitions: plan.transitions,
+          snapshot: scenes,
+          mode: ['beginner', 'advanced', 'professional'].includes(body.mode)
+            ? body.mode : 'advanced',
+          source: plan.source || 'rules',
+          ai_note: String(body.aiNote || '').slice(0, 1000),
+          applied: true
+        }).select('id, version').single();
+        planId = saved?.id || null;
+      } catch { /* geçmiş ikincil */ }
+
       return NextResponse.json({
         ok: true,
         scenes: nextScenes.length,
         before: plan.current.scenes,
         needsVoiceWork: nextScenes.some(s => s._needsVoiceSlice || s._needsVoiceRerecord),
         plan: after,
+        planId,
         /*
           Yeni sahneleri de döndür.
 
@@ -261,6 +295,68 @@ export async function POST(req) {
           aynı veriye bakar ve yarış ortadan kalkar.
         */
         nextScenes
+      });
+    }
+
+    /* ---------- GEÇMİŞ (ücretsiz) ----------
+       Hafif liste: plan JSON'ları ve snapshot çekilmez, özet döner.
+       Görünüm (scene_plan_history) yoksa tabloya düşer. */
+    if (action === 'history') {
+      const { data, error } = await supabase
+        .from('scene_plans')
+        .select('id, version, scenes_before, scenes_after, total_duration, avg_duration, mode, source, created_at, snapshot')
+        .eq('episode_id', episodeId)
+        .order('version', { ascending: false })
+        .limit(30);
+      if (error) throw new Error(error.message);
+      // snapshot'ı istemciye YOLLAMA — sadece geri alınabilir mi bilgisini ver
+      const rows = (data || []).map(({ snapshot, ...rest }) => ({
+        ...rest, canUndo: Array.isArray(snapshot) && snapshot.length > 0
+      }));
+      return NextResponse.json({ history: rows });
+    }
+
+    /* ---------- GERİ AL (ücretsiz) ----------
+       Kayıttaki anlık görüntüyü storyboard'a geri yazar.
+
+       Geri alma kaydı 'applied=false' yapılır: aynı kayıt iki kez geri
+       alınamaz. Kullanıcı arka arkaya basıp beklenmedik hale düşmesin. */
+    if (action === 'undo') {
+      const planId = String(body.planId || '');
+      if (!planId) {
+        return NextResponse.json({ error: 'planId gerekli.' }, { status: 400 });
+      }
+      const { data: rec, error: rErr } = await supabase
+        .from('scene_plans')
+        .select('id, snapshot, applied, scenes_before, user_id')
+        .eq('id', planId)
+        .single();
+      if (rErr || !rec) {
+        return NextResponse.json({ error: 'Plan kaydı bulunamadı.' }, { status: 404 });
+      }
+      if (rec.user_id !== user.id) {
+        return NextResponse.json({ error: 'Bu kayıt sana ait değil.' }, { status: 403 });
+      }
+      if (!Array.isArray(rec.snapshot) || !rec.snapshot.length) {
+        return NextResponse.json({ error: 'Bu kayıt geri alınamaz.' }, { status: 400 });
+      }
+      if (!rec.applied) {
+        return NextResponse.json({ error: 'Bu plan zaten geri alındı.' }, { status: 400 });
+      }
+
+      const restoredSb = { ...sb, scenes: rec.snapshot };
+      const { error: upErr } = await supabase
+        .from('episodes').update({ storyboard: restoredSb }).eq('id', episodeId);
+      if (upErr) throw new Error('Geri alınamadı: ' + upErr.message);
+
+      await supabase.from('scene_plans')
+        .update({ applied: false }).eq('id', planId);
+
+      return NextResponse.json({
+        ok: true,
+        scenes: rec.snapshot.length,
+        nextScenes: rec.snapshot,      // istemci durumunu eşitlesin (yarış önlemi)
+        plan: planStoryboard(restoredSb)
       });
     }
 
