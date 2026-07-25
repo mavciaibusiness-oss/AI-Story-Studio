@@ -250,7 +250,17 @@ export async function POST(req) {
         scenes: nextScenes.length,
         before: plan.current.scenes,
         needsVoiceWork: nextScenes.some(s => s._needsVoiceSlice || s._needsVoiceRerecord),
-        plan: after
+        plan: after,
+        /*
+          Yeni sahneleri de döndür.
+
+          NEDEN ZORUNLU: istemcide 800 ms'lik otomatik kayıt döngüsü var
+          (lib/store.jsx). Sunucu storyboard'u yazdıktan sonra istemci
+          kendi ESKİ halini kaydederse değişiklik kaybolur — sessiz veri
+          kaybı. İstemci bu diziyi alıp durumunu güncelleyince iki taraf
+          aynı veriye bakar ve yarış ortadan kalkar.
+        */
+        nextScenes
       });
     }
 

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useStudio, callAI, parseJSONLoose } from '@/lib/store';
 import EpisodeBar from '@/lib/EpisodeBar';
 import VideoHealthPanel from '@/lib/VideoHealthPanel';
+import ScenePlanPanel from '@/lib/ScenePlanPanel';
 import { emptyScene, renumber, PROMPT_KEYS } from '@/lib/storyboard';
 import { useT } from '@/lib/i18n';
 import { triggerDownload, formatDur } from '@/lib/engine';
@@ -86,6 +87,15 @@ export default function StoryboardPage() {
 
       {/* Video Health özet + Timeline Preview — Sprint 4 / TASK-02 */}
       <VideoHealthPanel storyboard={sb} />
+
+      {/* Sahne planı — Sprint 4 / TASK-04.
+          Plan uygulanınca sunucu storyboard'u yazar; dönen sahneleri
+          buraya alıyoruz ki otomatik kayıt eski haliyle üzerine yazmasın. */}
+      <ScenePlanPanel
+        episodeId={episodeId}
+        storyboard={sb}
+        spendCredits={spendCredits}
+        onApplied={nextScenes => setStoryboard(prev => ({ ...prev, scenes: nextScenes }))} />
 
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 18 }}>
         <Link href="/studio/promptlar" className="btn btn-mini">{t('sb.genPrompts')}</Link>
