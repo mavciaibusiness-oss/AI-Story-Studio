@@ -151,14 +151,43 @@ export async function POST(req) {
         timeline: report.timeline,
         stats: report.stats,
         summary: report.summary,
-        source: report.source
+        source: report.source,
+        /* TASK-05 katmanları. Migration v8 çalışmamışsa bu kolonlar
+           yok demektir — insert hata verir ve rapor kaydedilemez.
+           Aşağıda yakalanıp v8 öncesi şemayla tekrar deneniyor. */
+        emotion_curve: report.emotionCurve || [],
+        narrative: report.narrative || {},
+        coverage: report.coverage || {},
+        genre: report.genre || {},
+        retention: report.retention || {}
       };
-      const { data: saved, error: sErr } = await supabase
-        .from('video_health_reports')
-        .insert(row)
-        .select('id, version, created_at')
-        .single();
-      if (sErr) throw new Error('Rapor kaydedilemedi: ' + sErr.message);
+      let saved = null;
+      {
+        const { data, error: sErr } = await supabase
+          .from('video_health_reports')
+          .insert(row)
+          .select('id, version, created_at')
+          .single();
+
+        if (sErr) {
+          /* Migration v8 çalıştırılmamış olabilir: yeni kolonlar yok.
+             Analizi çöpe atmak yerine eski şemayla kaydediyoruz —
+             kullanıcı raporu yine görür, yalnızca yeni katmanlar
+             geçmişe yazılmaz. */
+          const {
+            emotion_curve, narrative, coverage, genre, retention, ...legacy
+          } = row;
+          const { data: d2, error: e2 } = await supabase
+            .from('video_health_reports')
+            .insert(legacy)
+            .select('id, version, created_at')
+            .single();
+          if (e2) throw new Error('Rapor kaydedilemedi: ' + e2.message);
+          saved = d2;
+        } else {
+          saved = data;
+        }
+      }
 
       return NextResponse.json({
         report: { ...report, id: saved.id, version: saved.version, created_at: saved.created_at },
@@ -240,7 +269,35 @@ export async function POST(req) {
         await supabase.from('profiles').update({ credits: creditsLeft }).eq('id', user.id);
       }
 
+      /* Yeniden yazımı geçmişe yaz — GERİ ALMA anlık görüntüsüyle.
+         applied=false: kullanıcı henüz onaylamadı. Kayıt hatası
+         öneriyi geçersiz kılmaz (migration v8 gerekiyor). */
+      let rewriteId = null;
+      try {
+        const { data: rec } = await supabase.from('story_rewrites').insert({
+          episode_id: episodeId,
+          user_id: user.id,
+          score_before: before.overall,
+          score_after: after.overall,
+          scenes_touched: result.scenes.length,
+          targets: result.targets,
+          scenes_before: result.scenes.map(r => ({
+            scene: r.scene,
+            paragraph: scenes[r.scene - 1]?.paragraph || '',
+            voiceText: scenes[r.scene - 1]?.voiceText || ''
+          })),
+          scenes_after: result.scenes,
+          rejected: result.rejected || [],
+          change_note: result.changeNote || '',
+          genre_family: before.genre?.family || null,
+          model: result.model,
+          applied: false
+        }).select('id').single();
+        rewriteId = rec?.id || null;
+      } catch { /* geçmiş ikincil */ }
+
       return NextResponse.json({
+        rewriteId,
         before: { overall: before.overall, stars: before.stars, scores: before.scores },
         after:  { overall: after.overall,  stars: after.stars,  scores: after.scores },
         scenes: result.scenes,
@@ -304,6 +361,17 @@ export async function POST(req) {
       const { error: upErr } = await supabase
         .from('episodes').update({ storyboard: nextSb }).eq('id', episodeId);
       if (upErr) throw new Error('Kaydedilemedi: ' + upErr.message);
+
+      /* Geçmiş kaydını uygulandı işaretle. Başarısız olursa sessiz geç:
+         metin zaten yazıldı, kullanıcıyı ikincil hatayla meşgul etme. */
+      if (body.rewriteId) {
+        try {
+          await supabase.from('story_rewrites')
+            .update({ applied: true })
+            .eq('id', String(body.rewriteId))
+            .eq('user_id', user.id);
+        } catch { /* ikincil */ }
+      }
 
       return NextResponse.json({
         ok: true,

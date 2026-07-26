@@ -997,3 +997,100 @@ button { font-family: var(--body); }
   .sp-piece { grid-template-columns: 1fr; gap: 2px; }
   .sp-item-dur { margin-left: 0; width: 100%; }
 }
+
+
+/* ============================================================
+   STORY HEALTH ARAYÜZÜ (Sprint 4 / TASK-05)
+   Anlatı yayı, duygu eğrisi, izlenme tahmini, yeniden yazım.
+   Mevcut vh-* dilini kullanır; yeni surface yaratmaz.
+   ============================================================ */
+
+.vh-coverage { font-size: 13.5px; color: var(--lamp); line-height: 1.55; margin: 6px 0 0; }
+
+/* --- Anlatı evre şeridi --- */
+.sh-arc { padding: 16px 18px; margin-bottom: 18px; }
+.sh-phases { display: flex; gap: 3px; }
+.sh-phase { flex: 1; min-width: 0; border-radius: 6px; padding: 8px 4px;
+  text-align: center; background: var(--panel-2); border: 1px solid var(--line);
+  overflow: hidden; }
+.sh-phase-n { display: block; font-family: var(--display); font-size: 11px;
+  font-weight: 700; color: var(--muted); }
+.sh-phase-label { display: block; font-size: 9.5px; letter-spacing: .4px;
+  color: var(--dim); margin-top: 2px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; }
+.sh-phase-hook       { border-color: rgba(255,180,84,.35); }
+.sh-phase-setup      { border-color: rgba(244,241,234,.12); }
+.sh-phase-rising     { border-color: rgba(255,180,84,.2); }
+.sh-phase-conflict   { border-color: rgba(255,160,74,.4); background: rgba(255,160,74,.07); }
+.sh-phase-climax     { border-color: var(--err); background: rgba(239,139,139,.1); }
+.sh-phase-resolution { border-color: rgba(127,209,143,.4); background: rgba(127,209,143,.07); }
+.sh-phase-peak .sh-phase-n { color: var(--err); }
+.sh-phase-peak::after { content: '▲'; display: block; font-size: 8px;
+  color: var(--err); margin-top: 1px; }
+
+/* --- Duygu eğrisi --- */
+.sh-curve-svg { width: 100%; height: 64px; display: block; overflow: visible; }
+.sh-curve-mid  { stroke: rgba(244,241,234,.14); stroke-width: .4; }
+.sh-curve-area { fill: rgba(255,180,84,.10); stroke: none; }
+.sh-curve-line { fill: none; stroke: var(--lamp); stroke-width: 1.1;
+  stroke-linejoin: round; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.sh-curve-dot  { fill: var(--lamp); }
+.sh-curve-dot.down { fill: var(--err); }
+.sh-curve-axis { display: flex; justify-content: space-between;
+  font-size: 10.5px; color: var(--dim); margin-top: 2px; }
+
+/* --- İzlenme tahmini --- */
+.sh-ret { padding: 16px 18px; margin-bottom: 18px; }
+.sh-ret-disclaimer { margin: 0 0 12px; }
+.sh-ret-buckets { display: flex; flex-direction: column; gap: 7px; }
+.sh-ret-bucket { display: grid; grid-template-columns: 92px minmax(0,1fr) 48px;
+  gap: 10px; align-items: center; }
+.sh-ret-range { font-size: 11.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.sh-ret-bar { height: 8px; border-radius: 4px; background: rgba(244,241,234,.07);
+  overflow: hidden; }
+.sh-ret-bar > i { display: block; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp));
+  transition: width .4s ease; }
+.sh-ret-pct { font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: var(--cream); text-align: right; font-variant-numeric: tabular-nums; }
+
+.sh-drops { display: flex; flex-direction: column; gap: 5px; }
+.sh-drop { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  padding: 6px 10px; border-radius: 7px; background: var(--panel-2);
+  border-left: 2px solid var(--line); font-size: 12.5px; }
+.sh-drop-warn { border-left-color: var(--lamp); }
+.sh-drop-tip  { border-left-color: var(--muted); }
+.sh-drop-scene { font-family: var(--display); font-weight: 700; color: var(--cream); }
+.sh-drop-dur { color: var(--muted); font-variant-numeric: tabular-nums; }
+.sh-drop-why { color: var(--text-2); }
+
+/* --- Hikâye yeniden yazımı --- */
+.sh-rewrite { padding: 16px 18px; margin-bottom: 18px; }
+.sh-rw-head { display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap; margin-bottom: 10px; }
+.sh-rw-side { text-align: center; }
+.sh-rw-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.sh-rw-score { font-family: var(--display); font-size: 26px; font-weight: 800;
+  letter-spacing: -1px; color: var(--muted); line-height: 1.1;
+  font-variant-numeric: tabular-nums; }
+.sh-rw-after .sh-rw-score { color: var(--ok); }
+.sh-rw-arrow { font-size: 20px; color: var(--muted); }
+.sh-rw-delta { margin-left: auto; font-family: var(--display); font-size: 15px;
+  font-weight: 800; color: var(--ok); background: rgba(127,209,143,.12);
+  border-radius: 20px; padding: 4px 12px; }
+.sh-rw-note { font-size: 13.5px; color: var(--text-2); line-height: 1.55; margin: 0 0 10px; }
+.sh-rw-scenes { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+.sh-rw-scene { padding: 10px 12px; border-radius: 8px; background: var(--ink-2);
+  border: 1px solid var(--line); }
+.sh-rw-scene-no { font-family: var(--display); font-size: 11px; font-weight: 700;
+  letter-spacing: .8px; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.sh-rw-scene-text { font-size: 13.5px; color: var(--text-2); line-height: 1.6; }
+.sh-rw-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 12px; }
+
+@media (max-width: 620px) {
+  .sh-phase-label { display: none; }
+  .sh-ret-bucket { grid-template-columns: 76px minmax(0,1fr) 42px; gap: 7px; }
+  .sh-rw-delta { margin-left: 0; }
+}
