@@ -1094,3 +1094,105 @@ button { font-family: var(--body); }
   .sh-ret-bucket { grid-template-columns: 76px minmax(0,1fr) 42px; gap: 7px; }
   .sh-rw-delta { margin-left: 0; }
 }
+
+
+/* ============================================================
+   AI DIRECTOR (Sprint 4 / TASK-06)
+   Öneri listesi, zaman ekseni, güven göstergesi.
+   Mevcut card/chip dilini kullanır.
+   ============================================================ */
+
+.dr-start { padding: 20px 22px; text-align: center; }
+.dr-start .hint { margin-bottom: 14px; }
+
+/* --- Özet --- */
+.dr-summary { padding: 18px 20px; margin-bottom: 18px; }
+.dr-sum-scores { display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap; margin-bottom: 8px; }
+.dr-sum-side { text-align: center; }
+.dr-sum-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.dr-sum-score { font-family: var(--display); font-size: 30px; font-weight: 800;
+  letter-spacing: -1.2px; color: var(--muted); line-height: 1.05;
+  font-variant-numeric: tabular-nums; }
+.dr-sum-after .dr-sum-score { color: var(--ok); }
+.dr-sum-arrow { font-size: 20px; color: var(--muted); }
+.dr-sum-delta { margin-left: auto; font-family: var(--display); font-size: 15px;
+  font-weight: 800; color: var(--ok); background: rgba(127,209,143,.12);
+  border-radius: 20px; padding: 4px 12px; }
+.dr-sum-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px;
+  font-size: 12.5px; color: var(--muted); }
+
+.dr-note { font-size: 13.5px; color: var(--ok); line-height: 1.55;
+  padding: 9px 12px; background: rgba(127,209,143,.07);
+  border: 1px solid rgba(127,209,143,.2); border-radius: 8px; margin: 0 0 12px; }
+
+.dr-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 12px; }
+.dr-actions { display: flex; gap: 9px; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* --- Öneri kartı --- */
+.dr-list { display: flex; flex-direction: column; gap: 12px; }
+.dr-rec { padding: 15px 18px; border-left: 3px solid var(--line); }
+.dr-kind-camera  { border-left-color: rgba(255,180,84,.55); }
+.dr-kind-motion  { border-left-color: rgba(127,209,143,.55); }
+.dr-kind-voice   { border-left-color: rgba(154,181,255,.55); }
+.dr-kind-visual  { border-left-color: rgba(255,160,74,.55); }
+.dr-kind-pacing  { border-left-color: rgba(244,241,234,.25); }
+.dr-kind-story   { border-left-color: rgba(239,139,139,.55); }
+.dr-kind-hook    { border-left-color: var(--lamp); }
+.dr-kind-ending  { border-left-color: rgba(255,180,84,.4); }
+
+.dr-rec-head { display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 6px; }
+.dr-rec-kind { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.1px; text-transform: uppercase; color: var(--muted);
+  background: var(--panel-2); border-radius: 4px; padding: 2px 7px; }
+.dr-rec-scene, .dr-rec-at { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+
+.dr-rec-title { font-family: var(--display); font-size: 16px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.3px; margin-bottom: 4px; }
+.dr-rec-reason { font-size: 14px; color: var(--text-2); line-height: 1.55; margin: 0 0 8px; }
+.dr-rec-impact { font-size: 12.5px; color: var(--ok); font-weight: 600; margin-bottom: 8px; }
+.dr-rec-actions { display: flex; gap: 8px; align-items: center;
+  flex-wrap: wrap; margin-top: 10px; }
+
+/* Elle yapılacak rozeti — "Uygula" düğmesinin yerine */
+.dr-manual { font-size: 11.5px; color: var(--muted); letter-spacing: .3px;
+  background: var(--panel-2); border: 1px dashed var(--line);
+  border-radius: 6px; padding: 5px 10px; }
+
+/* --- Güven --- */
+.dr-conf { display: inline-flex; align-items: center; gap: 6px; margin-left: auto; }
+.dr-conf-stars { font-size: 10px; letter-spacing: .5px; color: var(--line); }
+.dr-conf-stars .on { color: var(--lamp); }
+.dr-conf-band { font-size: 11px; color: var(--muted); }
+.dr-conf-high .dr-conf-band { color: var(--ok); }
+.dr-conf-weak .dr-conf-band { color: var(--dim); }
+
+/* --- AI açıklaması --- */
+.dr-explain { padding: 11px 13px; background: rgba(255,180,84,.05);
+  border: 1px solid rgba(255,180,84,.16); border-radius: 8px; margin: 8px 0; }
+.dr-explain p { font-size: 13.5px; color: var(--text-2); line-height: 1.6; margin: 0; }
+
+/* --- Zaman ekseni --- */
+.dr-timeline { display: flex; flex-direction: column; gap: 10px; }
+.dr-tl-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 12px;
+  padding: 12px 14px; border: 1px solid var(--line); border-left-width: 3px;
+  border-radius: 10px; background: var(--panel); }
+.dr-tl-time { font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: var(--lamp); font-variant-numeric: tabular-nums; padding-top: 2px; }
+.dr-tl-head { display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 4px; }
+.dr-tl-title { font-family: var(--display); font-size: 14.5px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.2px; margin-bottom: 3px; }
+.dr-tl-reason { font-size: 13px; color: var(--text-2); line-height: 1.5; margin: 0; }
+.dr-tl-explain { font-size: 12.5px; color: var(--lamp-soft); line-height: 1.5;
+  margin: 6px 0 0; }
+
+@media (max-width: 620px) {
+  .dr-tl-row { grid-template-columns: 1fr; gap: 4px; }
+  .dr-conf { margin-left: 0; width: 100%; }
+  .dr-sum-delta { margin-left: 0; }
+}
