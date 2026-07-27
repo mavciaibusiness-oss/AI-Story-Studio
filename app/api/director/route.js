@@ -51,6 +51,106 @@ async function loadEpisode(supabase, episodeId, userId) {
   return { ep };
 }
 
+/*
+  KALICI YOKSAYMALARI ELE.
+
+  Kullanıcı bir öneriyi reddettiyse her açılışta tekrar görmemeli.
+  Öneri id'leri kural motoru tarafından deterministik üretiliyor
+  ('camera-closeup:3'), yani aynı sorun aynı sahnede aynı id'yi alır —
+  bu yüzden kalıcı yoksayma çalışıyor.
+
+  MIGRATION YOKSA SESSİZ GEÇ: tablo bulunamazsa liste olduğu gibi
+  döner. Yoksayma çalışmaz ama Director çalışmaya devam eder.
+  Analizi tabloya bağlı kılmak yanlış olurdu.
+*/
+async function filterIgnored(supabase, episodeId, director) {
+  try {
+    const { data, error } = await supabase
+      .from('director_actions')
+      .select('rec_id')
+      .eq('episode_id', episodeId)
+      .eq('status', 'ignored');
+    if (error) throw new Error(error.message);
+
+    const ignoredIds = (data || []).map(r => r.rec_id);
+    if (!ignoredIds.length) return { ignoredIds: [], filtered: director };
+
+    const set = new Set(ignoredIds);
+    const recs = (director.recommendations || []).filter(r => !set.has(r.id));
+    return {
+      ignoredIds,
+      filtered: { ...director, recommendations: recs }
+    };
+  } catch {
+    /* Tablo yok ya da erişilemedi — Director yine çalışsın */
+    return { ignoredIds: [], filtered: director };
+  }
+}
+
+/*
+  ÖNERİ EYLEMİNİ KAYDET.
+
+  Aynı bölüm + aynı öneri için TEK satır (benzersiz indeks). Kullanıcı
+  yoksayıp sonra uygularsa satır güncellenir — yoksa "hem yoksayılmış
+  hem uygulanmış" gibi tutarsız bir durum oluşur.
+
+  Dönüş: başarılıysa true. Yoksayma için bu önemli — kaydedilemezse
+  kullanıcıya söylemeliyiz, yoksa yoksaydığını sanıp sayfayı
+  yenileyince geri gelmesine şaşırır.
+*/
+async function recordAction(supabase, episodeId, userId, rec, status, snapshotScenes) {
+  try {
+    const row = {
+      episode_id: episodeId,
+      user_id: userId,
+      rec_id: rec.id,
+      rec_action: rec.action || null,
+      rec_kind: rec.kind || null,
+      rec_scene: Number.isInteger(rec.scene) ? rec.scene : null,
+      rec_title: String(rec.title || '').slice(0, 500),
+      confidence: rec.confidence ?? null,
+      status,
+      snapshot: status === 'applied' && Array.isArray(snapshotScenes)
+        ? snapshotScenes : null
+    };
+    const { error } = await supabase
+      .from('director_actions')
+      .upsert(row, { onConflict: 'episode_id,rec_id' });
+    return !error;
+  } catch {
+    return false;
+  }
+}
+
+/*
+  KARAR TURUNU GEÇMİŞE YAZ.
+
+  Kayıt hatası karar listesini geçersiz kılmaz — analiz zaten üretildi,
+  kullanıcı görebilmeli. Migration v9 çalıştırılmamışsa null döner.
+*/
+async function saveReport(supabase, episodeId, userId, director) {
+  try {
+    const { data, error } = await supabase.from('director_reports').insert({
+      episode_id: episodeId,
+      user_id: userId,
+      score_current: director.projected?.current ?? 0,
+      score_expected: director.projected?.expected ?? 0,
+      rec_count: director.summary?.total ?? 0,
+      auto_count: director.summary?.auto ?? 0,
+      avg_confidence: director.summary?.avgConfidence ?? 0,
+      data_quality: director.dataQuality || 'estimated',
+      recommendations: director.recommendations || [],
+      summary: director.summary || {},
+      engines: director.engines || {},
+      projected: director.projected || {},
+      source: director.source || 'rules'
+    }).select('id').single();
+    return error ? null : (data?.id || null);
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req) {
   try {
     const supabase = getSupabaseServer();
@@ -81,7 +181,19 @@ export async function POST(req) {
 
     /* ---------- KARAR LİSTESİ (ücretsiz) ---------- */
     if (action === 'direct') {
-      return NextResponse.json({ director: directProject(sb) });
+      const director = directProject(sb);
+      /* Kalıcı yoksaymalar listeden elenir. Kullanıcı bir öneriyi
+         reddettiyse her açılışta tekrar görmemeli. */
+      const { ignoredIds, filtered } = await filterIgnored(supabase, episodeId, director);
+
+      /* Karar turunu geçmişe yaz — kayıt hatası listeyi geçersiz
+         kılmaz (migration v9 gerekiyor). */
+      let reportId = null;
+      if (body.save !== false) {
+        reportId = await saveReport(supabase, episodeId, user.id, filtered);
+      }
+
+      return NextResponse.json({ director: filtered, ignoredIds, reportId });
     }
 
     /* ---------- AÇIKLAMA (kredili) ---------- */
@@ -189,13 +301,19 @@ export async function POST(req) {
         .from('episodes').update({ storyboard: nextSb }).eq('id', episodeId);
       if (upErr) throw new Error('Kaydedilemedi: ' + upErr.message);
 
+      /* Geçmişe yaz — geri alma anlık görüntüsüyle. */
+      await recordAction(supabase, episodeId, user.id, rec, 'applied', scenes);
+
+      const after = directProject(nextSb);
+      const { filtered } = await filterIgnored(supabase, episodeId, after);
+
       return NextResponse.json({
         ok: true,
         applied: [rec.id],
         /* İstemci durumunu eşitlesin — otomatik kayıt eski haliyle
            üzerine yazmasın (TASK-04'te düzelttiğim yarış durumu). */
         nextScenes,
-        director: directProject(nextSb)
+        director: filtered
       });
     }
 
@@ -222,6 +340,8 @@ export async function POST(req) {
         const next = applyRecommendation(currentSb, rec);
         if (!next) { skipped.push({ id, reason: 'no-change' }); continue; }
 
+        /* Snapshot uygulama ÖNCESİ durumu taşımalı */
+        await recordAction(supabase, episodeId, user.id, rec, 'applied', currentSb.scenes);
         currentSb = { ...currentSb, scenes: next };
         applied.push(id);
       }
@@ -237,12 +357,129 @@ export async function POST(req) {
         .from('episodes').update({ storyboard: currentSb }).eq('id', episodeId);
       if (upErr) throw new Error('Kaydedilemedi: ' + upErr.message);
 
+      const afterMany = directProject(currentSb);
+      const { filtered: filteredMany } = await filterIgnored(supabase, episodeId, afterMany);
+
       return NextResponse.json({
         ok: true,
         applied,
         skipped,
         nextScenes: currentSb.scenes,
-        director: directProject(currentSb)
+        director: filteredMany
+      });
+    }
+
+    /* ---------- KALICI YOKSAY (ücretsiz) ----------
+       { action: 'ignore', episodeId, id }
+       Öneri bir daha gösterilmez. Kullanıcı fikrini değiştirirse
+       'unignore' ile geri alır. */
+    if (action === 'ignore') {
+      const id = String(body.id || '');
+      if (!id) return NextResponse.json({ error: 'id gerekli.' }, { status: 400 });
+
+      const director = directProject(sb);
+      const rec = director.recommendations.find(r => r.id === id);
+      if (!rec) {
+        return NextResponse.json({ error: 'Öneri bulunamadı.' }, { status: 404 });
+      }
+
+      const ok = await recordAction(supabase, episodeId, user.id, rec, 'ignored', null);
+      if (!ok) {
+        return NextResponse.json({
+          error: 'Yoksayma kaydedilemedi. Migration v9 çalıştırıldı mı?'
+        }, { status: 500 });
+      }
+
+      const { ignoredIds, filtered } = await filterIgnored(supabase, episodeId, director);
+      return NextResponse.json({ ok: true, ignoredIds, director: filtered });
+    }
+
+    /* ---------- YOKSAYMAYI GERİ AL (ücretsiz) ---------- */
+    if (action === 'unignore') {
+      const ids = Array.isArray(body.ids) ? body.ids.map(String)
+        : body.id ? [String(body.id)] : [];
+      if (!ids.length) {
+        return NextResponse.json({ error: 'id ya da ids gerekli.' }, { status: 400 });
+      }
+      const { error } = await supabase.from('director_actions')
+        .delete().eq('episode_id', episodeId).eq('user_id', user.id)
+        .eq('status', 'ignored').in('rec_id', ids);
+      if (error) throw new Error(error.message);
+
+      const director = directProject(sb);
+      const { ignoredIds, filtered } = await filterIgnored(supabase, episodeId, director);
+      return NextResponse.json({ ok: true, ignoredIds, director: filtered });
+    }
+
+    /* ---------- GEÇMİŞ (ücretsiz) ----------
+       Uygulanmış öneriler ve karar turları. */
+    if (action === 'history') {
+      const [actionsRes, reportsRes] = await Promise.all([
+        supabase.from('director_actions')
+          .select('id, rec_id, rec_action, rec_kind, rec_scene, rec_title, confidence, status, snapshot, created_at')
+          .eq('episode_id', episodeId)
+          .order('created_at', { ascending: false })
+          .limit(50),
+        supabase.from('director_reports')
+          .select('id, version, score_current, score_expected, rec_count, auto_count, avg_confidence, data_quality, created_at')
+          .eq('episode_id', episodeId)
+          .order('version', { ascending: false })
+          .limit(20)
+      ]);
+
+      /* snapshot İSTEMCİYE GİTMEZ — tüm sahne metinlerini taşıyor,
+         listede gereksiz. Yalnızca geri alınabilir mi bilgisi. */
+      const actions = (actionsRes.data || []).map(({ snapshot, ...rest }) => ({
+        ...rest, canUndo: Array.isArray(snapshot) && snapshot.length > 0
+      }));
+
+      return NextResponse.json({
+        actions,
+        reports: reportsRes.data || []
+      });
+    }
+
+    /* ---------- UYGULAMAYI GERİ AL (ücretsiz) ---------- */
+    if (action === 'undo') {
+      const actionId = String(body.actionId || '');
+      if (!actionId) {
+        return NextResponse.json({ error: 'actionId gerekli.' }, { status: 400 });
+      }
+
+      const { data: rec, error: rErr } = await supabase
+        .from('director_actions')
+        .select('id, snapshot, status, user_id, rec_title')
+        .eq('id', actionId).single();
+      if (rErr || !rec) {
+        return NextResponse.json({ error: 'Kayıt bulunamadı.' }, { status: 404 });
+      }
+      if (rec.user_id !== user.id) {
+        return NextResponse.json({ error: 'Bu kayıt sana ait değil.' }, { status: 403 });
+      }
+      if (rec.status !== 'applied') {
+        return NextResponse.json({ error: 'Bu kayıt uygulanmış değil.' }, { status: 400 });
+      }
+      if (!Array.isArray(rec.snapshot) || !rec.snapshot.length) {
+        return NextResponse.json({ error: 'Bu kayıt geri alınamaz.' }, { status: 400 });
+      }
+
+      const restoredSb = { ...sb, scenes: rec.snapshot };
+      const { error: upErr } = await supabase
+        .from('episodes').update({ storyboard: restoredSb }).eq('id', episodeId);
+      if (upErr) throw new Error('Geri alınamadı: ' + upErr.message);
+
+      /* Kaydı sil: öneri tekrar listede görünsün. Silmek yerine
+         durumu değiştirseydik "yoksayılmış" gibi davranırdı. */
+      await supabase.from('director_actions').delete().eq('id', actionId);
+
+      const director = directProject(restoredSb);
+      const { filtered } = await filterIgnored(supabase, episodeId, director);
+
+      return NextResponse.json({
+        ok: true,
+        scenes: rec.snapshot.length,
+        nextScenes: rec.snapshot,
+        director: filtered
       });
     }
 

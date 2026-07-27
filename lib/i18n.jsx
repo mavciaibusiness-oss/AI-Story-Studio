@@ -109,6 +109,13 @@ const DICT = {
     // --- AI Director (Sprint 4 / TASK-06) ---
     'nav.director': 'Director',
     'dr.title': 'AI Director',
+    'dr.ignoredPersisted': '{n} suggestions permanently ignored. They will not be shown again.',
+    'dr.history': 'Applied decisions',
+    'dr.status.applied': 'applied', 'dr.status.ignored': 'ignored',
+    'dr.undo': 'Undo',
+    'dr.undone': 'The change was undone.',
+    'dr.noUndo': 'cannot undo',
+
     'dr.sub': 'Reads five analysis engines and proposes production decisions. You decide.',
     'dr.noEpisode': 'Open a video first.',
     'dr.noScenes': 'No scenes to direct. Split the script into scenes first.',
@@ -262,6 +269,13 @@ const DICT = {
     // --- AI Director (Sprint 4 / TASK-06) ---
     'nav.director': 'Yönetmen',
     'dr.title': 'AI Yönetmen',
+    'dr.ignoredPersisted': '{n} öneri kalıcı olarak yoksayıldı. Bir daha gösterilmez.',
+    'dr.history': 'Uygulanan kararlar',
+    'dr.status.applied': 'uygulandı', 'dr.status.ignored': 'yoksayıldı',
+    'dr.undo': 'Geri al',
+    'dr.undone': 'Uygulama geri alındı.',
+    'dr.noUndo': 'geri alınamaz',
+
     'dr.sub': 'Beş analiz motorunu okur, prodüksiyon kararı önerir. Son söz senin.',
     'dr.noEpisode': 'Önce bir video aç.',
     'dr.noScenes': 'Karar için sahne yok. Önce senaryoyu sahnelere böl.',
@@ -836,6 +850,13 @@ const DICT = {
     // --- AI Director (Sprint 4 / TASK-06) ---
     'nav.director': 'Director',
     'dr.title': 'AI Director',
+    'dr.ignoredPersisted': '{n} suggestions permanently ignored. They will not be shown again.',
+    'dr.history': 'Applied decisions',
+    'dr.status.applied': 'applied', 'dr.status.ignored': 'ignored',
+    'dr.undo': 'Undo',
+    'dr.undone': 'The change was undone.',
+    'dr.noUndo': 'cannot undo',
+
     'dr.sub': 'Reads five analysis engines and proposes production decisions. You decide.',
     'dr.noEpisode': 'Open a video first.',
     'dr.noScenes': 'No scenes to direct. Split the script into scenes first.',

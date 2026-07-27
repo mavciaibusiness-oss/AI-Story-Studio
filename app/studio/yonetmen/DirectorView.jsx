@@ -38,7 +38,9 @@ export default function DirectorView() {
   const [busy, setBusy] = useState(null);        // 'direct' | 'explain' | id
   const [err, setErr] = useState(null);
   const [warn, setWarn] = useState(null);
-  const [ignored, setIgnored] = useState([]);    // oturumluk
+  const [ignoredIds, setIgnoredIds] = useState([]);  // sunucuda kalıcı
+  const [history, setHistory] = useState(null);      // uygulanmış öneriler
+  const [showHistory, setShowHistory] = useState(false);
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState('list');      // 'list' | 'timeline'
 
@@ -58,12 +60,51 @@ export default function DirectorView() {
     finally { setBusy(null); }
   }
 
+  const loadHistory = useCallback(async () => {
+    const data = await call('history');
+    if (data) setHistory(data);
+  }, [episodeId]);
+
   const load = useCallback(async () => {
     const data = await call('direct');
-    if (data) { setDir(data.director); setWarn(null); }
-  }, [episodeId, locale]);
+    if (!data) return;
+    setDir(data.director);
+    setIgnoredIds(data.ignoredIds || []);
+    setWarn(null);
+    loadHistory();
+  }, [episodeId, locale, loadHistory]);
 
-  useEffect(() => { setDir(null); setIgnored([]); setErr(null); }, [episodeId]);
+  useEffect(() => {
+    setDir(null); setIgnoredIds([]); setHistory(null); setErr(null);
+  }, [episodeId]);
+
+  /* Yoksayma artık SUNUCUDA kalıcı. Kaydedilemezse kullanıcıya
+     söylüyoruz — yoksaydığını sanıp sayfayı yenileyince geri
+     gelmesine şaşırmasın. */
+  async function ignore(id) {
+    const data = await call('ignore', { id });
+    if (!data) return;
+    setDir(data.director);
+    setIgnoredIds(data.ignoredIds || []);
+  }
+
+  async function unignoreAll() {
+    const data = await call('unignore', { ids: ignoredIds });
+    if (!data) return;
+    setDir(data.director);
+    setIgnoredIds(data.ignoredIds || []);
+  }
+
+  async function undo(actionId) {
+    const data = await call('undo', { actionId });
+    if (!data) return;
+    if (Array.isArray(data.nextScenes)) {
+      setStoryboard(prev => ({ ...prev, scenes: data.nextScenes }));
+    }
+    setDir(data.director);
+    setWarn(t('dr.undone'));
+    loadHistory();
+  }
 
   async function explain(id) {
     const data = await call('explain', { ids: [id] });
@@ -82,6 +123,7 @@ export default function DirectorView() {
     }
     setDir(data.director);
     setWarn(t('dr.applied'));
+    loadHistory();
   }
 
   async function applyAll() {
@@ -94,6 +136,7 @@ export default function DirectorView() {
     }
     setDir(data.director);
     setWarn(t('dr.appliedMany', { n: data.applied.length, s: data.skipped?.length || 0 }));
+    loadHistory();
   }
 
   if (!episodeId) {
@@ -107,10 +150,9 @@ export default function DirectorView() {
     );
   }
 
+  /* Sunucu yoksayılanları zaten eledi; burada yalnızca tür filtresi. */
   const all = dir?.recommendations || [];
-  const visible = all
-    .filter(r => !ignored.includes(r.id))
-    .filter(r => filter === 'all' || r.kind === filter);
+  const visible = all.filter(r => filter === 'all' || r.kind === filter);
   const autoCount = visible.filter(r => r.auto).length;
 
   return (
@@ -142,7 +184,7 @@ export default function DirectorView() {
             <div className="chips">
               <button className={'chip' + (filter === 'all' ? ' on' : '')}
                 onClick={() => setFilter('all')}>
-                {t('dr.all')} ({all.filter(r => !ignored.includes(r.id)).length})
+                {t('dr.all')} ({all.length})
               </button>
               {KIND_KEYS.filter(k => (dir.summary.byKind[k] || 0) > 0).map(k => (
                 <button key={k} className={'chip' + (filter === k ? ' on' : '')}
@@ -169,9 +211,14 @@ export default function DirectorView() {
                 {t('dr.applyAll', { n: autoCount })}
               </button>
             )}
-            {ignored.length > 0 && (
-              <button className="btn btn-mini" onClick={() => setIgnored([])}>
-                {t('dr.restoreIgnored', { n: ignored.length })}
+            {ignoredIds.length > 0 && (
+              <button className="btn btn-mini" onClick={unignoreAll} disabled={!!busy}>
+                {t('dr.restoreIgnored', { n: ignoredIds.length })}
+              </button>
+            )}
+            {history?.actions?.length > 0 && (
+              <button className="btn btn-mini" onClick={() => setShowHistory(!showHistory)}>
+                {t('dr.history')} ({history.actions.length})
               </button>
             )}
           </div>
@@ -180,19 +227,45 @@ export default function DirectorView() {
             <p className="hint">{all.length === 0 ? t('dr.clean') : t('dr.allFiltered')}</p>
           ) : view === 'timeline' ? (
             <DirectorTimeline recs={visible} t={t} onExplain={explain}
-              onApply={apply} onIgnore={id => setIgnored(x => [...x, id])} busy={busy} />
+              onApply={apply} onIgnore={ignore} busy={busy} />
           ) : (
             <div className="dr-list">
               {visible.map(r => (
                 <RecCard key={r.id} r={r} t={t} busy={busy}
                   onExplain={() => explain(r.id)}
                   onApply={() => apply(r.id)}
-                  onIgnore={() => setIgnored(x => [...x, r.id])} />
+                  onIgnore={() => ignore(r.id)} />
               ))}
             </div>
           )}
 
-          {ignored.length > 0 && <p className="hint">{t('dr.ignoredNote')}</p>}
+          {ignoredIds.length > 0 && <p className="hint">{t('dr.ignoredPersisted', { n: ignoredIds.length })}</p>}
+
+          {/* Uygulanan öneriler — geri alınabilir */}
+          {showHistory && history?.actions?.length > 0 && (
+            <>
+              <h2 className="entry-label" style={{ marginTop: 20 }}>{t('dr.history')}</h2>
+              <div className="dr-hist">
+                {history.actions.map(a => (
+                  <div className="dr-hist-row" key={a.id}>
+                    <span className={'dr-hist-status dr-hist-' + a.status}>
+                      {t('dr.status.' + a.status)}
+                    </span>
+                    <span className="dr-hist-title">{a.rec_title}</span>
+                    <span className="dr-hist-date">
+                      {new Date(a.created_at).toLocaleDateString(locale === 'tr' ? 'tr-TR' : 'en-GB')}
+                    </span>
+                    {a.status === 'applied' && a.canUndo ? (
+                      <button className="btn btn-mini" disabled={!!busy}
+                        onClick={() => undo(a.id)}>{t('dr.undo')}</button>
+                    ) : a.status === 'applied' ? (
+                      <span className="hint">{t('dr.noUndo')}</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </>
       )}
     </>

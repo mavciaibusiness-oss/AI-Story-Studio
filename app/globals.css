@@ -1176,6 +1176,18 @@ button { font-family: var(--body); }
   border: 1px solid rgba(255,180,84,.16); border-radius: 8px; margin: 8px 0; }
 .dr-explain p { font-size: 13.5px; color: var(--text-2); line-height: 1.6; margin: 0; }
 
+/* --- Karar geçmişi --- */
+.dr-hist { display: flex; flex-direction: column; gap: 6px; }
+.dr-hist-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 8px 11px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--panel-2); font-size: 12.5px; }
+.dr-hist-status { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; padding: 2px 7px; border-radius: 4px; }
+.dr-hist-applied { color: var(--ok); background: rgba(127,209,143,.12); }
+.dr-hist-ignored { color: var(--muted); background: rgba(244,241,234,.06); }
+.dr-hist-title { color: var(--text-2); min-width: 0; flex: 1 1 200px; }
+.dr-hist-date { color: var(--dim); font-size: 11.5px; }
+
 /* --- Zaman ekseni --- */
 .dr-timeline { display: flex; flex-direction: column; gap: 10px; }
 .dr-tl-row { display: grid; grid-template-columns: 58px minmax(0, 1fr); gap: 12px;
