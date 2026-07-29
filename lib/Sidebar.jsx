@@ -29,6 +29,7 @@ const LINKS = [
   { sep: 'nav.intel' },
   { href: '/studio/saglik', key: 'nav.health', icon: '❤' },
   { href: '/studio/yonetmen', key: 'nav.director', icon: '⌾' },
+  { href: '/studio/yeniden', key: 'nav.rebuild', icon: '↻' },
   { sep: 'nav.account' },
   { href: '/studio/ayarlar', key: 'nav.settings', icon: '⚙' },
   /* Yalnızca admin görür — render sırasında rol kontrolüyle elenir.

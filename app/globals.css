@@ -1208,3 +1208,138 @@ button { font-family: var(--body); }
   .dr-conf { margin-left: 0; width: 100%; }
   .dr-sum-delta { margin-left: 0; }
 }
+
+
+/* ============================================================
+   VIDEO REBUILDER (Sprint 4 / TASK-07)
+   Yükleme, tarama ilerlemesi, sahne haritası, bulgular.
+   ============================================================ */
+
+/* --- Yükleme alanı --- */
+.rb-drop { padding: 44px 28px; text-align: center; border-style: dashed;
+  border-width: 2px; border-color: var(--line); transition: border-color .2s; }
+.rb-drop:hover { border-color: rgba(255,180,84,.35); }
+.rb-drop-icon { font-size: 34px; color: var(--muted); margin-bottom: 10px; }
+.rb-drop-title { font-family: var(--display); font-size: 19px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.4px; margin-bottom: 6px; }
+.rb-drop .hint { margin-bottom: 16px; }
+.rb-privacy { font-size: 12.5px; color: var(--ok); line-height: 1.55;
+  margin: 16px auto 0; max-width: 420px;
+  padding: 9px 13px; background: rgba(127,209,143,.07);
+  border: 1px solid rgba(127,209,143,.2); border-radius: 8px; }
+
+/* --- Dosya bilgisi + tarama --- */
+.rb-ready { padding: 18px 20px; margin-bottom: 18px; }
+.rb-file { margin-bottom: 10px; }
+.rb-file-name { display: block; font-family: var(--display); font-size: 16px;
+  font-weight: 700; color: var(--cream); letter-spacing: -.3px; }
+.rb-file-meta { font-size: 12.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.rb-actions { display: flex; gap: 9px; flex-wrap: wrap; align-items: center;
+  margin-top: 12px; }
+
+.rb-progress { height: 8px; border-radius: 4px; background: rgba(244,241,234,.07);
+  overflow: hidden; margin: 12px 0 6px; }
+.rb-progress > i { display: block; height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp));
+  transition: width .2s linear; }
+.rb-progress-label { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; margin-bottom: 10px; }
+
+.rb-note { font-size: 13.5px; color: var(--ok); line-height: 1.55;
+  padding: 9px 12px; background: rgba(127,209,143,.07);
+  border: 1px solid rgba(127,209,143,.2); border-radius: 8px; margin: 0 0 12px; }
+
+/* --- Özet --- */
+.rb-summary { padding: 16px 18px; margin-bottom: 18px; }
+.rb-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+  gap: 12px; margin-bottom: 12px; }
+.rb-stat-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.1px; text-transform: uppercase; color: var(--muted); }
+.rb-stat-value { font-family: var(--display); font-size: 21px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.5px; font-variant-numeric: tabular-nums; }
+.rb-stat-warn .rb-stat-value { color: var(--lamp); }
+
+/* --- Senaryo kutusu --- */
+.rb-script { padding: 16px 18px; margin-bottom: 18px;
+  border-left: 3px solid var(--lamp); }
+.rb-script-on { border-left-color: var(--ok); }
+.rb-script-area { width: 100%; margin: 10px 0 0; font-family: inherit;
+  font-size: 13.5px; line-height: 1.6; resize: vertical; }
+.rb-ok { font-size: 12.5px; color: var(--ok); }
+
+.rb-locked { margin: 10px 0; padding: 11px 13px; border-radius: 8px;
+  background: rgba(255,180,84,.06); border: 1px solid rgba(255,180,84,.18); }
+.rb-locked-head { font-size: 12.5px; color: var(--lamp); margin-bottom: 7px; }
+.rb-locked-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.rb-locked-item { font-size: 11.5px; color: var(--text-2);
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 5px; padding: 3px 8px; }
+
+/* --- Puan bloğu --- */
+.rb-score { padding: 18px 20px; margin-bottom: 18px; }
+.rb-noscore-title { font-family: var(--display); font-size: 17px; font-weight: 700;
+  color: var(--lamp); letter-spacing: -.3px; margin-bottom: 6px; }
+.rb-sum-scores { display: flex; align-items: center; gap: 18px;
+  flex-wrap: wrap; margin-bottom: 10px; }
+.rb-sum-side { text-align: center; }
+.rb-sum-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+.rb-sum-score { font-family: var(--display); font-size: 30px; font-weight: 800;
+  letter-spacing: -1.2px; color: var(--muted); line-height: 1.05;
+  font-variant-numeric: tabular-nums; }
+.rb-sum-after .rb-sum-score { color: var(--ok); }
+.rb-sum-arrow { font-size: 20px; color: var(--muted); }
+.rb-sum-delta { margin-left: auto; font-family: var(--display); font-size: 15px;
+  font-weight: 800; color: var(--ok); background: rgba(127,209,143,.12);
+  border-radius: 20px; padding: 4px 12px; }
+
+.rb-cats { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 8px; }
+.rb-cat { display: flex; align-items: baseline; gap: 6px;
+  padding: 5px 11px; border-radius: 7px; background: var(--panel-2);
+  border: 1px solid var(--line); }
+.rb-cat-name { font-size: 12px; color: var(--muted); }
+.rb-cat-score { font-family: var(--display); font-size: 14px; font-weight: 700;
+  color: var(--cream); font-variant-numeric: tabular-nums; }
+
+/* --- Sahne haritası --- */
+.rb-shots { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+.rb-shot { display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px;
+  padding: 11px 14px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); }
+.rb-shot-black { opacity: .6; }
+.rb-shot-n { font-family: var(--display); font-size: 15px; font-weight: 800;
+  color: var(--muted); text-align: center; padding-top: 2px;
+  font-variant-numeric: tabular-nums; }
+.rb-shot-head { display: flex; align-items: center; gap: 9px;
+  flex-wrap: wrap; margin-bottom: 5px; }
+.rb-shot-time { font-size: 12px; color: var(--lamp);
+  font-variant-numeric: tabular-nums; }
+.rb-shot-dur { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.rb-shot-fit { font-size: 11.5px; color: var(--dim); margin-left: auto;
+  font-variant-numeric: tabular-nums; }
+.rb-shot-text { font-size: 13px; color: var(--text-2); line-height: 1.55; margin: 0; }
+
+/* --- Bulgular --- */
+.rb-findings { display: flex; flex-direction: column; gap: 10px; }
+.rb-finding { padding: 14px 16px; border-left: 3px solid var(--line); }
+.rb-finding-head { display: flex; align-items: center; gap: 9px;
+  flex-wrap: wrap; margin-bottom: 5px; }
+.rb-finding-src { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.1px; text-transform: uppercase; color: var(--muted);
+  background: var(--panel-2); border-radius: 4px; padding: 2px 7px; }
+.rb-finding-scenes { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.rb-finding-title { font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.3px; margin-bottom: 4px; }
+.rb-finding-detail { font-size: 13.5px; color: var(--text-2);
+  line-height: 1.55; margin: 0 0 8px; }
+.rb-finding-rec { font-size: 13px; color: var(--lamp-soft); line-height: 1.5; }
+
+@media (max-width: 620px) {
+  .rb-shot { grid-template-columns: 1fr; gap: 4px; }
+  .rb-shot-fit { margin-left: 0; }
+  .rb-sum-delta { margin-left: 0; }
+  .rb-drop { padding: 32px 18px; }
+}
