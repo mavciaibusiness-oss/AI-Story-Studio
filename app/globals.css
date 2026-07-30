@@ -1343,3 +1343,161 @@ button { font-family: var(--body); }
   .rb-sum-delta { margin-left: 0; }
   .rb-drop { padding: 32px 18px; }
 }
+
+
+/* ============================================================
+   CREATOR OS (Sprint 5 / TASK-01)
+   Giriş ekranı, yol haritası kartı, görev listesi.
+   ============================================================ */
+
+/* --- Giriş --- */
+.cos-hero { max-width: 720px; margin: 0 auto 28px; text-align: center; padding-top: 8px; }
+.cos-greet { font-family: var(--display); font-size: 15px; color: var(--muted);
+  letter-spacing: .2px; margin-bottom: 6px; }
+.cos-question { font-family: var(--display); font-size: 34px; font-weight: 800;
+  color: var(--cream); letter-spacing: -1px; line-height: 1.15; margin: 0 0 22px; }
+
+.cos-input-wrap { position: relative; }
+.cos-input { width: 100%; font-family: inherit; font-size: 16px; line-height: 1.55;
+  padding: 15px 17px; resize: vertical; min-height: 76px; }
+.cos-start { width: 100%; margin-top: 12px; }
+
+.cos-preview { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  justify-content: center; margin-top: 10px; font-size: 13px; color: var(--muted); }
+.cos-preview b { color: var(--lamp); font-weight: 700; }
+.cos-preview-mods { color: var(--dim); font-size: 12px; }
+.cos-preview-amb { color: var(--lamp-soft); font-size: 12px; }
+
+.cos-examples { margin-top: 28px; }
+.cos-examples-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.cos-examples-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.cos-example { font-size: 13px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 20px; padding: 7px 15px;
+  cursor: pointer; transition: border-color .18s, color .18s; }
+.cos-example:hover { border-color: rgba(255,180,84,.4); color: var(--cream); }
+
+/* --- Yol haritası --- */
+.cos-wf { max-width: 780px; margin: 0 auto 24px; }
+.cos-wf-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+
+.cos-quote { font-family: var(--display); font-size: 19px; font-weight: 600;
+  color: var(--cream); line-height: 1.45; letter-spacing: -.3px;
+  border-left: 3px solid var(--lamp); padding: 2px 0 2px 16px; margin: 0 0 12px; }
+
+.cos-intent { display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 16px; }
+.cos-intent-label { font-family: var(--display); font-size: 13px; font-weight: 700;
+  color: var(--lamp); background: rgba(255,180,84,.1);
+  border-radius: 6px; padding: 4px 11px; }
+.cos-intent-conf { font-size: 12px; color: var(--dim); }
+
+/* Kararsızlık / seçenek */
+.cos-ambiguous { padding: 13px 15px; border-radius: 10px;
+  background: rgba(255,180,84,.06); border: 1px solid rgba(255,180,84,.2);
+  margin-bottom: 16px; }
+.cos-ambiguous-title { font-size: 13.5px; color: var(--lamp); margin-bottom: 9px; }
+.cos-ambiguous-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.cos-choice { font-size: 13px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 7px; padding: 6px 13px; cursor: pointer; }
+.cos-choice:hover { border-color: rgba(255,180,84,.4); color: var(--cream); }
+.cos-choice.on { border-color: var(--lamp); color: var(--lamp); }
+
+/* Akış henüz hazır değilse alternatif */
+.cos-unavailable { padding: 15px 17px; border-radius: 10px;
+  background: var(--panel-2); border: 1px solid var(--line);
+  border-left: 3px solid var(--lamp); margin-bottom: 16px; }
+.cos-unavailable-title { font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--lamp); margin-bottom: 5px; }
+.cos-unavailable-offer { font-size: 13.5px; color: var(--text-2);
+  line-height: 1.55; margin: 0 0 11px; }
+.cos-unavailable-tasks { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Sonraki adım — en belirgin öğe */
+.cos-next { padding: 17px 19px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,180,84,.09), rgba(255,180,84,.03));
+  border: 1px solid rgba(255,180,84,.28); margin-bottom: 16px; }
+.cos-next-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--lamp); margin-bottom: 7px; }
+.cos-next-body { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.cos-next-body > div { flex: 1 1 260px; min-width: 0; }
+.cos-next-title { font-family: var(--display); font-size: 19px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.4px; margin-bottom: 3px; }
+.cos-next-desc { font-size: 13.5px; color: var(--text-2); line-height: 1.5; margin: 0; }
+
+.cos-done { padding: 13px 16px; border-radius: 10px; font-size: 14px;
+  color: var(--ok); background: rgba(127,209,143,.08);
+  border: 1px solid rgba(127,209,143,.24); margin-bottom: 16px; }
+
+/* İlerleme */
+.cos-progress { margin-bottom: 16px; }
+.cos-progress-bar { height: 6px; border-radius: 3px;
+  background: rgba(244,241,234,.07); overflow: hidden; margin-bottom: 6px; }
+.cos-progress-bar > i { display: block; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp));
+  transition: width .3s ease; }
+.cos-progress-label { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+
+/* Görev listesi */
+.cos-tasks { display: flex; flex-direction: column; gap: 7px; }
+.cos-task { display: grid; grid-template-columns: 30px minmax(0,1fr) auto;
+  gap: 12px; align-items: center; padding: 11px 14px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  transition: border-color .18s, opacity .18s; }
+.cos-task-active { border-color: rgba(255,180,84,.45); }
+.cos-task-done { opacity: .62; }
+.cos-task-skipped { opacity: .45; }
+.cos-task-future { opacity: .5; border-style: dashed; }
+
+.cos-task-n { font-family: var(--display); font-size: 14px; font-weight: 800;
+  color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.cos-task-done .cos-task-n { color: var(--ok); }
+
+.cos-task-head { display: flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; margin-bottom: 2px; }
+.cos-task-label { font-family: var(--display); font-size: 14.5px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.2px; }
+.cos-task-done .cos-task-label { text-decoration: line-through; }
+.cos-task-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; margin: 0; }
+
+.cos-opt, .cos-soon { font-size: 9.5px; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; border-radius: 4px; padding: 2px 6px; }
+.cos-opt { color: var(--dim); background: rgba(244,241,234,.05); }
+.cos-soon { color: var(--lamp); background: rgba(255,180,84,.12); }
+
+.cos-task-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cos-task-remove { padding: 4px 9px !important; color: var(--muted); }
+
+.cos-wf-actions { display: flex; gap: 8px; margin-top: 12px; }
+.cos-add-list { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.cos-add-item { font-size: 12.5px; color: var(--text-2); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 7px; padding: 6px 12px;
+  cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+.cos-add-item:hover { border-color: rgba(255,180,84,.4); }
+.cos-add-future { opacity: .6; }
+
+/* Yarım kalanlar */
+.cos-resume { max-width: 780px; margin: 26px auto 0; }
+.cos-resume-list { display: flex; flex-direction: column; gap: 7px; }
+.cos-resume-item { display: grid; grid-template-columns: minmax(0,1fr) auto;
+  gap: 10px; align-items: center; padding: 11px 14px; text-align: left;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--panel);
+  cursor: pointer; position: relative; overflow: hidden; }
+.cos-resume-item:hover { border-color: rgba(255,180,84,.35); }
+.cos-resume-title { font-size: 13.5px; color: var(--cream);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cos-resume-meta { font-size: 12px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.cos-resume-bar { position: absolute; left: 0; bottom: 0; height: 2px;
+  width: 100%; background: transparent; grid-column: 1 / -1; }
+.cos-resume-bar > i { display: block; height: 100%; background: var(--lamp); }
+
+.cos-store-note { max-width: 780px; margin: 16px auto 0; }
+
+@media (max-width: 620px) {
+  .cos-question { font-size: 26px; }
+  .cos-task { grid-template-columns: 26px minmax(0,1fr); }
+  .cos-task-actions { grid-column: 1 / -1; }
+  .cos-next-body { flex-direction: column; align-items: stretch; }
+}

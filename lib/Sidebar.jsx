@@ -10,6 +10,7 @@ import LangSwitch from '@/lib/LangSwitch';
 /* Etiketler çeviri anahtarı olarak tutulur, render sırasında çözülür */
 const LINKS = [
   { sep: 'nav.project' },
+  { href: '/studio/creator', key: 'nav.creator', icon: '✦' },
   { href: '/studio', key: 'nav.overview', icon: '◆' },
   { href: '/studio/projeler', key: 'nav.projects', icon: '▤' },
   { sep: 'nav.production' },
