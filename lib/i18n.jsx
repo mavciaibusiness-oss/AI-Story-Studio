@@ -106,6 +106,17 @@ const DICT = {
 
     // --- açılış sayfası (landing) ---
 
+    'entry.creatorTitle': 'Creator OS ile başla',
+    'entry.creatorDesc': 'Ne yapmak istediğini tek cümleyle yaz; yol haritasını Creator OS kursun.',
+    'entry.creatorGo': 'Başla',
+    'cst.backToPlan': 'Planıma dön',
+    'cst.youAreHere': 'Buradasın: {s}',
+    'cst.stepDone': '{s} tamamlandı',
+    'cst.notInPlan': 'Bu sayfa planında yok',
+    'cst.markDone': 'Bu adımı bitirdim',
+    'cst.next': 'Sırada',
+    'cst.allDone': 'Plan tamamlandı',
+    'cst.hide': 'Şeridi gizle',
     // --- Creator OS (Sprint 5 / TASK-01) ---
     'nav.creator': 'Creator OS',
     'cos.greet': 'Merhaba 👋',
@@ -768,6 +779,17 @@ const DICT = {
 
     // --- landing page ---
 
+    'entry.creatorTitle': 'Start with Creator OS',
+    'entry.creatorDesc': 'Write what you want to make in one sentence; let Creator OS build the roadmap.',
+    'entry.creatorGo': 'Start',
+    'cst.backToPlan': 'Back to my plan',
+    'cst.youAreHere': 'You are here: {s}',
+    'cst.stepDone': '{s} done',
+    'cst.notInPlan': 'This page is not in your plan',
+    'cst.markDone': 'I finished this step',
+    'cst.next': 'Next',
+    'cst.allDone': 'Plan complete',
+    'cst.hide': 'Hide the strip',
     // --- Creator OS (Sprint 5 / TASK-01) ---
     'nav.creator': 'Creator OS',
     'cos.greet': 'Hello 👋',

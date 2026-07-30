@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSupabaseServer } from '@/lib/supabase-server';
 import { StudioProvider } from '@/lib/store';
 import Sidebar from '@/lib/Sidebar';
+import CreatorStrip from '@/lib/CreatorStrip';
 import Roadmap from '@/lib/Roadmap';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,9 @@ export default async function StudioLayout({ children }) {
       <div className="shell">
         <Sidebar />
         <main className="main">
+          {/* Creator OS dönüş şeridi — aktif plan varsa her modülde
+              görünür, sırada ne olduğunu söyler (spec kuralı 3-4). */}
+          <CreatorStrip />
           <Roadmap />
           {children}
         </main>

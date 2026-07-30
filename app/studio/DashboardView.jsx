@@ -96,6 +96,20 @@ export default function DashboardView({ counts, eps }) {
     return (
       <>
         {/* Hero — ürünün ne yaptığını tek bakışta anlatır */}
+        {/* CREATOR OS — yeni giriş noktası.
+            Spec: "Kullanıcı uygulamaya girince hangi sayfaya gideceğini
+            değil, sadece ne yapmak istediğini düşünmelidir."
+            Eski akış (aşağıdaki PathChoice) korunuyor — bozmuyoruz,
+            ikinci seçenek olarak duruyor. */}
+        <Link href="/studio/creator" className="card entry-creator">
+          <div className="entry-creator-icon" aria-hidden="true">✦</div>
+          <div className="entry-creator-body">
+            <div className="entry-creator-title">{t('entry.creatorTitle')}</div>
+            <p className="entry-creator-desc">{t('entry.creatorDesc')}</p>
+          </div>
+          <span className="entry-creator-go">{t('entry.creatorGo')} →</span>
+        </Link>
+
         <section className="entry-hero">
           <div className="entry-eyebrow">{t('entry.eyebrow')}</div>
           <h1>{t('entry.heroTitle')}</h1>
