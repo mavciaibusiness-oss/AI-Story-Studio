@@ -11,6 +11,7 @@ import LangSwitch from '@/lib/LangSwitch';
 const LINKS = [
   { sep: 'nav.project' },
   { href: '/studio/creator', key: 'nav.creator', icon: '✦' },
+  { href: '/studio/hafiza', key: 'nav.memory', icon: '◈' },
   { href: '/studio', key: 'nav.overview', icon: '◆' },
   { href: '/studio/projeler', key: 'nav.projects', icon: '▤' },
   { sep: 'nav.production' },

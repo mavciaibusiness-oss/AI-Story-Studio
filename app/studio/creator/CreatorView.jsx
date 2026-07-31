@@ -16,6 +16,8 @@ import { workflowStatus, markSuggested } from '@/lib/creator/suggest';
 import { STATES, normalizeStatus, warningsFor } from '@/lib/creator/state';
 /* TASK-02 Adım 6: storyboard'dan otomatik ilerleme tespiti */
 import { autoCompletable, progressEvidence, isDetectable } from '@/lib/creator/detect';
+/* TASK-03 Adım 5: hafıza yol haritasını kişiselleştiriyor */
+import { personalizeWorkflow, intentHints } from '@/lib/creator/personalize';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -66,6 +68,9 @@ export default function CreatorView({ userId }) {
   const [storeWarn, setStoreWarn] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  /* Creator Memory — açılışta okunur, arka planda öğrenir */
+  const [memory, setMemory] = useState(null);
+  const [memChanges, setMemChanges] = useState([]);
 
   /* Oturumları yükle — yalnızca istemcide (localStorage) */
   useEffect(() => {
@@ -74,6 +79,32 @@ export default function CreatorView({ userId }) {
     setSessions(list);
     setLoaded(true);
   }, [userId]);
+
+  /* OTOMATİK ÖĞRENME — açılışta bir kez.
+
+     Öğrenme sunucuda; istemci yalnızca oturumları gönderiyor
+     (localStorage'da olduğu için sunucu göremiyor).
+
+     Hafıza kapalıysa (migration yok) sessizce geçiyoruz: Creator OS
+     hafızasız da çalışmalı. */
+  useEffect(() => {
+    if (!loaded) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('/api/memory', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'learn',
+            sessions: sessions.map(s => ({ id: s.id, log: s.log || [] }))
+          })
+        }).then(x => x.json());
+        if (!cancelled && r?.ok && r.memory) setMemory(r.memory);
+      } catch { /* hafıza kapalı ya da ağ hatası — Creator OS çalışmaya devam */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded]);
 
   const persist = useCallback((list) => {
     setSessions(list);
@@ -94,7 +125,21 @@ export default function CreatorView({ userId }) {
   function start(input) {
     const value = String(input ?? text).trim();
     if (!value) return;
-    const s = markSuggested(upgradeSession(createSession(value, { episodeId })));
+    let s = upgradeSession(createSession(value, { episodeId }));
+
+    /* KİŞİSELLEŞTİRME: hafıza yol haritasını alışkanlığına göre
+       ayarlıyor. Değişiklikler raporlanıyor — sessiz değişiklik yok. */
+    if (memory && s.workflow?.tasks?.length) {
+      const p = personalizeWorkflow(s.workflow, memory);
+      if (p.changes.length) {
+        s = { ...s, workflow: p.workflow };
+        setMemChanges(p.changes);
+      } else {
+        setMemChanges([]);
+      }
+    }
+
+    s = markSuggested(s);
     const list = upsertSession(sessions, s);
     persist(list);
     setActive(s);
@@ -199,6 +244,7 @@ export default function CreatorView({ userId }) {
         <WorkflowCard
           session={active} status={status} t={t} locale={locale}
           storyboard={storyboard}
+          memChanges={memChanges}
           showAdd={showAdd} setShowAdd={setShowAdd}
           onUpdate={update}
           onBack={() => setActive(null)}
@@ -241,7 +287,7 @@ export default function CreatorView({ userId }) {
 /* ------------------------------------------------------------------ */
 
 function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
-                        storyboard, onUpdate, onBack, onDiscard }) {
+                        storyboard, memChanges, onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
   const [showLog, setShowLog] = useState(false);
@@ -314,6 +360,23 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
               <Link key={x.key} href={x.route} className="btn btn-mini">{L(x.label)}</Link>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* KİŞİSELLEŞTİRME RAPORU — spec: kullanıcı kontrolü kaybetmemeli.
+          Hafıza yol haritasını değiştirdiyse ne yaptığını söylüyoruz. */}
+      {memChanges?.length > 0 && (
+        <div className="cos-memory">
+          <div className="cos-memory-title">{t('cos.memoryTitle')}</div>
+          {memChanges.map((c, i) => (
+            <p className="cos-memory-item" key={i}>
+              {c.type === 'task-added'
+                ? t('cos.memAdded', { task: L(c.label),
+                    n: c.evidence.count, m: c.evidence.sessions })
+                : t('cos.memSkipped', { task: L(c.label),
+                    n: c.evidence.count, m: c.evidence.sessions })}
+            </p>
+          ))}
         </div>
       )}
 
@@ -507,6 +570,8 @@ function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen,
           <span className="cos-task-label">{L(task.label)}</span>
           <span className={'cos-state cos-state-' + st}>{L(STATES[st]?.label)}</span>
           {task.optional && <span className="cos-opt">{t('cos.optional')}</span>}
+          {task.usuallySkipped && <span className="cos-hab">{t('cos.usuallySkip')}</span>}
+          {task.fromMemory && <span className="cos-hab">{t('cos.fromMemory')}</span>}
         </div>
         <p className="cos-task-desc">{L(task.desc)}</p>
 

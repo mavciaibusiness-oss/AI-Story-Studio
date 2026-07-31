@@ -1671,3 +1671,111 @@ button { font-family: var(--body); }
   .cos-timeline .cos-task { grid-template-columns: 26px minmax(0,1fr); }
   .cos-timeline .cos-task-actions { grid-column: 2 / -1; padding-bottom: 6px; }
 }
+
+
+/* ============================================================
+   CREATOR MEMORY (Sprint 5 / TASK-03)
+   ============================================================ */
+
+.mem-privacy { font-size: 12.5px; color: var(--ok); line-height: 1.55;
+  padding: 9px 13px; margin: 0 0 18px;
+  background: rgba(127,209,143,.07);
+  border: 1px solid rgba(127,209,143,.2); border-radius: 8px; }
+.mem-note { font-size: 13.5px; color: var(--ok); padding: 8px 12px;
+  background: rgba(127,209,143,.07); border-radius: 8px; margin: 0 0 12px; }
+
+.mem-off, .mem-learning { padding: 16px 18px; margin-bottom: 18px; }
+.mem-off-title, .mem-learning-title { font-family: var(--display);
+  font-size: 16px; font-weight: 700; color: var(--lamp); margin-bottom: 5px; }
+
+.mem-active { padding: 15px 18px; margin-bottom: 18px;
+  border-left: 3px solid var(--ok); }
+.mem-active-title { font-family: var(--display); font-size: 15px;
+  font-weight: 700; color: var(--ok); margin-bottom: 7px; }
+.mem-reasons { margin: 0; padding-left: 18px; }
+.mem-reasons li { font-size: 13px; color: var(--text-2);
+  line-height: 1.6; }
+
+/* Öneriler */
+.mem-proposals { padding: 16px 18px; margin-bottom: 18px;
+  border-left: 3px solid var(--lamp); }
+.mem-proposal { display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; padding: 10px 0; border-top: 1px solid var(--line); }
+.mem-proposal:first-of-type { border-top: none; }
+.mem-proposal-body { flex: 1 1 240px; min-width: 0; }
+.mem-proposal-q { font-size: 14px; color: var(--cream); }
+.mem-proposal-q b { color: var(--lamp); }
+.mem-proposal-why { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.mem-proposal-actions { display: flex; gap: 7px; }
+
+/* Bölümler */
+.mem-section { padding: 16px 18px; margin-bottom: 18px; }
+.mem-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px; margin-top: 12px; }
+.mem-field-label { display: block; font-family: var(--display);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1.1px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.mem-field-row { display: flex; gap: 6px; }
+.mem-field-row .input { flex: 1; min-width: 0; }
+.mem-req { color: var(--lamp); }
+
+/* Öğrenilenler */
+.mem-learned { padding: 11px 0; border-top: 1px solid var(--line); }
+.mem-learned:first-of-type { border-top: none; }
+.mem-learned-head { display: flex; align-items: center; gap: 10px;
+  flex-wrap: wrap; margin-bottom: 7px; }
+.mem-learned-name { font-family: var(--display); font-size: 13.5px;
+  font-weight: 700; color: var(--cream); }
+.mem-learned-conf { font-size: 12px; color: var(--lamp);
+  font-variant-numeric: tabular-nums; }
+.mem-learned-none { font-size: 12px; color: var(--dim); }
+.mem-learned-head .btn { margin-left: auto; }
+
+.mem-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mem-chip { display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12.5px; color: var(--text-2); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 6px; padding: 4px 6px 4px 10px; }
+.mem-chip b { color: var(--cream); font-variant-numeric: tabular-nums; }
+.mem-chip-x { background: none; border: none; color: var(--muted);
+  font-size: 14px; line-height: 1; cursor: pointer; padding: 0 3px; }
+.mem-chip-x:hover:not(:disabled) { color: var(--err); }
+
+/* Kanal / marka / hedef */
+.mem-entity-head { display: flex; align-items: center;
+  justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+.mem-entity { display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--line); }
+.mem-entity:first-of-type { border-top: none; }
+.mem-entity-body { flex: 1; min-width: 0; }
+.mem-entity-name { font-family: var(--display); font-size: 14px;
+  font-weight: 700; color: var(--cream); }
+.mem-entity-meta { font-size: 12px; color: var(--muted);
+  line-height: 1.5; margin-top: 2px; }
+.mem-entity-form { margin-top: 12px; padding-top: 12px;
+  border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px; align-items: end; }
+
+/* Veri işlemleri */
+.mem-data { padding: 16px 18px; }
+.mem-data-actions { display: flex; gap: 8px; flex-wrap: wrap;
+  align-items: center; margin-top: 12px; }
+.mem-reset { margin-top: 16px; padding-top: 14px;
+  border-top: 1px solid var(--line); }
+.mem-reset-warn { font-size: 13px; color: var(--err); margin: 0; }
+
+/* Creator OS içindeki hafıza raporu */
+.cos-memory { padding: 12px 15px; border-radius: 10px; margin-bottom: 16px;
+  background: rgba(127,209,143,.06); border: 1px solid rgba(127,209,143,.22); }
+.cos-memory-title { font-family: var(--display); font-size: 14px;
+  font-weight: 700; color: var(--ok); margin-bottom: 5px; }
+.cos-memory-item { font-size: 13px; color: var(--text-2);
+  line-height: 1.5; margin: 0; }
+.cos-hab { font-size: 9.5px; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; border-radius: 4px; padding: 2px 6px;
+  color: var(--ok); background: rgba(127,209,143,.1); }
+
+@media (max-width: 620px) {
+  .mem-fields, .mem-entity-form { grid-template-columns: 1fr; }
+  .mem-learned-head .btn { margin-left: 0; }
+}
