@@ -14,6 +14,8 @@ import { availableToAdd, TASKS } from '@/lib/creator/workflow';
 import { live, upgradeSession, readLog, staleTasks } from '@/lib/creator/live';
 import { workflowStatus, markSuggested } from '@/lib/creator/suggest';
 import { STATES, normalizeStatus, warningsFor } from '@/lib/creator/state';
+/* TASK-02 Adım 6: storyboard'dan otomatik ilerleme tespiti */
+import { autoCompletable, progressEvidence, isDetectable } from '@/lib/creator/detect';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -55,7 +57,7 @@ import { STATES, normalizeStatus, warningsFor } from '@/lib/creator/state';
 export default function CreatorView({ userId }) {
   const t = useT();
   const { locale } = useI18n();
-  const { episodeId } = useStudio();
+  const { episodeId, storyboard } = useStudio();
 
   const [text, setText] = useState('');
   const [sessions, setSessions] = useState([]);
@@ -107,6 +109,26 @@ export default function CreatorView({ userId }) {
     setActive(marked);
     persist(upsertSession(sessions, marked));
   }
+
+  /* OTOMATİK İLERLEME: storyboard'da kanıt varsa görevi işaretle.
+
+     Yalnızca KESİN kanıtta (tüm sahnelerde) çalışıyor — kısmi iş
+     bitmiş sayılmaz. Kullanıcının atladığı görevlere dokunulmuyor.
+
+     Bağlı bölüm yoksa çalışmıyor: başka bir videonun storyboard'una
+     bakıp bu planı işaretlemek yanlış olur. */
+  useEffect(() => {
+    if (!active || !storyboard) return;
+    if (active.episodeId && episodeId && active.episodeId !== episodeId) return;
+
+    const keys = autoCompletable(active.workflow?.tasks || [], storyboard);
+    if (!keys.length) return;
+
+    let next = active;
+    for (const k of keys) next = live.done(next, k);
+    update(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, storyboard, episodeId]);
 
   function discard(id) {
     persist(removeSession(sessions, id));
@@ -176,6 +198,7 @@ export default function CreatorView({ userId }) {
       {active && (
         <WorkflowCard
           session={active} status={status} t={t} locale={locale}
+          storyboard={storyboard}
           showAdd={showAdd} setShowAdd={setShowAdd}
           onUpdate={update}
           onBack={() => setActive(null)}
@@ -218,7 +241,7 @@ export default function CreatorView({ userId }) {
 /* ------------------------------------------------------------------ */
 
 function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
-                        onUpdate, onBack, onDiscard }) {
+                        storyboard, onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
   const [showLog, setShowLog] = useState(false);
@@ -226,6 +249,8 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
 
   const sg = status?.suggestion;
   const stale = status?.stale || [];
+  /* Kısmi ilerleme: "12 sahneden 7'sinde görsel var" */
+  const evidence = storyboard ? progressEvidence(wf.tasks, storyboard) : {};
 
   /* Akıllı uyarı: kullanıcı yumuşak önkoşulu eksik bir göreve
      girmek istiyor. Spec: "[Yine de Devam Et]" — engel değil, bilgi. */
@@ -368,6 +393,8 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
             session={session} onUpdate={onUpdate}
             isSuggested={sg?.task?.key === task.key}
             onOpen={openTask}
+            evidence={evidence[task.key] || null}
+            total={wf.tasks.length}
             last={i === wf.tasks.length - 1} />
         ))}
       </div>
@@ -457,7 +484,8 @@ function EventLog({ session, t, L }) {
   );
 }
 
-function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen, last }) {
+function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen,
+                  evidence, total, last }) {
   const st = normalizeStatus(task.status);
   const done = st === 'done';
   const skipped = st === 'skipped';
@@ -486,9 +514,31 @@ function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen, la
         {blocked && task.blockReason && (
           <p className="cos-blocked-why">{L(task.blockReason)}</p>
         )}
+
+        {/* Kısmi ilerleme kanıtı — işaretleme yok, bilgi */}
+        {evidence && (
+          <div className="cos-evidence">
+            <div className="cos-evidence-bar">
+              <i style={{ width: Math.round(evidence.ratio * 100) + '%' }} />
+            </div>
+            <span>{t('cos.evidence', { have: evidence.have, total: evidence.total })}</span>
+          </div>
+        )}
       </div>
 
       <div className="cos-task-actions">
+        {/* SIRALAMA — spec kabul kriteri: "Görevler yeniden sıralanabiliyor"
+            Sürükle-bırak yerine düğme: erişilebilir, dokunmatikte çalışır,
+            test edilebilir. */}
+        <span className="cos-move">
+          <button className="cos-move-btn" disabled={index === 0}
+            onClick={() => onUpdate(live.move(session, task.key, index - 1))}
+            title={t('cos.moveUp')}>↑</button>
+          <button className="cos-move-btn" disabled={index === total - 1}
+            onClick={() => onUpdate(live.move(session, task.key, index + 1))}
+            title={t('cos.moveDown')}>↓</button>
+        </span>
+
         {task.future ? null : blocked ? null : done ? (
           <button className="btn btn-mini"
             onClick={() => onUpdate(live.reopen(session, task.key))}>

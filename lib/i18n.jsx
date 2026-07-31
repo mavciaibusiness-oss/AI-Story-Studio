@@ -121,6 +121,9 @@ const DICT = {
     'cst.next': 'Sırada',
     'cst.allDone': 'Plan tamamlandı',
     'cst.hide': 'Şeridi gizle',
+    'cos.evidence': '{total} sahneden {have} tanesinde hazır',
+    'cos.moveUp': 'Yukarı taşı',
+    'cos.moveDown': 'Aşağı taşı',
     // --- Active Workflow Manager (Sprint 5 / TASK-02) ---
     'cos.why.stale': 'Önce bunu düzelt — sonraki işler buna bağlı.',
     'cos.why.continue': 'Yarım kalan işine devam et.',
@@ -830,6 +833,9 @@ const DICT = {
     'cst.next': 'Next',
     'cst.allDone': 'Plan complete',
     'cst.hide': 'Hide the strip',
+    'cos.evidence': 'ready in {have} of {total} scenes',
+    'cos.moveUp': 'Move up',
+    'cos.moveDown': 'Move down',
     // --- Active Workflow Manager (Sprint 5 / TASK-02) ---
     'cos.why.stale': 'Fix this first — later steps depend on it.',
     'cos.why.continue': 'Continue what you started.',

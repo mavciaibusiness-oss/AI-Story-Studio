@@ -1607,6 +1607,24 @@ button { font-family: var(--body); }
 .cos-state-blocked { color: var(--err); background: rgba(239,139,139,.1); }
 
 .cos-task-suggested .cos-task-label { color: var(--lamp); }
+/* Kısmi ilerleme kanıtı */
+.cos-evidence { display: flex; align-items: center; gap: 8px;
+  margin-top: 5px; font-size: 11.5px; color: var(--muted); }
+.cos-evidence-bar { width: 70px; height: 4px; border-radius: 2px;
+  background: rgba(244,241,234,.08); overflow: hidden; flex-shrink: 0; }
+.cos-evidence-bar > i { display: block; height: 100%;
+  background: var(--lamp); border-radius: 2px; }
+
+/* Sıralama düğmeleri */
+.cos-move { display: inline-flex; flex-direction: column; gap: 1px;
+  margin-right: 2px; }
+.cos-move-btn { width: 20px; height: 15px; padding: 0; line-height: 1;
+  font-size: 10px; color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 3px; cursor: pointer; }
+.cos-move-btn:hover:not(:disabled) { color: var(--lamp);
+  border-color: rgba(255,180,84,.4); }
+.cos-move-btn:disabled { opacity: .3; cursor: default; }
+
 .cos-blocked-why { font-size: 12px; color: var(--err);
   line-height: 1.45; margin: 4px 0 0; }
 .cos-next-why { font-size: 12.5px; color: var(--lamp-soft);
