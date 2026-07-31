@@ -26,8 +26,13 @@ export default async function StudioLayout({ children }) {
         <Sidebar />
         <main className="main">
           {/* Creator OS dönüş şeridi — aktif plan varsa her modülde
-              görünür, sırada ne olduğunu söyler (spec kuralı 3-4). */}
-          <CreatorStrip />
+              görünür, sırada ne olduğunu söyler (spec kuralı 3-4).
+
+              userId ZORUNLU: oturumlar kullanıcı kimliğine göre ayrı
+              anahtarlarda tutuluyor. TASK-01'de şeride geçirilmiyordu
+              ve şerit profile.email kullanıyordu — farklı anahtar,
+              yani şerit ekranın yazdığı planları hiç göremiyordu. */}
+          <CreatorStrip userId={user.id} />
           <Roadmap />
           {children}
         </main>
