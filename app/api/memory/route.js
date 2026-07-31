@@ -5,6 +5,11 @@ import { emptyMemory, summarize, setProfileField, isCritical,
 import { learn, ensureObserved, activeProposals, acceptProposal,
          rejectProposal, forgetKey, forgetSection, resetMemory,
          managerStatus, SECTION_KEYS } from '@/lib/creator/manager';
+/* TASK-03 Adım 4: kullanıcının kendi girdiği kayıtlar */
+import { addChannel, updateChannel, removeChannel,
+         addBrand, updateBrand, removeBrand,
+         addGoal, updateGoal, removeGoal, entitySummary } from '@/lib/creator/entities';
+import { personalizationSummary } from '@/lib/creator/personalize';
 
 export const dynamic = 'force-dynamic';
 
@@ -122,6 +127,26 @@ async function gatherSources(supabase, userId) {
   return out;
 }
 
+/* Kayıt işlemlerinin ortak sonu: hata varsa 400, yoksa yaz ve dön. */
+async function saveEntity(supabase, userId, result) {
+  if (result.error) {
+    return NextResponse.json({
+      error: result.error,
+      fields: result.fields, limit: result.limit
+    }, { status: 400 });
+  }
+  const w = await writeMemory(supabase, userId, result.memory);
+  if (w.error) return NextResponse.json({ error: w.error }, { status: 500 });
+  if (w.missing) return NextResponse.json({ ok: false, missing: true, hint: 'migration-v10-required' });
+
+  return NextResponse.json({
+    ok: true,
+    memory: result.memory,
+    entities: entitySummary(result.memory),
+    channel: result.channel, brand: result.brand, goal: result.goal
+  });
+}
+
 export async function POST(req) {
   const supabase = getSupabaseServer();
   const { data: { user } } = await supabase.auth.getUser();
@@ -156,7 +181,11 @@ export async function POST(req) {
         memory,
         summary: summarize(memory),
         proposals: activeProposals(memory),
-        status: managerStatus(memory)
+        status: managerStatus(memory),
+        entities: entitySummary(memory),
+        /* Hafıza şu an neyi etkiliyor — arayüz şeffaflık için
+           gösterecek (spec: kullanıcı kontrolü kaybetmemeli) */
+        personalization: personalizationSummary(memory)
       });
 
     /* ---------- ÖĞREN ---------- */
@@ -249,6 +278,22 @@ export async function POST(req) {
       return NextResponse.json({ ok: true, memory: next, summary: summarize(next) });
     }
 
+    /* ---------- KANAL / MARKA / HEDEF ----------
+
+       Hepsi aynı desende: işlemi yap, hata varsa 400, yoksa kaydet.
+       Ortak yardımcı `saveEntity` tekrarı önlüyor. */
+    case 'addChannel':    return saveEntity(supabase, user.id, addChannel(memory, body?.data));
+    case 'updateChannel': return saveEntity(supabase, user.id, updateChannel(memory, body?.id, body?.data));
+    case 'removeChannel': return saveEntity(supabase, user.id, removeChannel(memory, body?.id));
+
+    case 'addBrand':      return saveEntity(supabase, user.id, addBrand(memory, body?.data));
+    case 'updateBrand':   return saveEntity(supabase, user.id, updateBrand(memory, body?.id, body?.data));
+    case 'removeBrand':   return saveEntity(supabase, user.id, removeBrand(memory, body?.id));
+
+    case 'addGoal':       return saveEntity(supabase, user.id, addGoal(memory, body?.data));
+    case 'updateGoal':    return saveEntity(supabase, user.id, updateGoal(memory, body?.id, body?.data));
+    case 'removeGoal':    return saveEntity(supabase, user.id, removeGoal(memory, body?.id));
+
     /* ---------- DIŞA / İÇE AKTAR ---------- */
     case 'export':
       /* Spec: "Memory Export". Ham hafıza + üretim bilgisi.
@@ -292,7 +337,10 @@ export async function POST(req) {
       return NextResponse.json({
         error: 'unknown-action',
         actions: ['read', 'learn', 'setField', 'accept', 'reject',
-                  'forgetKey', 'forgetSection', 'reset', 'export', 'import'],
+                  'forgetKey', 'forgetSection', 'reset', 'export', 'import',
+                  'addChannel', 'updateChannel', 'removeChannel',
+                  'addBrand', 'updateBrand', 'removeBrand',
+                  'addGoal', 'updateGoal', 'removeGoal'],
         sections: SECTION_KEYS
       }, { status: 400 });
   }
