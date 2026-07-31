@@ -6,10 +6,14 @@ import { useStudio } from '@/lib/store';
 import { classifyIntent, EXAMPLE_PROMPTS, intentByKey } from '@/lib/creator/intent';
 import {
   createSession, loadSessions, saveSessions, upsertSession, removeSession,
-  sessionProgress, markTaskActive, markTaskDone, skipTask,
-  removeSessionTask, addSessionTask, reclassify, unfinishedSessions
+  reclassify, unfinishedSessions
 } from '@/lib/creator/session';
 import { availableToAdd, TASKS } from '@/lib/creator/workflow';
+/* TASK-02: canlı workflow motoru. Görev işlemleri artık live.* üzerinden
+   geçiyor — her biri durumları yeniden hesaplayıp günlüğe yazıyor. */
+import { live, upgradeSession, readLog, staleTasks } from '@/lib/creator/live';
+import { workflowStatus, markSuggested } from '@/lib/creator/suggest';
+import { STATES, normalizeStatus, warningsFor } from '@/lib/creator/state';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -63,7 +67,8 @@ export default function CreatorView({ userId }) {
 
   /* Oturumları yükle — yalnızca istemcide (localStorage) */
   useEffect(() => {
-    const list = loadSessions(userId);
+    /* TASK-01 oturumlarını canlı modele yükselt — planlar kaybolmasın */
+    const list = loadSessions(userId).map(s => markSuggested(upgradeSession(s)));
     setSessions(list);
     setLoaded(true);
   }, [userId]);
@@ -87,7 +92,7 @@ export default function CreatorView({ userId }) {
   function start(input) {
     const value = String(input ?? text).trim();
     if (!value) return;
-    const s = createSession(value, { episodeId });
+    const s = markSuggested(upgradeSession(createSession(value, { episodeId })));
     const list = upsertSession(sessions, s);
     persist(list);
     setActive(s);
@@ -95,9 +100,12 @@ export default function CreatorView({ userId }) {
     setPreview(null);
   }
 
+  /* Her değişiklikten sonra öneri yeniden hesaplanıyor — spec:
+     "Creator OS workflow'u her olaydan sonra yeniden değerlendirmelidir." */
   function update(next) {
-    setActive(next);
-    persist(upsertSession(sessions, next));
+    const marked = markSuggested(next);
+    setActive(marked);
+    persist(upsertSession(sessions, marked));
   }
 
   function discard(id) {
@@ -106,7 +114,7 @@ export default function CreatorView({ userId }) {
   }
 
   const unfinished = unfinishedSessions(sessions).filter(s => s.id !== active?.id);
-  const progress = active ? sessionProgress(active) : null;
+  const status = active ? workflowStatus(active) : null;
 
   return (
     <>
@@ -167,7 +175,7 @@ export default function CreatorView({ userId }) {
       {/* ---- Yol haritası ---- */}
       {active && (
         <WorkflowCard
-          session={active} progress={progress} t={t} locale={locale}
+          session={active} status={status} t={t} locale={locale}
           showAdd={showAdd} setShowAdd={setShowAdd}
           onUpdate={update}
           onBack={() => setActive(null)}
@@ -180,7 +188,7 @@ export default function CreatorView({ userId }) {
           <div className="entry-label">{t('cos.continue')}</div>
           <div className="cos-resume-list">
             {unfinished.slice(0, 4).map(s => {
-              const p = sessionProgress(s);
+              const p = workflowStatus(s);
               return (
                 <button className="cos-resume-item" key={s.id}
                   onClick={() => setActive(s)}>
@@ -209,23 +217,44 @@ export default function CreatorView({ userId }) {
 
 /* ------------------------------------------------------------------ */
 
-function WorkflowCard({ session, progress, t, locale, showAdd, setShowAdd,
+function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
                         onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
+  const [showLog, setShowLog] = useState(false);
+  const [warnFor, setWarnFor] = useState(null);   // akıllı uyarı bekleyen görev
+
+  const sg = status?.suggestion;
+  const stale = status?.stale || [];
+
+  /* Akıllı uyarı: kullanıcı yumuşak önkoşulu eksik bir göreve
+     girmek istiyor. Spec: "[Yine de Devam Et]" — engel değil, bilgi. */
+  function openTask(task) {
+    const w = warningsFor(task.key, wf.tasks);
+    if (w.length && warnFor !== task.key) {
+      setWarnFor(task.key);
+      return false;   // önce uyarıyı göster
+    }
+    setWarnFor(null);
+    onUpdate(live.openModule(session, task.key, task.route));
+    return true;
+  }
 
   return (
     <section className="cos-wf">
       <div className="cos-wf-head">
         <button className="btn btn-mini" onClick={onBack}>{t('cos.back')}</button>
         <span style={{ flex: 1 }} />
+        {(session.log?.length > 0) && (
+          <button className="btn btn-mini" onClick={() => setShowLog(!showLog)}>
+            {showLog ? t('cos.closeLog') : t('cos.showLog')}
+          </button>
+        )}
         <button className="btn btn-mini" onClick={onDiscard}>{t('cos.discard')}</button>
       </div>
 
-      {/* Kullanıcının kendi cümlesi — ne istediğini görsün */}
       <blockquote className="cos-quote">{session.input}</blockquote>
 
-      {/* Niyet + kararsızlık */}
       <div className="cos-intent">
         {session.intent ? (
           <>
@@ -244,76 +273,105 @@ function WorkflowCard({ session, progress, t, locale, showAdd, setShowAdd,
         )}
       </div>
 
-      {/* Kararsızsa seçenek sun — sessizce yanlış tahmine bağlanma */}
       {session.ambiguous && wf.tasks.length > 0 && (
         <AmbiguityPicker session={session} t={t} locale={locale} onUpdate={onUpdate} />
       )}
-
-      {/* Niyet hiç tanınmadıysa da seçenek sun */}
       {!session.intent && (
         <IntentFallback t={t} locale={locale} session={session} onUpdate={onUpdate} />
       )}
 
-      {/* Akış bugün yapılamıyorsa alternatifi ÖNE çıkar */}
       {wf.available === false && wf.suggestion && (
         <div className="cos-unavailable">
           <div className="cos-unavailable-title">{L(wf.suggestion.reason)}</div>
           <p className="cos-unavailable-offer">{L(wf.suggestion.offer)}</p>
           <div className="cos-unavailable-tasks">
             {wf.suggestion.tasks.map(x => (
-              <Link key={x.key} href={x.route} className="btn btn-mini">
-                {L(x.label)}
-              </Link>
+              <Link key={x.key} href={x.route} className="btn btn-mini">{L(x.label)}</Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* SONRAKİ ADIM — en üstte, en büyük. Spec kuralı 4. */}
-      {progress?.next && (
+      {/* ESKİMİŞ İŞ — işi silmiyoruz, riski bildiriyoruz */}
+      {stale.length > 0 && (
+        <div className="cos-stale">
+          <div className="cos-stale-title">{t('cos.staleTitle')}</div>
+          {stale.map(x => (
+            <p className="cos-stale-item" key={x.key}>
+              {t('cos.staleItem', {
+                task: L(x.label),
+                because: x.becauseLabels.map(l => L(l)).join(', ')
+              })}
+            </p>
+          ))}
+        </div>
+      )}
+
+      {/* TEK ÖNERİ — gerekçesiyle. Spec kuralı: menü değil, tek adım. */}
+      {sg?.task && (
         <div className="cos-next">
           <div className="cos-next-label">{t('cos.nextStep')}</div>
           <div className="cos-next-body">
             <div>
-              <div className="cos-next-title">{L(progress.next.label)}</div>
-              <p className="cos-next-desc">{L(progress.next.desc)}</p>
+              <div className="cos-next-title">{L(sg.task.label)}</div>
+              <p className="cos-next-desc">{L(sg.task.desc)}</p>
+              <p className="cos-next-why">{reasonText(sg, t)}</p>
             </div>
-            <Link href={progress.next.route} className="btn btn-primary"
-              onClick={() => onUpdate(markTaskActive(session, progress.next.key))}>
+            <Link href={sg.task.route} className="btn btn-primary"
+              onClick={(e) => { if (!openTask(sg.task)) e.preventDefault(); }}>
               {t('cos.go')}
             </Link>
           </div>
         </div>
       )}
 
-      {progress?.complete && (
-        <div className="cos-done">{t('cos.allDone')}</div>
+      {/* Tıkanma — "bitti" ile karıştırılmamalı */}
+      {status?.stuck && (
+        <div className="cos-stuck">
+          <div className="cos-stuck-title">{t('cos.stuckTitle')}</div>
+          <p className="hint">{t('cos.stuckHint')}</p>
+        </div>
+      )}
+      {status?.complete && <div className="cos-done">{t('cos.allDone')}</div>}
+
+      {/* Akıllı uyarı — [Yine de Devam Et] */}
+      {warnFor && (
+        <SmartWarning taskKey={warnFor} tasks={wf.tasks} t={t} L={L}
+          onProceed={() => {
+            const task = wf.tasks.find(x => x.key === warnFor);
+            setWarnFor(null);
+            if (task) {
+              onUpdate(live.openModule(session, task.key, task.route));
+              window.location.href = task.route;
+            }
+          }}
+          onCancel={() => setWarnFor(null)} />
       )}
 
-      {/* İlerleme */}
-      {progress && progress.doable > 0 && (
+      {status && status.doable > 0 && (
         <div className="cos-progress">
           <div className="cos-progress-bar">
-            <i style={{ width: progress.percent + '%' }} />
+            <i style={{ width: status.percent + '%' }} />
           </div>
           <div className="cos-progress-label">
-            {t('cos.progress', {
-              done: progress.done, total: progress.doable, p: progress.percent
-            })}
+            {t('cos.progress', { done: status.done, total: status.doable, p: status.percent })}
+            {status.blocked > 0 && ' · ' + t('cos.blockedCount', { n: status.blocked })}
             {wf.stats.future > 0 && ' · ' + t('cos.futureCount', { n: wf.stats.future })}
           </div>
         </div>
       )}
 
-      {/* Görev listesi */}
-      <div className="cos-tasks">
+      {/* CREATOR TIMELINE — zaman sıralı, yedi durum */}
+      <div className="cos-timeline">
         {wf.tasks.map((task, i) => (
           <TaskRow key={task.key} task={task} index={i} t={t} L={L}
-            session={session} onUpdate={onUpdate} />
+            session={session} onUpdate={onUpdate}
+            isSuggested={sg?.task?.key === task.key}
+            onOpen={openTask}
+            last={i === wf.tasks.length - 1} />
         ))}
       </div>
 
-      {/* Görev ekle */}
       <div className="cos-wf-actions">
         <button className="btn btn-mini" onClick={() => setShowAdd(!showAdd)}>
           {showAdd ? t('cos.closeAdd') : t('cos.addTask')}
@@ -323,70 +381,139 @@ function WorkflowCard({ session, progress, t, locale, showAdd, setShowAdd,
         <div className="cos-add-list">
           {availableToAdd(wf).map(a => (
             <button key={a.key} className={'cos-add-item' + (a.future ? ' cos-add-future' : '')}
-              onClick={() => { onUpdate(addSessionTask(session, a.key)); setShowAdd(false); }}>
+              onClick={() => { onUpdate(live.add(session, a.key)); setShowAdd(false); }}>
               {L(a.label)}
               {a.future && <span className="cos-soon">{t('cos.soon')}</span>}
             </button>
           ))}
         </div>
       )}
+
+      {/* OLAY GÜNLÜĞÜ */}
+      {showLog && <EventLog session={session} t={t} L={L} />}
     </section>
   );
 }
 
-function TaskRow({ task, index, t, L, session, onUpdate }) {
-  const done = task.status === 'done';
-  const skipped = task.status === 'skipped';
-  const activeNow = task.status === 'active';
+/* Öneri gerekçesi — metin i18n'den, veri motordan. */
+function reasonText(sg, t) {
+  switch (sg.reason) {
+    case 'stale':
+      return t('cos.why.stale');
+    case 'continue':
+      return t('cos.why.continue');
+    case 'unlocks':
+      return t('cos.why.unlocks', { n: sg.detail?.unlocks ?? 0 });
+    case 'next-in-plan':
+    default:
+      return t('cos.why.next');
+  }
+}
+
+/* Akıllı uyarı kutusu — spec'in "[Yine de Devam Et]" akışı */
+function SmartWarning({ taskKey, tasks, t, L, onProceed, onCancel }) {
+  const w = warningsFor(taskKey, tasks)[0];
+  if (!w) return null;
+  return (
+    <div className="cos-warn">
+      <div className="cos-warn-title">
+        {t('cos.warnTitle', { missing: w.labels.map(l => L(l)).join(', ') })}
+      </div>
+      <p className="cos-warn-desc">{t('cos.warnDesc')}</p>
+      <div className="cos-warn-actions">
+        <button className="btn btn-mini" onClick={onProceed}>{t('cos.proceedAnyway')}</button>
+        <button className="btn btn-mini" onClick={onCancel}>{t('cos.cancel')}</button>
+      </div>
+    </div>
+  );
+}
+
+/* Olay günlüğü — metin burada kuruluyor, kayıtta anahtar var. */
+function EventLog({ session, t, L }) {
+  const [showBlocking, setShowBlocking] = useState(false);
+  const entries = readLog(session, { limit: 20, includeBlocking: showBlocking });
 
   return (
-    <div className={'cos-task'
-      + (done ? ' cos-task-done' : '')
-      + (skipped ? ' cos-task-skipped' : '')
-      + (activeNow ? ' cos-task-active' : '')
-      + (task.future ? ' cos-task-future' : '')}>
+    <div className="cos-log">
+      <div className="cos-log-head">
+        <span className="entry-label" style={{ margin: 0 }}>{t('cos.logTitle')}</span>
+        <button className="btn btn-mini" onClick={() => setShowBlocking(!showBlocking)}>
+          {showBlocking ? t('cos.hideBlocking') : t('cos.showBlocking')}
+        </button>
+      </div>
+      {entries.map(e => (
+        <div className="cos-log-row" key={e.id}>
+          <span className="cos-log-icon">{e.icon}</span>
+          <span className="cos-log-text">
+            {e.taskLabel ? L(e.taskLabel) + ' ' : ''}{t('cos.ev.' + e.type)}
+          </span>
+          <span className="cos-log-time">
+            {new Date(e.at).toLocaleTimeString(undefined,
+              { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-      <div className="cos-task-n">
-        {done ? '✓' : skipped ? '–' : index + 1}
+function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen, last }) {
+  const st = normalizeStatus(task.status);
+  const done = st === 'done';
+  const skipped = st === 'skipped';
+  const blocked = st === 'blocked';
+  const activeNow = st === 'active';
+
+  return (
+    <div className={'cos-task cos-st-' + st + (isSuggested ? ' cos-task-suggested' : '')}>
+      {/* Zaman çizelgesi çizgisi */}
+      <div className="cos-tl-rail">
+        <div className="cos-tl-dot">
+          {done ? '✓' : skipped ? '–' : blocked ? '⊘' : task.future ? '⧗' : index + 1}
+        </div>
+        {!last && <div className="cos-tl-line" />}
       </div>
 
       <div className="cos-task-body">
         <div className="cos-task-head">
           <span className="cos-task-label">{L(task.label)}</span>
+          <span className={'cos-state cos-state-' + st}>{L(STATES[st]?.label)}</span>
           {task.optional && <span className="cos-opt">{t('cos.optional')}</span>}
-          {task.future && <span className="cos-soon">{t('cos.soon')}</span>}
         </div>
         <p className="cos-task-desc">{L(task.desc)}</p>
+
+        {/* Engelli görevde NEDEN yapamıyorum */}
+        {blocked && task.blockReason && (
+          <p className="cos-blocked-why">{L(task.blockReason)}</p>
+        )}
       </div>
 
       <div className="cos-task-actions">
-        {/* Sprint-6 görevi tıklanamaz — hiçbir yere gitmeyen düğme
-            göstermek güven kaybettirir */}
-        {task.future ? null : done ? (
+        {task.future ? null : blocked ? null : done ? (
           <button className="btn btn-mini"
-            onClick={() => onUpdate(markTaskActive(session, task.key))}>
+            onClick={() => onUpdate(live.reopen(session, task.key))}>
             {t('cos.redo')}
           </button>
         ) : (
           <>
             <Link href={task.route} className="btn btn-mini"
-              onClick={() => onUpdate(markTaskActive(session, task.key))}>
+              onClick={(e) => { if (!onOpen(task)) e.preventDefault(); }}>
               {t('cos.open')}
             </Link>
             <button className="btn btn-mini"
-              onClick={() => onUpdate(markTaskDone(session, task.key))}>
+              onClick={() => onUpdate(live.done(session, task.key))}>
               {t('cos.markDone')}
             </button>
             {task.optional && (
               <button className="btn btn-mini"
-                onClick={() => onUpdate(skipTask(session, task.key))}>
+                onClick={() => onUpdate(live.skip(session, task.key))}>
                 {t('cos.skip')}
               </button>
             )}
           </>
         )}
         <button className="btn btn-mini cos-task-remove"
-          onClick={() => onUpdate(removeSessionTask(session, task.key))}
+          onClick={() => onUpdate(live.remove(session, task.key))}
           title={t('cos.remove')}>×</button>
       </div>
     </div>

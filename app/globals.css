@@ -1551,3 +1551,101 @@ button { font-family: var(--body); }
   .cst-body { flex-basis: 100%; }
   .entry-creator { flex-wrap: wrap; }
 }
+
+
+/* ============================================================
+   CREATOR TIMELINE (Sprint 5 / TASK-02)
+   Zaman sıralı görünüm, yedi durum, olay günlüğü.
+   ============================================================ */
+
+/* --- Zaman çizelgesi --- */
+.cos-timeline { display: flex; flex-direction: column; }
+.cos-timeline .cos-task {
+  display: grid; grid-template-columns: 30px minmax(0,1fr) auto;
+  gap: 12px; align-items: start; padding: 10px 14px 10px 0;
+  border: none; border-radius: 0; background: none; }
+
+.cos-tl-rail { display: flex; flex-direction: column; align-items: center;
+  align-self: stretch; }
+.cos-tl-dot { width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-size: 12px; font-weight: 800;
+  color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--line); flex-shrink: 0;
+  font-variant-numeric: tabular-nums; }
+.cos-tl-line { width: 1px; flex: 1; min-height: 14px;
+  background: var(--line); margin-top: 2px; }
+
+/* --- Yedi durum --- */
+.cos-st-done    .cos-tl-dot { color: var(--ok); border-color: rgba(127,209,143,.4);
+  background: rgba(127,209,143,.1); }
+.cos-st-done    .cos-tl-line { background: rgba(127,209,143,.3); }
+.cos-st-active  .cos-tl-dot { color: var(--lamp); border-color: var(--lamp);
+  background: rgba(255,180,84,.12); }
+.cos-st-suggested .cos-tl-dot { color: var(--lamp); border-color: var(--lamp);
+  box-shadow: 0 0 0 3px rgba(255,180,84,.14); }
+.cos-st-blocked .cos-tl-dot { color: var(--dim); border-style: dashed; }
+.cos-st-skipped .cos-tl-dot { color: var(--dim); }
+.cos-st-future  .cos-tl-dot { color: var(--dim); border-style: dashed;
+  background: none; }
+
+.cos-st-done    .cos-task-label { text-decoration: line-through; opacity: .7; }
+.cos-st-skipped .cos-task-body { opacity: .5; }
+.cos-st-blocked .cos-task-body { opacity: .72; }
+.cos-st-future  .cos-task-body { opacity: .5; }
+
+.cos-state { font-size: 9.5px; font-weight: 700; letter-spacing: .9px;
+  text-transform: uppercase; border-radius: 4px; padding: 2px 7px;
+  color: var(--muted); background: rgba(244,241,234,.05); }
+.cos-state-active, .cos-state-suggested {
+  color: var(--lamp); background: rgba(255,180,84,.12); }
+.cos-state-done { color: var(--ok); background: rgba(127,209,143,.1); }
+.cos-state-blocked { color: var(--err); background: rgba(239,139,139,.1); }
+
+.cos-task-suggested .cos-task-label { color: var(--lamp); }
+.cos-blocked-why { font-size: 12px; color: var(--err);
+  line-height: 1.45; margin: 4px 0 0; }
+.cos-next-why { font-size: 12.5px; color: var(--lamp-soft);
+  line-height: 1.45; margin: 5px 0 0; }
+
+/* --- Eskimiş iş --- */
+.cos-stale { padding: 12px 15px; border-radius: 10px; margin-bottom: 16px;
+  background: rgba(255,180,84,.06); border: 1px solid rgba(255,180,84,.24); }
+.cos-stale-title { font-family: var(--display); font-size: 14px; font-weight: 700;
+  color: var(--lamp); margin-bottom: 5px; }
+.cos-stale-item { font-size: 13px; color: var(--text-2);
+  line-height: 1.5; margin: 0; }
+
+/* --- Tıkanma --- */
+.cos-stuck { padding: 13px 16px; border-radius: 10px; margin-bottom: 16px;
+  background: rgba(239,139,139,.07); border: 1px solid rgba(239,139,139,.24); }
+.cos-stuck-title { font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--err); margin-bottom: 4px; }
+
+/* --- Akıllı uyarı --- */
+.cos-warn { padding: 13px 16px; border-radius: 10px; margin-bottom: 16px;
+  background: rgba(255,180,84,.08); border: 1px solid rgba(255,180,84,.3); }
+.cos-warn-title { font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--lamp); margin-bottom: 4px; }
+.cos-warn-desc { font-size: 13.5px; color: var(--text-2);
+  line-height: 1.5; margin: 0 0 10px; }
+.cos-warn-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* --- Olay günlüğü --- */
+.cos-log { margin-top: 18px; padding: 13px 15px; border-radius: 10px;
+  background: var(--panel-2); border: 1px solid var(--line); }
+.cos-log-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; margin-bottom: 9px; }
+.cos-log-row { display: grid; grid-template-columns: 20px minmax(0,1fr) auto;
+  gap: 9px; align-items: baseline; padding: 4px 0;
+  border-top: 1px solid var(--line); font-size: 12.5px; }
+.cos-log-row:first-of-type { border-top: none; }
+.cos-log-icon { color: var(--muted); text-align: center; }
+.cos-log-text { color: var(--text-2); }
+.cos-log-time { color: var(--dim); font-size: 11px;
+  font-variant-numeric: tabular-nums; }
+
+@media (max-width: 620px) {
+  .cos-timeline .cos-task { grid-template-columns: 26px minmax(0,1fr); }
+  .cos-timeline .cos-task-actions { grid-column: 2 / -1; padding-bottom: 6px; }
+}
