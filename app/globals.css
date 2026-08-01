@@ -1820,6 +1820,24 @@ button { font-family: var(--body); }
   color: var(--cream); letter-spacing: -.9px; line-height: 1.15; margin: 4px 0 18px; }
 .ws-input-wrap { max-width: 620px; margin: 0 auto; }
 
+/* --- Çalışma durumu şeridi --- */
+.ws-state { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 8px 14px; border-radius: 9px; font-size: 12.5px;
+  background: var(--panel-2); border: 1px solid var(--line); }
+.ws-state-text { color: var(--text-2); }
+.ws-state-blocked-kind .ws-state-text, .ws-state-blocked { color: var(--err); }
+.ws-state-needs-fix .ws-state-text { color: var(--lamp); }
+.ws-state-complete .ws-state-text { color: var(--ok); }
+.ws-state-no-plan .ws-state-text { color: var(--muted); }
+
+.ws-state-steps { display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.ws-step { font-size: 11.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+.ws-step-done { color: var(--ok); }
+.ws-state-dur { font-size: 11.5px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+.ws-state-blocked { font-size: 11.5px; }
+
 /* --- Bildirimler --- */
 .ws-notes { display: flex; flex-direction: column; gap: 6px; }
 .ws-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;

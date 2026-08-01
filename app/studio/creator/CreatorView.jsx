@@ -21,6 +21,8 @@ import { personalizeWorkflow, intentHints, personalizationSummary } from '@/lib/
 /* TASK-04: Workspace katmanı — bildirimler ve widget düzeni */
 import { buildNotifications, dismiss, actionCount } from '@/lib/creator/notify';
 import { buildLayout, layoutKeys, widgetData, moveWidget } from '@/lib/creator/widgets';
+/* TASK-04 Adım 3: gerçek çalışma durumu */
+import { workState, workSummary } from '@/lib/creator/workstate';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -186,6 +188,27 @@ export default function CreatorView({ userId }) {
     persist(upsertSession(sessions, marked));
   }
 
+  /* SEKME GÖRÜNÜR OLUNCA TAZELE.
+
+     Kullanıcı modüle gitti, iş yaptı, Workspace'e döndü. Sayfa
+     yeniden yüklenmediyse (Next.js istemci gezinmesi) oturumlar
+     bayat kalır ve ilerleme görünmez.
+
+     visibilitychange: sekme geri geldiğinde localStorage'dan
+     yeniden okuyoruz. Ucuz bir işlem — ağ isteği yok. */
+  useEffect(() => {
+    function refresh() {
+      if (document.visibilityState !== 'visible') return;
+      const list = loadSessions(userId).map(s => markSuggested(upgradeSession(s)));
+      setSessions(list);
+      /* Açık oturum varsa güncel hâlini al — kullanıcı modülde
+         bir adımı bitirmiş olabilir (dönüş şeridi yazmış olur). */
+      setActive(prev => prev ? (list.find(x => x.id === prev.id) || prev) : prev);
+    }
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, [userId]);
+
   /* OTOMATİK İLERLEME: storyboard'da kanıt varsa görevi işaretle.
 
      Yalnızca KESİN kanıtta (tüm sahnelerde) çalışıyor — kısmi iş
@@ -218,6 +241,8 @@ export default function CreatorView({ userId }) {
   const personalization = memory ? personalizationSummary(memory) : null;
   const wsCtx = { memory, sessions, active, personalization };
   const notifications = buildNotifications({ sessions, active, memory, dismissed });
+  const state = workState({ sessions, active, storyboard });
+  const summary = workSummary({ sessions, active });
   const built = buildLayout(wsCtx, layout);
   const badge = actionCount(notifications);
 
@@ -256,6 +281,10 @@ export default function CreatorView({ userId }) {
             preview={preview} onStart={start} />
         )}
       </section>
+
+      {/* Çalışma durumu — spec: "Her zaman bir durum gösterecek."
+          Gerçek veriden: kaç adım kaldı, sahnelerin kaçı hazır. */}
+      <StateBar state={state} summary={summary} t={t} locale={locale} />
 
       {/* Bildirimler — Director panelinin hemen altında, dikkat çeksin */}
       {notifications.length > 0 && (
@@ -373,6 +402,75 @@ function DirectorPanel({ session, status, t, locale }) {
       )}
     </div>
   );
+}
+
+/*
+  Çalışma durumu şeridi.
+
+  Spec'in "Video işleniyor · 2 dakika" örneği UYGULANMADI: render
+  tarayıcıda çalışıyor, Workspace'e gelen kullanıcının arka planda
+  işi olamaz. Sahte ilerleme göstermek yerine gerçek durumu
+  gösteriyoruz (bkz. lib/creator/workstate.js).
+*/
+function StateBar({ state, summary, t, locale }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+  const d = state.data || {};
+
+  const text = (() => {
+    switch (state.kind) {
+      case 'no-plan':       return t('ws.s.noPlan');
+      case 'blocked':       return t('ws.s.blocked', { n: d.blocked });
+      case 'needs-fix':     return t('ws.s.needsFix', { n: d.count });
+      case 'complete':      return t('ws.s.complete');
+      case 'in-progress':   return t('ws.s.inProgress', { n: d.remaining });
+      case 'ready-to-work':
+        return d.plans
+          ? t('ws.s.openPlans', { n: d.plans })
+          : t('ws.s.ready', { n: d.remaining });
+      default: return null;
+    }
+  })();
+
+  if (!text) return null;
+
+  const prod = d.production;
+
+  return (
+    <div className={'ws-state ws-state-' + state.kind}>
+      <span className="ws-state-text">{text}</span>
+
+      {/* Üretim ilerlemesi — gerçek sahne sayıları */}
+      {prod?.steps?.length > 0 && (
+        <span className="ws-state-steps">
+          {prod.steps.map(s => (
+            <span className={'ws-step' + (s.complete ? ' ws-step-done' : '')} key={s.key}>
+              {t('cos.' + s.key) || s.key} {s.have}/{s.total}
+            </span>
+          ))}
+        </span>
+      )}
+
+      {/* Tahmini süre — timeline motorundan, gerçek ölçüm.
+          `estimated` ise "yaklaşık" diyoruz; uydurmuyoruz. */}
+      {prod?.duration && (
+        <span className="ws-state-dur">
+          {prod.duration.estimated ? t('ws.s.approx') : ''} {formatDur(prod.duration.total)}
+        </span>
+      )}
+
+      {summary.blockedSteps > 0 && state.kind !== 'blocked' && (
+        <span className="ws-state-blocked">
+          {t('cos.blockedCount', { n: summary.blockedSteps })}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function formatDur(sec) {
+  const s = Math.max(0, Math.round(sec || 0));
+  const m = Math.floor(s / 60);
+  return m > 0 ? m + ':' + String(s % 60).padStart(2, '0') : s + 's';
 }
 
 /* Giriş paneli — plan yokken. Creator OS'un tek cümle girişi. */
