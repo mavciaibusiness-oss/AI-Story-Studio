@@ -81,6 +81,12 @@ export default function CreatorView({ userId }) {
   /* Creator Memory — açılışta okunur, arka planda öğrenir */
   const [memory, setMemory] = useState(null);
   const [memChanges, setMemChanges] = useState([]);
+  /* Öneriler hafızanın PARÇASI DEĞİL — türetilmiş veri.
+
+     İlk sürümde `memory.__proposals` olarak iliştiriyordum. Çalışıyordu
+     ama hafıza nesnesini kirletiyordu: bir yerde kaydedilirse
+     veritabanına türetilmiş veri yazılırdı. Ayrı durumda tutuluyor. */
+  const [proposals, setProposals] = useState([]);
   /* Workspace: bildirim kapatmaları ve widget düzeni.
 
      localStorage'da tutuluyor — kullanıcı tercihi, sunucuya taşımaya
@@ -135,8 +141,8 @@ export default function CreatorView({ userId }) {
           })
         }).then(x => x.json());
         if (!cancelled && r?.ok && r.memory) {
-          /* Öneriler bildirim üretiyor — hafızaya iliştiriyoruz */
-          setMemory({ ...r.memory, __proposals: r.proposals || [] });
+          setMemory(r.memory);
+          setProposals(r.proposals || []);
         }
       } catch { /* hafıza kapalı ya da ağ hatası — Creator OS çalışmaya devam */ }
     })();
@@ -245,7 +251,7 @@ export default function CreatorView({ userId }) {
   /* ---- Workspace verisi ---- */
   const personalization = memory ? personalizationSummary(memory) : null;
   const wsCtx = { memory, sessions, active, personalization };
-  const notifications = buildNotifications({ sessions, active, memory, dismissed });
+  const notifications = buildNotifications({ sessions, active, memory, proposals, dismissed });
   const state = workState({ sessions, active, storyboard });
   const summary = workSummary({ sessions, active });
   const built = buildLayout(wsCtx, layout);

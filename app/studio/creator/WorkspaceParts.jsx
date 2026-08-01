@@ -262,6 +262,105 @@ function noteText(x, t, L) {
 }
 
 
+export function Widget({ widget, data, t, locale, edit, first, last, onMove, onOpenSession }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+  if (!data) return null;
+
+  return (
+    <div className="ws-card">
+      <div className="ws-card-head">
+        <span className="ws-card-title">{L(widget.label)}</span>
+        {edit && (
+          <span className="ws-card-move">
+            <button className="cos-move-btn" disabled={first}
+              onClick={() => onMove(widget.key, 'up')}>↑</button>
+            <button className="cos-move-btn" disabled={last}
+              onClick={() => onMove(widget.key, 'down')}>↓</button>
+          </span>
+        )}
+      </div>
+      <WidgetBody kind={widget.key} data={data} t={t} L={L}
+        onOpenSession={onOpenSession} />
+    </div>
+  );
+}
+
+function WidgetBody({ kind, data, t, L, onOpenSession }) {
+  switch (kind) {
+    case 'memory':
+      return (
+        <div className="ws-card-body">
+          {data.genre && (
+            <p className="ws-fact">{t('ws.w.genre', {
+              genre: data.genre, p: Math.round((data.genreConfidence || 0) * 100) })}</p>
+          )}
+          {data.style && <p className="ws-fact">{t('ws.w.style', { style: data.style })}</p>}
+          <p className="hint">{t('ws.w.episodes', { n: data.episodes })}</p>
+          <Link href="/studio/hafiza" className="ws-card-link">{t('ws.w.memoryLink')}</Link>
+        </div>
+      );
+
+    case 'goals':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(g => <p className="ws-fact" key={g.id}>• {g.text}</p>)}
+          {data.open > 3 && <p className="hint">{t('ws.w.moreGoals', { n: data.open - 3 })}</p>}
+          <Link href="/studio/hafiza" className="ws-card-link">{t('ws.w.manage')}</Link>
+        </div>
+      );
+
+    case 'channels':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(c => (
+            <p className="ws-fact" key={c.id}>
+              • {c.name}{c.topic ? ' — ' + c.topic : ''}
+            </p>
+          ))}
+          <Link href="/studio/hafiza" className="ws-card-link">{t('ws.w.manage')}</Link>
+        </div>
+      );
+
+    case 'recent':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(s => (
+            <button className="ws-recent" key={s.id} onClick={() => onOpenSession(s.id)}>
+              <span className="ws-recent-title">{s.title}</span>
+              <span className="ws-recent-pct">{s.complete ? '✓' : s.percent + '%'}</span>
+            </button>
+          ))}
+        </div>
+      );
+
+    case 'progress':
+      return (
+        <div className="ws-card-body">
+          <div className="ws-card-big">{data.percent}%</div>
+          <p className="hint">
+            {t('ws.w.progress', { done: data.done, total: data.doable })}
+            {data.blocked > 0 && ' · ' + t('cos.blockedCount', { n: data.blocked })}
+          </p>
+        </div>
+      );
+
+    case 'habits':
+      return (
+        <div className="ws-card-body">
+          {data.reasons.map((r, i) => (
+            <p className="ws-fact" key={i}>
+              {t('mem.reason.' + r.kind, { keys: r.keys.join(', ') })}
+            </p>
+          ))}
+          <Link href="/studio/hafiza" className="ws-card-link">{t('ws.w.manage')}</Link>
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
+
 /*
   Hızlı başlangıç — kullanıcıya göre.
 
