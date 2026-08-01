@@ -156,6 +156,8 @@ const DICT = {
     'cos.ev.module.opened': 'modülü açıldı',
     'cos.ev.intent.changed': 'niyet değişti',
     'cos.ev.episode.attached': 'video bağlandı',
+    'mem.editInSettings': 'Ayarlar\'da değiştir',
+    'set.memoryLink': 'Creator OS senin hakkında ne biliyor? →',
     // --- Creator Memory (Sprint 5 / TASK-03) ---
     'nav.memory': 'Hafıza',
     'mem.title': 'Creator Hafızası',
@@ -954,6 +956,8 @@ const DICT = {
     'cos.ev.module.opened': 'module opened',
     'cos.ev.intent.changed': 'intent changed',
     'cos.ev.episode.attached': 'video attached',
+    'mem.editInSettings': 'Change in Settings',
+    'set.memoryLink': 'What does Creator OS know about you? →',
     // --- Creator Memory (Sprint 5 / TASK-03) ---
     'nav.memory': 'Memory',
     'mem.title': 'Creator Memory',

@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Link from 'next/link';
 import { useT, useI18n } from '@/lib/i18n';
+import { useStudio } from '@/lib/store';
 
 /*
   CREATOR MEMORY EKRANI — Sprint 5 / TASK-03, Adım 5.
@@ -265,10 +267,11 @@ function PersonalizationCard({ p, summary, t }) {
   );
 }
 
-const PROFILE_FIELDS = ['name', 'creatorType', 'level', 'primaryGoal', 'language'];
+const PROFILE_FIELDS = ['name', 'creatorType', 'level', 'primaryGoal'];
 
 function ProfileCard({ memory, t, busy, onSet }) {
   const [draft, setDraft] = useState({});
+  const { profile } = useStudio();
 
   return (
     <section className="card mem-section">
@@ -300,6 +303,18 @@ function ProfileCard({ memory, t, busy, onSet }) {
             </div>
           );
         })}
+
+        {/* ÜRETİM DİLİ — burada tutulmuyor, gösteriliyor.
+            Tek kaynak profiles.settings.prodLang; iki yerde tutmak
+            değerlerin ayrışmasına yol açardı. */}
+        <div className="mem-field">
+          <label className="mem-field-label">{t('mem.field.language')}</label>
+          <div className="mem-field-row">
+            <input className="input" value={profile?.settings?.prodLang || 'Türkçe'}
+              readOnly disabled />
+            <Link href="/studio/ayarlar" className="btn btn-mini">{t('mem.editInSettings')}</Link>
+          </div>
+        </div>
       </div>
     </section>
   );

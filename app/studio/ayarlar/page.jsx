@@ -76,6 +76,13 @@ export default function Ayarlar() {
             {LANGUAGES.map(l => <option key={l}>{l}</option>)}
           </select>
           <p className="hint">{t('set.defaultProdLangHint')}</p>
+          {/* Üretim dili tek kaynak: profiles.settings.prodLang.
+              Hafıza ekranı bunu gösteriyor ama tutmuyor. */}
+          <p className="hint">
+            <Link href="/studio/hafiza" className="set-mem-link">
+              {t('set.memoryLink')}
+            </Link>
+          </p>
         </div>
       </div>
 <p className="page-sub">Hesabın, planın ve verilerin.</p>
