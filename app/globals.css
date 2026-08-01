@@ -1922,3 +1922,128 @@ button { font-family: var(--body); }
   .ws-dir-next { flex-direction: column; align-items: stretch; }
   .ws-dir-title { font-size: 17px; }
 }
+
+
+/* ============================================================
+   SMART PROJECT MANAGER (Sprint 5 / TASK-05)
+   ============================================================ */
+
+/* Durum rozeti */
+.pj-badge { display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: .9px; text-transform: uppercase;
+  border-radius: 4px; padding: 2px 7px; margin-top: 5px;
+  background: var(--panel-2); color: var(--muted);
+  border: 1px solid var(--line); }
+.pj-badge-manual { color: var(--lamp); font-size: 13px; line-height: 0; }
+
+.pj-badge-idea       { color: var(--dim); }
+.pj-badge-planning   { color: var(--text-2); }
+.pj-badge-generating { color: var(--lamp); border-color: rgba(255,180,84,.3); }
+.pj-badge-editing    { color: var(--lamp); border-color: rgba(255,180,84,.3); }
+.pj-badge-ready      { color: var(--ok); border-color: rgba(127,209,143,.3); }
+.pj-badge-published  { color: var(--ok); border-color: rgba(127,209,143,.4);
+  background: rgba(127,209,143,.08); }
+.pj-badge-archived   { color: var(--dim); }
+.pj-badge-paused     { color: var(--muted); }
+.pj-badge-failed     { color: var(--err); border-color: rgba(239,139,139,.3); }
+
+/* Durum dağılımı şeridi */
+.pj-statusbar { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 16px; }
+.pj-count { font-family: var(--display); font-size: 10px; font-weight: 700;
+  letter-spacing: .8px; text-transform: uppercase; border-radius: 5px;
+  padding: 4px 9px; background: var(--panel); border: 1px solid var(--line); }
+.pj-count b { font-size: 12px; margin-left: 3px;
+  font-variant-numeric: tabular-nums; }
+
+/* Bölümler */
+.pj-section { padding: 15px 18px; margin-bottom: 16px; }
+
+.pj-row { display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--line); }
+.pj-row:first-of-type { border-top: none; }
+.pj-row-body { flex: 1; min-width: 0; }
+.pj-row-title { font-family: var(--display); font-size: 14.5px;
+  font-weight: 700; color: var(--cream); letter-spacing: -.2px; }
+.pj-row-meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  font-size: 12px; color: var(--muted); margin-top: 2px; }
+.pj-row-meta .pj-badge { margin-top: 0; }
+
+/* Öneriler */
+.pj-suggestions { border-left: 3px solid var(--lamp); }
+.pj-suggestion { display: flex; align-items: center; gap: 12px;
+  padding: 9px 0; border-top: 1px solid var(--line); }
+.pj-suggestion:first-of-type { border-top: none; }
+.pj-suggestion-body { flex: 1; min-width: 0; }
+.pj-suggestion-text { font-size: 14px; color: var(--cream); }
+.pj-suggestion-basis { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+
+/* Sürümler */
+.pj-version { display: flex; align-items: center; gap: 12px;
+  padding: 10px 0; border-top: 1px solid var(--line); }
+.pj-version:first-of-type { border-top: none; }
+.pj-version-body { flex: 1; min-width: 0; }
+.pj-version-head { display: flex; gap: 9px; align-items: baseline;
+  flex-wrap: wrap; }
+.pj-version-kind { font-family: var(--display); font-size: 13.5px;
+  font-weight: 700; color: var(--cream); }
+.pj-version-at { font-size: 11.5px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+.pj-version-detail { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.pj-version-no { font-size: 11.5px; color: var(--dim); }
+
+/* Geri alma onayı */
+.pj-confirm { margin-top: 14px; padding: 14px 16px; border-radius: 10px;
+  background: rgba(239,139,139,.05);
+  border: 1px solid rgba(239,139,139,.28); }
+.pj-confirm-title { font-family: var(--display); font-size: 15px;
+  font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+.pj-confirm-line { font-size: 13px; color: var(--text-2); margin: 0 0 8px; }
+.pj-confirm-safe { font-size: 13px; color: var(--ok); margin: 0 0 10px; }
+
+.pj-lost { margin-bottom: 12px; }
+.pj-lost-title { font-family: var(--display); font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--err);
+  margin-bottom: 5px; }
+.pj-lost-list { margin: 0 0 7px; padding-left: 18px; }
+.pj-lost-list li { font-size: 13px; color: var(--err); line-height: 1.6; }
+.pj-lost-warn { font-size: 12px; color: var(--lamp); margin: 0; }
+.pj-confirm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Karşılaştırma */
+.pj-compare-pick { display: flex; gap: 8px; flex-wrap: wrap;
+  align-items: center; margin: 10px 0 14px; }
+.pj-compare-pick .select { flex: 1 1 180px; min-width: 0; }
+.pj-compare-head { display: grid; grid-template-columns: 1fr 1fr;
+  gap: 12px; padding-left: 130px; margin-bottom: 6px; }
+.pj-compare-head span { font-family: var(--display); font-size: 12.5px;
+  font-weight: 700; color: var(--cream); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+
+.pj-table { width: 100%; border-collapse: collapse; }
+.pj-table td { padding: 7px 6px; border-top: 1px solid var(--line);
+  font-size: 13px; }
+.pj-metric { color: var(--muted); width: 130px; }
+.pj-val { color: var(--text-2); text-align: center;
+  font-variant-numeric: tabular-nums; }
+.pj-win { color: var(--ok); font-weight: 600; }
+.pj-note { color: var(--dim); font-size: 11.5px; text-align: right; }
+.pj-row-dim { opacity: .6; }
+
+/* Ölçülemeyenler */
+.pj-unavailable { margin-top: 14px; padding-top: 12px;
+  border-top: 1px solid var(--line); }
+.pj-unavailable-title { font-family: var(--display); font-size: 10px;
+  font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 6px; }
+.pj-unavailable-list { display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 6px; }
+.pj-unavailable-item { font-size: 11.5px; color: var(--dim);
+  background: var(--panel-2); border: 1px dashed var(--line);
+  border-radius: 5px; padding: 3px 8px; }
+
+@media (max-width: 620px) {
+  .pj-compare-head { padding-left: 0; }
+  .pj-metric { width: auto; }
+  .pj-row, .pj-suggestion, .pj-version { flex-wrap: wrap; }
+}

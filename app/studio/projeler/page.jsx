@@ -6,12 +6,17 @@ import { useStudio } from '@/lib/store';
 import { triggerDownload } from '@/lib/engine';
 import { normalize, progressOf, FORMATS, emptyStoryboard } from '@/lib/storyboard';
 import { useT } from '@/lib/i18n';
+/* TASK-05 Adım 4: akıllı proje katmanı. Mevcut sayfanın mantığına
+   dokunulmuyor — durum rozetleri, yarım kalanlar, sürümler ve
+   karşılaştırma ayrı bileşenlerde. */
+import { SmartPanel, VersionPanel, ComparePanel, StatusBadge } from './SmartPanels';
+import { deriveStatus } from '@/lib/project/model';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 
 export default function Projeler() {
-  const { episodeId, openEpisode, closeEpisode, storyboard, profile } = useStudio();
+  const { episodeId, openEpisode, closeEpisode, storyboard, setStoryboard, profile } = useStudio();
   const t = useT();
   const router = useRouter();
   const [projects, setProjects] = useState([]);
@@ -175,6 +180,12 @@ export default function Projeler() {
         </div>
       )}
 
+      {/* Akıllı katman: durum dağılımı, yarım kalanlar, öneriler */}
+      <SmartPanel onOpenEpisode={(id) => {
+        const ep = episodes.find(x => x.id === id);
+        if (ep) openEpisode(ep);
+      }} />
+
       {episodes.map(ep => {
         const sb = normalize(ep.storyboard);
         const isOpen = episodeId === ep.id;
@@ -191,6 +202,11 @@ export default function Projeler() {
                   {fmt} · {sb.genre} · {p.scenes} sahne
                   {p.scenes > 0 && ' · %' + p.pct + ' ' + t('proj.complete')}
                 </div>
+                {/* Durum rozeti — storyboard'dan türetiliyor */}
+                {(() => {
+                  const st = deriveStatus({ ...ep, storyboard: isOpen ? storyboard : sb });
+                  return <StatusBadge status={st.status} derived={st.derived} t={t} />;
+                })()}
               </div>
               {isOpen
                 ? <span className="chip on" style={{ fontSize: 12 }}>{t('proj.opened')}</span>
@@ -215,6 +231,20 @@ export default function Projeler() {
       {activeProject && episodes.length === 0 && (
         <div className="card"><p className="hint">{t('proj.noVideos')}</p></div>
       )}
+
+      {/* Açık bölümün sürüm geçmişi ve güvenli geri alma.
+          Yalnızca bir bölüm açıkken görünüyor — hangi bölümün
+          sürümlerine baktığı belirsiz kalmasın. */}
+      {episodeId && (
+        <VersionPanel episodeId={episodeId}
+          onRestored={(sb) => { if (sb) setStoryboard(sb); }} />
+      )}
+
+      {/* İki projeyi karşılaştır — en az iki bölüm varsa */}
+      <ComparePanel episodes={episodes.map(e => ({
+        id: e.id,
+        title: (e.storyboard?.title || e.title || '').trim() || e.title
+      }))} />
     </>
   );
 }
