@@ -1782,3 +1782,121 @@ button { font-family: var(--body); }
   .mem-fields, .mem-entity-form { grid-template-columns: 1fr; }
   .mem-learned-head .btn { margin-left: 0; }
 }
+
+
+/* ============================================================
+   AI WORKSPACE (Sprint 5 / TASK-04)
+   Director paneli · Active Workflow · Panolar · Hızlı başlangıç
+   ============================================================ */
+
+.ws { display: flex; flex-direction: column; gap: 16px; }
+
+/* --- 1. AI Director paneli (en üstte) --- */
+.ws-director { }
+.ws-dir { padding: 18px 20px; border-radius: 12px;
+  background: linear-gradient(135deg, rgba(255,180,84,.09), rgba(255,180,84,.03));
+  border: 1px solid rgba(255,180,84,.28); }
+.ws-dir-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--lamp); }
+.ws-dir-title { font-family: var(--display); font-size: 20px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.5px; margin: 3px 0 12px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-dir-next { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.ws-dir-next > div { flex: 1 1 240px; min-width: 0; }
+.ws-dir-step { font-family: var(--display); font-size: 18px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.3px; }
+.ws-dir-why { font-size: 13px; color: var(--lamp-soft); margin-top: 2px; }
+.ws-dir-done { font-size: 14px; color: var(--ok); }
+.ws-dir-stuck { font-size: 14px; color: var(--err); }
+.ws-dir-bar { height: 5px; border-radius: 3px; margin-top: 14px;
+  background: rgba(244,241,234,.08); overflow: hidden; }
+.ws-dir-bar > i { display: block; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--lamp-deep), var(--lamp));
+  transition: width .3s ease; }
+
+/* Giriş paneli (plan yokken) */
+.ws-entry { text-align: center; padding: 8px 0; }
+.ws-question { font-family: var(--display); font-size: 28px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.9px; line-height: 1.15; margin: 4px 0 18px; }
+.ws-input-wrap { max-width: 620px; margin: 0 auto; }
+
+/* --- Bildirimler --- */
+.ws-notes { display: flex; flex-direction: column; gap: 6px; }
+.ws-note { display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 9px 13px; border-radius: 9px; font-size: 13px;
+  background: var(--panel); border: 1px solid var(--line); }
+.ws-note-problem { border-color: rgba(239,139,139,.3);
+  background: rgba(239,139,139,.06); }
+.ws-note-action { border-color: rgba(255,180,84,.28);
+  background: rgba(255,180,84,.05); }
+.ws-note-text { flex: 1; min-width: 0; color: var(--text-2); }
+.ws-note-problem .ws-note-text { color: var(--err); }
+.ws-note-x { background: none; border: none; color: var(--muted);
+  font-size: 15px; line-height: 1; cursor: pointer; padding: 0 2px; }
+.ws-note-x:hover { color: var(--cream); }
+
+/* --- 2 + 3: iki sütun --- */
+.ws-body { display: grid; grid-template-columns: minmax(0,1fr) 300px; gap: 16px;
+  align-items: start; }
+.ws-main { min-width: 0; }
+.ws-side { display: flex; flex-direction: column; gap: 10px; }
+.ws-side-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; }
+.ws-side-title { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); }
+
+/* Boş durum */
+.ws-empty { padding: 20px; }
+.ws-empty-title { font-family: var(--display); font-size: 17px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.3px; margin-bottom: 8px; }
+
+/* --- Panolar --- */
+.ws-card { padding: 13px 15px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line); }
+.ws-card-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-bottom: 7px; }
+.ws-card-title { font-family: var(--display); font-size: 12px; font-weight: 700;
+  letter-spacing: .4px; color: var(--cream); }
+.ws-card-move { display: inline-flex; gap: 3px; }
+.ws-card-body { display: flex; flex-direction: column; gap: 4px; }
+.ws-card-big { font-family: var(--display); font-size: 28px; font-weight: 800;
+  color: var(--lamp); letter-spacing: -1px; line-height: 1;
+  font-variant-numeric: tabular-nums; }
+.ws-fact { font-size: 12.5px; color: var(--text-2); line-height: 1.5; margin: 0; }
+.ws-card-link { font-size: 12px; color: var(--lamp); text-decoration: none;
+  margin-top: 4px; }
+.ws-card-link:hover { text-decoration: underline; }
+
+.ws-recent { display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 5px 0; background: none; border: none; cursor: pointer;
+  text-align: left; border-top: 1px solid var(--line); }
+.ws-recent:first-of-type { border-top: none; }
+.ws-recent-title { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-recent:hover .ws-recent-title { color: var(--cream); }
+.ws-recent-pct { font-size: 11.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums; }
+
+/* --- 4. Hızlı başlangıç --- */
+.ws-quick { padding-top: 4px; }
+.ws-quick-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted);
+  margin-bottom: 9px; }
+.ws-quick-list { display: flex; flex-wrap: wrap; gap: 7px; }
+.ws-quick-item { font-size: 12.5px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 20px; padding: 7px 14px;
+  cursor: pointer; transition: border-color .18s, color .18s; }
+.ws-quick-item:hover { border-color: rgba(255,180,84,.4); color: var(--cream); }
+
+/* --- Responsive: dar ekranda tek sütun --- */
+@media (max-width: 900px) {
+  .ws-body { grid-template-columns: 1fr; }
+  /* Panolar altta: dar ekranda asıl iş yol haritası */
+  .ws-side { order: 2; }
+  .ws-main { order: 1; }
+}
+@media (max-width: 620px) {
+  .ws-question { font-size: 22px; }
+  .ws-dir-next { flex-direction: column; align-items: stretch; }
+  .ws-dir-title { font-size: 17px; }
+}

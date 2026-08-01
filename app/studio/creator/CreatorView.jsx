@@ -17,7 +17,10 @@ import { STATES, normalizeStatus, warningsFor } from '@/lib/creator/state';
 /* TASK-02 Adım 6: storyboard'dan otomatik ilerleme tespiti */
 import { autoCompletable, progressEvidence, isDetectable } from '@/lib/creator/detect';
 /* TASK-03 Adım 5: hafıza yol haritasını kişiselleştiriyor */
-import { personalizeWorkflow, intentHints } from '@/lib/creator/personalize';
+import { personalizeWorkflow, intentHints, personalizationSummary } from '@/lib/creator/personalize';
+/* TASK-04: Workspace katmanı — bildirimler ve widget düzeni */
+import { buildNotifications, dismiss, actionCount } from '@/lib/creator/notify';
+import { buildLayout, layoutKeys, widgetData, moveWidget } from '@/lib/creator/widgets';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -71,6 +74,31 @@ export default function CreatorView({ userId }) {
   /* Creator Memory — açılışta okunur, arka planda öğrenir */
   const [memory, setMemory] = useState(null);
   const [memChanges, setMemChanges] = useState([]);
+  /* Workspace: bildirim kapatmaları ve widget düzeni.
+
+     localStorage'da tutuluyor — kullanıcı tercihi, sunucuya taşımaya
+     değmez. Hafızadan farklı: hafıza cihazlar arası olmalı (öğrenilen
+     bilgi), widget sırası bu ekrana özgü bir görünüm ayarı. */
+  const [dismissed, setDismissed] = useState([]);
+  const [layout, setLayout] = useState(null);
+  const [editLayout, setEditLayout] = useState(false);
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('ws:' + (userId || 'anon'));
+      if (raw) {
+        const d = JSON.parse(raw);
+        setDismissed(Array.isArray(d.dismissed) ? d.dismissed : []);
+        setLayout(Array.isArray(d.layout) ? d.layout : null);
+      }
+    } catch { /* bozuk veri — varsayılana düş */ }
+  }, [userId]);
+
+  const saveWorkspace = useCallback((next) => {
+    try {
+      localStorage.setItem('ws:' + (userId || 'anon'), JSON.stringify(next));
+    } catch { /* kota dolu — görünüm ayarı, kritik değil */ }
+  }, [userId]);
 
   /* Oturumları yükle — yalnızca istemcide (localStorage) */
   useEffect(() => {
@@ -99,7 +127,10 @@ export default function CreatorView({ userId }) {
             sessions: sessions.map(s => ({ id: s.id, log: s.log || [] }))
           })
         }).then(x => x.json());
-        if (!cancelled && r?.ok && r.memory) setMemory(r.memory);
+        if (!cancelled && r?.ok && r.memory) {
+          /* Öneriler bildirim üretiyor — hafızaya iliştiriyoruz */
+          setMemory({ ...r.memory, __proposals: r.proposals || [] });
+        }
       } catch { /* hafıza kapalı ya da ağ hatası — Creator OS çalışmaya devam */ }
     })();
     return () => { cancelled = true; };
@@ -183,108 +214,420 @@ export default function CreatorView({ userId }) {
   const unfinished = unfinishedSessions(sessions).filter(s => s.id !== active?.id);
   const status = active ? workflowStatus(active) : null;
 
+  /* ---- Workspace verisi ---- */
+  const personalization = memory ? personalizationSummary(memory) : null;
+  const wsCtx = { memory, sessions, active, personalization };
+  const notifications = buildNotifications({ sessions, active, memory, dismissed });
+  const built = buildLayout(wsCtx, layout);
+  const badge = actionCount(notifications);
+
+  function closeNotification(id) {
+    const next = dismiss(dismissed, id);
+    setDismissed(next);
+    saveWorkspace({ dismissed: next, layout });
+  }
+
+  function moveCard(key, dir) {
+    const current = layout || layoutKeys(built);
+    const next = moveWidget(current, key, dir);
+    setLayout(next);
+    saveWorkspace({ dismissed, layout: next });
+  }
+
+  function resetCards() {
+    setLayout(null);
+    saveWorkspace({ dismissed, layout: null });
+  }
+
   return (
-    <>
-      {/* ---- Giriş ---- */}
-      {!active && (
-        <section className="cos-hero">
-          <div className="cos-greet">{t('cos.greet')}</div>
-          <h1 className="cos-question">{t('cos.question')}</h1>
+    <div className="ws">
+      {/* ============ 1. AI DIRECTOR PANELİ (en üstte) ============
+          Spec: "AI Director her zaman ilk görülen bölüm olacak."
 
-          <div className="cos-input-wrap">
-            <textarea
-              className="input cos-input"
-              rows={2}
-              placeholder={t('cos.placeholder')}
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); start(); }
-              }} />
+          Aktif plan varsa sonraki adımı, yoksa giriş sorusunu
+          gösteriyor. İkisi de aynı yeri kaplıyor — kullanıcı her
+          zaman aynı noktaya bakıyor. */}
+      <section className="ws-director">
+        {active ? (
+          <DirectorPanel session={active} status={status} t={t} locale={locale}
+            onOpen={() => {}} onBack={() => setActive(null)} />
+        ) : (
+          <EntryPanel t={t} locale={locale} text={text} setText={setText}
+            preview={preview} onStart={start} />
+        )}
+      </section>
 
-            {/* Canlı tahmin — sürpriz olmasın */}
-            {preview?.intent && (
-              <div className="cos-preview">
-                {t('cos.understood')}: <b>{preview.label?.[locale] || preview.label?.tr}</b>
-                {Object.keys(preview.modifiers || {}).length > 0 && (
-                  <span className="cos-preview-mods">
-                    {Object.values(preview.modifiers).map(k => {
-                      const d = intentByKey(k);
-                      return d ? (d.label[locale] || d.label.tr) : k;
-                    }).join(' · ')}
-                  </span>
-                )}
-                {preview.ambiguous && <span className="cos-preview-amb">{t('cos.notSure')}</span>}
-              </div>
-            )}
+      {/* Bildirimler — Director panelinin hemen altında, dikkat çeksin */}
+      {notifications.length > 0 && (
+        <NotificationBar items={notifications} t={t} locale={locale}
+          onClose={closeNotification}
+          onOpenSession={(id) => {
+            const s = sessions.find(x => x.id === id);
+            if (s) setActive(s);
+          }} />
+      )}
 
-            <button className="btn btn-primary cos-start"
-              onClick={() => start()} disabled={!text.trim()}>
-              {t('cos.start')}
+      {err && <span className="err">{err}</span>}
+      {note && <p className="cos-note">{note}</p>}
+
+      {/* ============ ORTA + SAĞ: iki sütun ============ */}
+      <div className="ws-body">
+        {/* ---- 2. ACTIVE WORKFLOW (orta) ---- */}
+        <main className="ws-main">
+          {active ? (
+            <WorkflowCard
+              session={active} status={status} t={t} locale={locale}
+              showAdd={showAdd} setShowAdd={setShowAdd}
+              storyboard={storyboard}
+              memChanges={memChanges}
+              onUpdate={update}
+              onBack={() => setActive(null)}
+              onDiscard={() => discard(active.id)} />
+          ) : (
+            <EmptyState unfinished={unfinished} t={t} locale={locale}
+              onResume={setActive} onStart={start} />
+          )}
+        </main>
+
+        {/* ---- 3. WIDGET'LAR (sağ) ---- */}
+        <aside className="ws-side">
+          <div className="ws-side-head">
+            <span className="ws-side-title">{t('ws.widgets')}</span>
+            <button className="btn btn-mini" onClick={() => setEditLayout(!editLayout)}>
+              {editLayout ? t('ws.done') : t('ws.arrange')}
             </button>
           </div>
 
-          {/* Hazır örnekler — boş ekran yok */}
-          <div className="cos-examples">
-            <div className="cos-examples-label">{t('cos.examples')}</div>
-            <div className="cos-examples-list">
-              {EXAMPLE_PROMPTS.map((e, i) => (
-                <button key={i} className="cos-example"
-                  onClick={() => start(e[locale] || e.tr)}>
-                  {e[locale] || e.tr}
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+          {built.widgets.length === 0 && (
+            <p className="hint">{t('ws.noWidgets')}</p>
+          )}
 
-      {/* ---- Yol haritası ---- */}
-      {active && (
-        <WorkflowCard
-          session={active} status={status} t={t} locale={locale}
-          storyboard={storyboard}
-          memChanges={memChanges}
-          showAdd={showAdd} setShowAdd={setShowAdd}
-          onUpdate={update}
-          onBack={() => setActive(null)}
-          onDiscard={() => discard(active.id)} />
-      )}
+          {built.widgets.map((w, i) => (
+            <Widget key={w.key} widget={w} data={widgetData(w.key, wsCtx)}
+              t={t} locale={locale} edit={editLayout}
+              first={i === 0} last={i === built.widgets.length - 1}
+              onMove={moveCard}
+              onOpenSession={(id) => {
+                const s = sessions.find(x => x.id === id);
+                if (s) setActive(s);
+              }} />
+          ))}
 
-      {/* ---- Devam edilecek oturumlar ---- */}
-      {loaded && unfinished.length > 0 && (
-        <section className="cos-resume">
-          <div className="entry-label">{t('cos.continue')}</div>
-          <div className="cos-resume-list">
-            {unfinished.slice(0, 4).map(s => {
-              const p = workflowStatus(s);
-              return (
-                <button className="cos-resume-item" key={s.id}
-                  onClick={() => setActive(s)}>
-                  <span className="cos-resume-title">{s.title}</span>
-                  <span className="cos-resume-meta">
-                    {p.done}/{p.doable} · {p.percent}%
-                  </span>
-                  <span className="cos-resume-bar">
-                    <i style={{ width: p.percent + '%' }} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
+          {editLayout && built.source === 'user' && (
+            <button className="btn btn-mini" onClick={resetCards}>
+              {t('ws.resetCards')}
+            </button>
+          )}
+        </aside>
+      </div>
 
-      {/* Depolama sınırı — kullanıcı başka cihazda bulamayınca şaşırmasın */}
+      {/* ============ 4. QUICK ACTIONS (alt) ============ */}
+      <QuickActions t={t} locale={locale} memory={memory} onStart={start} />
+
       {loaded && sessions.length > 0 && (
         <p className="hint cos-store-note">{t('cos.storageNote')}</p>
       )}
       {storeWarn && <div className="admin-alert">{t('cos.storeFull')}</div>}
-    </>
+    </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
+
+/*
+  AI Director paneli — aktif plan varken.
+
+  Spec: "Kullanıcının son isteğini gösterir... Son çalışmana devam
+  etmek ister misin?"
+
+  Sonraki adımı ve gerekçesini büyük gösteriyor; kullanıcı buraya
+  bakıp devam edebilmeli.
+*/
+function DirectorPanel({ session, status, t, locale }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+  const sg = status?.suggestion;
+
+  return (
+    <div className="ws-dir">
+      <div className="ws-dir-label">{t('ws.working')}</div>
+      <div className="ws-dir-title">{session.title}</div>
+
+      {sg?.task ? (
+        <div className="ws-dir-next">
+          <div>
+            <div className="ws-dir-step">{L(sg.task.label)}</div>
+            <div className="ws-dir-why">{reasonText(sg, t)}</div>
+          </div>
+          <Link href={sg.task.route} className="btn btn-primary">{t('cos.go')}</Link>
+        </div>
+      ) : status?.complete ? (
+        <div className="ws-dir-done">{t('cos.allDone')}</div>
+      ) : status?.stuck ? (
+        <div className="ws-dir-stuck">{t('cos.stuckTitle')}</div>
+      ) : null}
+
+      {status && status.doable > 0 && (
+        <div className="ws-dir-bar">
+          <i style={{ width: status.percent + '%' }} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* Giriş paneli — plan yokken. Creator OS'un tek cümle girişi. */
+function EntryPanel({ t, locale, text, setText, preview, onStart }) {
+  return (
+    <div className="ws-entry">
+      <div className="cos-greet">{t('cos.greet')}</div>
+      <h1 className="ws-question">{t('cos.question')}</h1>
+
+      <div className="ws-input-wrap">
+        <textarea className="input cos-input" rows={2}
+          placeholder={t('cos.placeholder')}
+          value={text} onChange={e => setText(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onStart(); }
+          }} />
+        <button className="btn btn-primary cos-start"
+          onClick={() => onStart()} disabled={!text.trim()}>
+          {t('cos.start')}
+        </button>
+      </div>
+
+      {preview?.intent && (
+        <div className="cos-preview">
+          {t('cos.understood')}: <b>{preview.label?.[locale] || preview.label?.tr}</b>
+          {preview.ambiguous && <span className="cos-preview-amb">{t('cos.notSure')}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/*
+  Boş durum — spec: "Workspace boş görünmeyecek. Her zaman bir durum
+  gösterecek."
+
+  Yarım plan varsa onu öneriyor, yoksa ne yapabileceğini anlatıyor.
+*/
+function EmptyState({ unfinished, t, locale, onResume }) {
+  if (unfinished.length > 0) {
+    return (
+      <div className="card ws-empty">
+        <div className="ws-empty-title">{t('ws.resumeTitle')}</div>
+        <div className="cos-resume-list">
+          {unfinished.slice(0, 4).map(s => {
+            const p = workflowStatus(s);
+            return (
+              <button className="cos-resume-item" key={s.id} onClick={() => onResume(s)}>
+                <span className="cos-resume-title">{s.title}</span>
+                <span className="cos-resume-meta">{p.done}/{p.doable} · {p.percent}%</span>
+                <span className="cos-resume-bar"><i style={{ width: p.percent + '%' }} /></span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card ws-empty">
+      <div className="ws-empty-title">{t('ws.firstTitle')}</div>
+      <p className="hint">{t('ws.firstHint')}</p>
+    </div>
+  );
+}
+
+/* Bildirim çubuğu */
+function NotificationBar({ items, t, locale, onClose, onOpenSession }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+
+  return (
+    <div className="ws-notes">
+      {items.map(x => (
+        <div className={'ws-note ws-note-' + x.level} key={x.id}>
+          <span className="ws-note-text">{noteText(x, t, L)}</span>
+          {x.kind === 'unfinished-plans' && (
+            <button className="btn btn-mini" onClick={() => onOpenSession(x.data.id)}>
+              {t('ws.open')}
+            </button>
+          )}
+          {x.kind === 'next-step' && x.data.route && (
+            <Link href={x.data.route} className="btn btn-mini">{t('cos.go')}</Link>
+          )}
+          {x.kind === 'memory-proposals' && (
+            <Link href="/studio/hafiza" className="btn btn-mini">{t('ws.review')}</Link>
+          )}
+          <button className="ws-note-x" onClick={() => onClose(x.id)}
+            title={t('ws.dismiss')}>×</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* Bildirim metni — anahtar + veriden kuruluyor (metin saklanmıyor) */
+function noteText(x, t, L) {
+  const d = x.data || {};
+  switch (x.kind) {
+    case 'stale-work':
+      return t('ws.n.stale', { n: d.count, tasks: (d.tasks || []).map(y => L(y.label)).join(', ') });
+    case 'stuck':
+      return t('ws.n.stuck', { n: d.blocked });
+    case 'plan-complete':
+      return t('ws.n.complete', { title: d.title });
+    case 'next-step':
+      return t('ws.n.next', { task: L(d.label) });
+    case 'unfinished-plans':
+      return t('ws.n.unfinished', { n: d.count, title: d.title });
+    case 'known-genre':
+      return t('ws.n.genre', { genre: d.genre, n: d.count, m: d.total });
+    case 'memory-proposals':
+      return t('ws.n.proposals', { n: d.count });
+    case 'no-plans':
+      return t('ws.n.empty');
+    default:
+      return x.kind;
+  }
+}
+
+/* Widget kartı — içerik türüne göre gövde */
+function Widget({ widget, data, t, locale, edit, first, last, onMove, onOpenSession }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+  if (!data) return null;
+
+  return (
+    <div className="ws-card">
+      <div className="ws-card-head">
+        <span className="ws-card-title">{L(widget.label)}</span>
+        {edit && (
+          <span className="ws-card-move">
+            <button className="cos-move-btn" disabled={first}
+              onClick={() => onMove(widget.key, 'up')}>↑</button>
+            <button className="cos-move-btn" disabled={last}
+              onClick={() => onMove(widget.key, 'down')}>↓</button>
+          </span>
+        )}
+      </div>
+      <WidgetBody kind={widget.key} data={data} t={t} L={L}
+        onOpenSession={onOpenSession} />
+    </div>
+  );
+}
+
+function WidgetBody({ kind, data, t, L, onOpenSession }) {
+  switch (kind) {
+    case 'memory':
+      return (
+        <div className="ws-card-body">
+          {data.genre && (
+            <p className="ws-fact">{t('ws.w.genre', {
+              genre: data.genre, p: Math.round((data.genreConfidence || 0) * 100) })}</p>
+          )}
+          {data.style && <p className="ws-fact">{t('ws.w.style', { style: data.style })}</p>}
+          <p className="hint">{t('ws.w.episodes', { n: data.episodes })}</p>
+          <Link href="/studio/hafiza" className="ws-card-link">{t('ws.w.memoryLink')}</Link>
+        </div>
+      );
+
+    case 'goals':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(g => <p className="ws-fact" key={g.id}>• {g.text}</p>)}
+          {data.open > 3 && <p className="hint">{t('ws.w.moreGoals', { n: data.open - 3 })}</p>}
+        </div>
+      );
+
+    case 'channels':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(c => (
+            <p className="ws-fact" key={c.id}>
+              • {c.name}{c.topic ? ' — ' + c.topic : ''}
+            </p>
+          ))}
+        </div>
+      );
+
+    case 'recent':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(s => (
+            <button className="ws-recent" key={s.id} onClick={() => onOpenSession(s.id)}>
+              <span className="ws-recent-title">{s.title}</span>
+              <span className="ws-recent-pct">{s.complete ? '✓' : s.percent + '%'}</span>
+            </button>
+          ))}
+        </div>
+      );
+
+    case 'progress':
+      return (
+        <div className="ws-card-body">
+          <div className="ws-card-big">{data.percent}%</div>
+          <p className="hint">
+            {t('ws.w.progress', { done: data.done, total: data.doable })}
+            {data.blocked > 0 && ' · ' + t('cos.blockedCount', { n: data.blocked })}
+          </p>
+        </div>
+      );
+
+    case 'habits':
+      return (
+        <div className="ws-card-body">
+          {data.reasons.map((r, i) => (
+            <p className="ws-fact" key={i}>
+              {t('mem.reason.' + r.kind, { keys: r.keys.join(', ') })}
+            </p>
+          ))}
+        </div>
+      );
+
+    default:
+      return null;
+  }
+}
+
+/*
+  Quick Actions — spec: "En sık kullanılan işlemler."
+
+  Kaynak: intent.js'teki EXAMPLE_PROMPTS. Yeni bir liste yazmıyoruz —
+  o örnekler zaten tanınan niyetlere karşılık geliyor ve test edilmiş
+  durumda.
+
+  Hafıza varsa kullanıcının baskın türü en başa alınıyor.
+*/
+function QuickActions({ t, locale, memory, onStart }) {
+  const items = [...EXAMPLE_PROMPTS];
+
+  /* Hafızadan gelen tür varsa ona uygun örnek öne alınıyor */
+  const genre = memory ? dominantGenre(memory) : null;
+  if (genre) {
+    const i = items.findIndex(x => (x.tr + x.en).toLowerCase().includes(genre.toLowerCase()));
+    if (i > 0) items.unshift(items.splice(i, 1)[0]);
+  }
+
+  return (
+    <section className="ws-quick">
+      <div className="ws-quick-label">{t('ws.quickActions')}</div>
+      <div className="ws-quick-list">
+        {items.map((e, i) => (
+          <button className="ws-quick-item" key={i} onClick={() => onStart(e[locale] || e.tr)}>
+            {e[locale] || e.tr}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function dominantGenre(memory) {
+  const g = memory?.content?.genres || {};
+  const top = Object.entries(g).sort((a, b) => b[1] - a[1])[0];
+  return top && top[1] >= 3 ? top[0] : null;
+}
 
 function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
                         storyboard, memChanges, onUpdate, onBack, onDiscard }) {
