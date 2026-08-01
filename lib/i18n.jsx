@@ -219,6 +219,11 @@ const DICT = {
     'pj.err.snapshot-missing': 'Bu sürümün kaydı yok.',
     'pj.err.scene-missing': 'O sahne artık yok.',
     // --- AI Workspace (Sprint 5 / TASK-04) ---
+    'ws.w.allProjects': 'Tüm videolar ({n}) →',
+    'ws.openFailed': 'Video açılamadı.',
+    'ws.n.unfinishedProject': '{title} {d} gündür bekliyor.',
+    'ws.n.unfinishedProjects': '{n} video bekliyor. En yenisi: {title} ({d} gün)',
+
     'ws.quickPersonal': 'sana göre',
     'quick.genrePlatform': '{platform} için yeni {genre} hazırla',
     'quick.genre': 'Yeni {genre} hazırla',
@@ -1130,6 +1135,11 @@ const DICT = {
     'pj.err.snapshot-missing': 'No saved copy for this version.',
     'pj.err.scene-missing': 'That scene no longer exists.',
     // --- AI Workspace (Sprint 5 / TASK-04) ---
+    'ws.w.allProjects': 'All videos ({n}) →',
+    'ws.openFailed': 'Could not open the video.',
+    'ws.n.unfinishedProject': '{title} has been idle for {d} days.',
+    'ws.n.unfinishedProjects': '{n} videos are waiting. Most recent: {title} ({d} days)',
+
     'ws.quickPersonal': 'for you',
     'quick.genrePlatform': 'Make a new {genre} for {platform}',
     'quick.genre': 'Make a new {genre}',

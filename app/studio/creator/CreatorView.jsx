@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import { useT, useI18n } from '@/lib/i18n';
 import { useStudio } from '@/lib/store';
 import { classifyIntent, EXAMPLE_PROMPTS, intentByKey } from '@/lib/creator/intent';
@@ -69,7 +71,7 @@ import { DirectorPanel, EntryPanel, StateBar, EmptyState,
 export default function CreatorView({ userId }) {
   const t = useT();
   const { locale } = useI18n();
-  const { episodeId, storyboard } = useStudio();
+  const { episodeId, storyboard, openEpisode } = useStudio();
 
   const [text, setText] = useState('');
   const [sessions, setSessions] = useState([]);
@@ -86,7 +88,14 @@ export default function CreatorView({ userId }) {
      İlk sürümde `memory.__proposals` olarak iliştiriyordum. Çalışıyordu
      ama hafıza nesnesini kirletiyordu: bir yerde kaydedilirse
      veritabanına türetilmiş veri yazılırdı. Ayrı durumda tutuluyor. */
+  const router = useRouter();
   const [proposals, setProposals] = useState([]);
+  /* TASK-05 Adım 5: gerçek projeler.
+
+     Workspace şimdiye kadar yalnızca Creator OS oturumlarını
+     biliyordu. Kullanıcı modüllerden doğrudan video ürettiyse o iş
+     burada görünmüyordu. Artık /api/project'ten okunuyor. */
+  const [projects, setProjects] = useState(null);
   /* Workspace: bildirim kapatmaları ve widget düzeni.
 
      localStorage'da tutuluyor — kullanıcı tercihi, sunucuya taşımaya
@@ -220,6 +229,30 @@ export default function CreatorView({ userId }) {
     return () => document.removeEventListener('visibilitychange', refresh);
   }, [userId]);
 
+  /* Proje verisi — açılışta bir kez.
+
+     Hata olursa sessizce geçiyoruz: Workspace projeler olmadan da
+     çalışmalı (oturum tabanlı akış bozulmasın). */
+  const loadProjects = useCallback(async () => {
+    try {
+      const r = await fetch('/api/project', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'list' })
+      }).then(x => x.json());
+      if (r?.ok) {
+        setProjects({
+          all: r.projects || [],
+          unfinished: r.unfinished || [],
+          suggestions: r.suggestions || [],
+          statuses: r.statuses || null,
+          total: (r.projects || []).length
+        });
+      }
+    } catch { /* proje verisi yok — Workspace çalışmaya devam eder */ }
+  }, []);
+
+  useEffect(() => { if (loaded) loadProjects(); }, [loaded, loadProjects]);
+
   /* OTOMATİK İLERLEME: storyboard'da kanıt varsa görevi işaretle.
 
      Yalnızca KESİN kanıtta (tüm sahnelerde) çalışıyor — kısmi iş
@@ -250,12 +283,46 @@ export default function CreatorView({ userId }) {
 
   /* ---- Workspace verisi ---- */
   const personalization = memory ? personalizationSummary(memory) : null;
-  const wsCtx = { memory, sessions, active, personalization };
-  const notifications = buildNotifications({ sessions, active, memory, proposals, dismissed });
+  const wsCtx = {
+    memory, sessions, active, personalization,
+    projects: projects?.all || [],
+    unfinished: projects?.unfinished || []
+  };
+  const notifications = buildNotifications({
+    sessions, active, memory, proposals, projects, dismissed });
   const state = workState({ sessions, active, storyboard });
   const summary = workSummary({ sessions, active });
   const built = buildLayout(wsCtx, layout);
   const badge = actionCount(notifications);
+
+  /*
+    Bir videoyu aç — Workspace'ten doğrudan.
+
+    Oturumu varsa onu açıyoruz: yol haritası da gelsin, kullanıcı
+    kaldığı yerden devam etsin.
+
+    Oturumu yoksa (kullanıcı modüllerden doğrudan üretmiş) bölümü
+    veritabanından çekip açıyoruz. İlk denemede `/studio/storyboard?ep=`
+    yazmıştım ama o sayfa böyle bir parametre okumuyor — çalışmayan
+    bir yönlendirme olurdu. Store'un openEpisode'u tam bölüm nesnesi
+    istiyor, o yüzden önce çekiyoruz.
+  */
+  async function openProject(episodeId) {
+    const s = sessions.find(x => x.episodeId === episodeId);
+    if (s) { setActive(s); return; }
+
+    setErr(null);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { data, error } = await supabase.from('episodes')
+        .select('id, title, storyboard').eq('id', episodeId).maybeSingle();
+      if (error || !data) { setErr(t('ws.openFailed')); return; }
+      await openEpisode(data);
+      router.push('/studio/storyboard');
+    } catch {
+      setErr(t('ws.openFailed'));
+    }
+  }
 
   function closeNotification(id) {
     const next = dismiss(dismissed, id);
@@ -304,7 +371,8 @@ export default function CreatorView({ userId }) {
           onOpenSession={(id) => {
             const s = sessions.find(x => x.id === id);
             if (s) setActive(s);
-          }} />
+          }}
+          onOpenProject={openProject} />
       )}
 
       {err && <span className="err">{err}</span>}
@@ -351,7 +419,8 @@ export default function CreatorView({ userId }) {
               onOpenSession={(id) => {
                 const s = sessions.find(x => x.id === id);
                 if (s) setActive(s);
-              }} />
+              }}
+              onOpenProject={openProject} />
           ))}
 
           {editLayout && built.source === 'user' && (

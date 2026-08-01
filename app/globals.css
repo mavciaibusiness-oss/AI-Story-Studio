@@ -1885,6 +1885,21 @@ button { font-family: var(--body); }
   margin-top: 4px; }
 .ws-card-link:hover { text-decoration: underline; }
 
+/* Videolar panosu */
+.ws-project { display: flex; flex-direction: column; gap: 2px; width: 100%;
+  padding: 6px 0; background: none; border: none; cursor: pointer;
+  text-align: left; border-top: 1px solid var(--line); }
+.ws-project:first-of-type { border-top: none; }
+.ws-project-main { display: flex; align-items: center; gap: 7px; min-width: 0; }
+.ws-project-title { flex: 1; min-width: 0; font-size: 12.5px; color: var(--text-2);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ws-project:hover .ws-project-title { color: var(--cream); }
+.ws-project-status { font-family: var(--display); font-size: 8.5px;
+  font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+  flex-shrink: 0; }
+.ws-project-meta { font-size: 11px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+
 .ws-recent { display: flex; align-items: center; gap: 8px; width: 100%;
   padding: 5px 0; background: none; border: none; cursor: pointer;
   text-align: left; border-top: 1px solid var(--line); }

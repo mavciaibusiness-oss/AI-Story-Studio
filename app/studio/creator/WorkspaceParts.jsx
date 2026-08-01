@@ -208,7 +208,7 @@ export function EmptyState({ unfinished, t, locale, onboarding, onResume }) {
 
 
 /* Bildirim çubuğu */
-export function NotificationBar({ items, t, locale, onClose, onOpenSession }) {
+export function NotificationBar({ items, t, locale, onClose, onOpenSession, onOpenProject }) {
   const L = (o) => o?.[locale] || o?.tr || '';
 
   return (
@@ -226,6 +226,14 @@ export function NotificationBar({ items, t, locale, onClose, onOpenSession }) {
           )}
           {x.kind === 'memory-proposals' && (
             <Link href="/studio/hafiza" className="btn btn-mini">{t('ws.review')}</Link>
+          )}
+          {/* Oturumu olmayan yarım video — doğrudan açılıyor */}
+          {x.kind === 'unfinished-project' && (
+            <button className="btn btn-mini"
+              onClick={() => onOpenProject?.(x.data.id)}>{t('ws.open')}</button>
+          )}
+          {x.kind === 'project-suggestion' && (
+            <Link href="/studio/projeler" className="btn btn-mini">{t('ws.review')}</Link>
           )}
           <button className="ws-note-x" onClick={() => onClose(x.id)}
             title={t('ws.dismiss')}>×</button>
@@ -254,6 +262,12 @@ function noteText(x, t, L) {
       return t('ws.n.genre', { genre: d.genre, n: d.count, m: d.total });
     case 'memory-proposals':
       return t('ws.n.proposals', { n: d.count });
+    case 'unfinished-project':
+      return d.count > 1
+        ? t('ws.n.unfinishedProjects', { n: d.count, title: d.title, d: d.idleDays })
+        : t('ws.n.unfinishedProject', { title: d.title, d: d.idleDays });
+    case 'project-suggestion':
+      return t('pj.sug.' + d.kind, { title: d.title });
     case 'no-plans':
       return t('ws.n.empty');
     default:
@@ -262,7 +276,8 @@ function noteText(x, t, L) {
 }
 
 
-export function Widget({ widget, data, t, locale, edit, first, last, onMove, onOpenSession }) {
+export function Widget({ widget, data, t, locale, edit, first, last, onMove,
+                         onOpenSession, onOpenProject }) {
   const L = (o) => o?.[locale] || o?.tr || '';
   if (!data) return null;
 
@@ -280,12 +295,12 @@ export function Widget({ widget, data, t, locale, edit, first, last, onMove, onO
         )}
       </div>
       <WidgetBody kind={widget.key} data={data} t={t} L={L}
-        onOpenSession={onOpenSession} />
+        onOpenSession={onOpenSession} onOpenProject={onOpenProject} />
     </div>
   );
 }
 
-function WidgetBody({ kind, data, t, L, onOpenSession }) {
+function WidgetBody({ kind, data, t, L, onOpenSession, onOpenProject }) {
   switch (kind) {
     case 'memory':
       return (
@@ -341,6 +356,35 @@ function WidgetBody({ kind, data, t, L, onOpenSession }) {
             {t('ws.w.progress', { done: data.done, total: data.doable })}
             {data.blocked > 0 && ' · ' + t('cos.blockedCount', { n: data.blocked })}
           </p>
+        </div>
+      );
+
+    /* Gerçek videolar — yarım kalanlar önce.
+       Durum rozeti ve ilerleme gösteriliyor; tıklayınca açılıyor. */
+    case 'projects':
+      return (
+        <div className="ws-card-body">
+          {data.items.map(p => (
+            <button className="ws-project" key={p.id}
+              onClick={() => onOpenProject?.(p.id)}>
+              <span className="ws-project-main">
+                <span className="ws-project-title">{p.title}</span>
+                <span className={'ws-project-status pj-badge-' + p.status}>
+                  {t('pj.status.' + p.status)}
+                </span>
+              </span>
+              <span className="ws-project-meta">
+                {p.idleDays != null
+                  ? t('pj.idle', { n: p.idleDays })
+                  : (p.ready != null ? '%' + p.ready : '')}
+              </span>
+            </button>
+          ))}
+          {data.total > data.items.length && (
+            <Link href="/studio/projeler" className="ws-card-link">
+              {t('ws.w.allProjects', { n: data.total })}
+            </Link>
+          )}
         </div>
       );
 
