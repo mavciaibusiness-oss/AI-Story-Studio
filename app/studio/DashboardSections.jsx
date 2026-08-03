@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useT, useI18n } from '@/lib/i18n';
 
@@ -37,8 +37,14 @@ export function DashboardSections({ sessions }) {
   /* Zaman aralığı — üretim bölümü için. 7 gün varsayılan; aylık
      bakmak isteyen 30'a geçebilir. */
   const [days, setDays] = useState(7);
+  /* İlk yükleme ile yenileme farklı: ilkinde iskelet, yenilemede
+     mevcut veri duruyor ve üstte ince bir belirteç çıkıyor.
+     Veriyi silip iskelet göstermek "kayboldu" hissi verir. */
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isRefresh) => {
+    if (isRefresh) setRefreshing(true);
     try {
       const r = await fetch('/api/dashboard', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -56,12 +62,59 @@ export function DashboardSections({ sessions }) {
       }).then(x => x.json());
       if (r.error) { setErr(r.error); return; }
       setData(r);
-    } catch (e) { setErr(String(e?.message || e)); }
+      setErr(null);
+    } catch (e) {
+      /* Yenilemede hata olursa MEVCUT VERİYİ KORUYORUZ — ağ hatası
+         yüzünden ekranı boşaltmak kullanıcıya bir şey kaybettiğini
+         düşündürür. İlk yüklemede gösterecek bir şey yok, hatayı
+         gösteriyoruz. */
+      if (!isRefresh) setErr(String(e?.message || e));
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   }, [sessions, days]);
 
   useEffect(() => { load(); }, [load]);
 
-  if (err) return <span className="err">{err}</span>;
+  /* SEKME DÖNÜŞÜNDE TAZELE.
+
+     Workspace'te (TASK-05 Adım 6) aynı deseni kurmuştuk: kullanıcı
+     başka sekmede iş yapıp döndüğünde eski veriyi görmesin.
+
+     `loadRef` bağımlılık döngüsünü önlüyor — `load` her render'da
+     yeniden oluşuyor, doğrudan bağlarsak dinleyici sürekli
+     yeniden kurulur. */
+  const loadRef = useRef(null);
+  useEffect(() => { loadRef.current = load; }, [load]);
+
+  useEffect(() => {
+    function onVisible() {
+      if (document.visibilityState !== 'visible') return;
+      loadRef.current?.(true);
+    }
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, []);
+
+  if (err && !data) return <span className="err">{err}</span>;
+
+  /* İlk yükleme — iskelet. Boş ekran "bir şey yok" der; iskelet
+     "geliyor" der. */
+  if (loading && !data) {
+    return (
+      <div className="db">
+        <h2 className="db-title">{t('db.title')}</h2>
+        {[0, 1, 2].map(i => (
+          <div className="card db-section db-skeleton" key={i}>
+            <div className="db-skel-line db-skel-title" />
+            <div className="db-skel-line" />
+            <div className="db-skel-line db-skel-short" />
+          </div>
+        ))}
+      </div>
+    );
+  }
   if (!data) return null;
 
   /* Bölüm sırası kişiye özel (spec: Dynamic Dashboard).
@@ -79,7 +132,10 @@ export function DashboardSections({ sessions }) {
 
   return (
     <div className="db">
-      <h2 className="db-title">{t('db.title')}</h2>
+      <div className="db-head-row">
+        <h2 className="db-title">{t('db.title')}</h2>
+        {refreshing && <span className="db-refreshing">{t('db.refreshing')}</span>}
+      </div>
       {(data.order || Object.keys(RENDER)).map(k => RENDER[k]?.() || null)}
 
       {/* Kapalı bölümler — neden kapalı olduğu yazıyor */}

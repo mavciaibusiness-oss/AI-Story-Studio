@@ -159,6 +159,7 @@ const DICT = {
     'mem.editInSettings': 'Ayarlar\'da değiştir',
     'set.memoryLink': 'Creator OS senin hakkında ne biliyor? →',
     // --- Creator Dashboard (Sprint 5 / TASK-06) ---
+    'db.refreshing': 'yenileniyor…',
     'db.dayRange': '{n} gün',
     'db.allProjects': 'Tüm projeler →',
     'db.upgrade': 'Planı yükselt →',
@@ -1131,6 +1132,7 @@ const DICT = {
     'mem.editInSettings': 'Change in Settings',
     'set.memoryLink': 'What does Creator OS know about you? →',
     // --- Creator Dashboard (Sprint 5 / TASK-06) ---
+    'db.refreshing': 'refreshing…',
     'db.dayRange': '{n} days',
     'db.allProjects': 'All projects →',
     'db.upgrade': 'Upgrade plan →',
