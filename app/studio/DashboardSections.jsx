@@ -117,6 +117,12 @@ export function DashboardSections({ sessions }) {
   }
   if (!data) return null;
 
+  /* Aksiyon gerektiren bulgular: riskler + sağlık sorunları.
+     Bilgi niteliğindekiler (öneri, gözlem) sayılmıyor. */
+  const actionCount =
+    (data.insights || []).filter(i => i.kind === 'risk').length +
+    (data.health?.issues || []).filter(i => i.severity === 'warn').length;
+
   /* Bölüm sırası kişiye özel (spec: Dynamic Dashboard).
      Bölümler KAYBOLMUYOR, yalnızca sıra değişiyor. */
   const RENDER = {
@@ -134,6 +140,24 @@ export function DashboardSections({ sessions }) {
     <div className="db">
       <div className="db-head-row">
         <h2 className="db-title">{t('db.title')}</h2>
+        {/*
+          BİLDİRİM ROZETİ (spec: Notifications).
+
+          Ayrı bir bildirim kutusu AÇMADIM. Workspace'te zaten bildirim
+          şeridi var (TASK-04); ikincisini Dashboard'a koymak aynı işi
+          iki yerde yapmak olurdu.
+
+          Bunun yerine Dashboard'un KENDİ bulguları sayılıyor: risk
+          uyarıları ve sağlık sorunları. Rozet "kaç şeye bakmam
+          gerekiyor" diyor; ayrıntı ilgili bölümde.
+
+          Bilgi niteliğindeki öngörüler SAYILMIYOR — rozet hep dolu
+          görünürse anlamını yitirir (TASK-04'te aynı kararı
+          vermiştik).
+        */}
+        {actionCount > 0 && (
+          <span className="db-badge">{t('db.needsAttention', { n: actionCount })}</span>
+        )}
         {refreshing && <span className="db-refreshing">{t('db.refreshing')}</span>}
       </div>
       {(data.order || Object.keys(RENDER)).map(k => RENDER[k]?.() || null)}
