@@ -2,6 +2,9 @@
 import Link from 'next/link';
 import LangSwitch from '@/lib/LangSwitch';
 import { useT } from '@/lib/i18n';
+/* Sprint-6 TASK-01: hero artık fikir kutusu. Eski marka iddiası
+   (Create. Animate. Publish.) yerini Creator OS mesajına bıraktı. */
+import HeroIdea from './HeroIdea';
 
 /*
   AÇILIŞ SAYFASI — pazarlama.
@@ -11,8 +14,11 @@ import { useT } from '@/lib/i18n';
   oturum açıldıktan sonra /studio içinde alınır.
 
   Tüm metinler i18n'den gelir — dil değiştirici sayfayı anında çevirir.
-  TEK İSTİSNA: hero iddiası "Create. Animate. Publish." Bu bir marka
-  imzası, çeviri konusu değil; hangi dil seçili olursa olsun İngilizce kalır.
+
+  Sprint-6 TASK-01: hero değişti. Eski marka iddiası ("Create.
+  Animate. Publish.") yerine fikir kutusu geldi — kullanıcı ilk
+  ekranda ne yapmak istediğini yazıyor ve Creator OS ne anladığını
+  ANINDA gösteriyor. Vaat yerine kanıt.
 */
 
 const PIPELINE = [
@@ -48,24 +54,7 @@ export default function Home() {
         </div>
       </nav>
 
-      <header className="hero">
-        {/* Marka imzası — çevrilmez. Üç kademe: üret → canlandır → yayınla.
-            Vurgu yalnızca ağırlık, renk ve boyutla; italik yok. */}
-        <h1 className="hero-claim">
-          <span className="hc-1">Create.</span>{' '}
-          <span className="hc-2">Animate.</span>{' '}
-          <span className="hc-3">Publish.</span>
-        </h1>
-        <p style={{ maxWidth: 580, margin: '0 auto 30px', color: 'var(--text-2)' }}>
-          {t('lp.heroSub')}
-        </p>
-
-        <div className="hero-cta">
-          <Link href="/giris" className="btn btn-primary btn-lg">{t('lp.ctaPrimary')}</Link>
-          <Link href="#nasil" className="btn btn-lg">{t('lp.ctaSecondary')}</Link>
-        </div>
-        <p className="hint" style={{ marginTop: 14 }}>{t('lp.ctaNote')}</p>
-      </header>
+      <HeroIdea />
 
       {/* ===== NASIL ÇALIŞIR ===== */}
       <h2 className="section-title" id="nasil">{t('lp.howTitle')}</h2>

@@ -1,9 +1,18 @@
 import './globals.css';
 import { I18nProvider } from '@/lib/i18n';
 
+/*
+  Sprint-6 TASK-01: başlık ve açıklama Creator OS mesajına geçti.
+
+  Hero değişince başlık eski kalmıştı — sekmede hâlâ "Create.
+  Animate. Publish." yazıyordu. Spec'in kendi ifadesiyle: "İnsanlara
+  AI Studio satmıyoruz, Creator OS satıyoruz." Sekme başlığı da o
+  mesajın parçası; arama sonuçlarında ve paylaşımlarda görünen ilk
+  şey.
+*/
 export const metadata = {
-  title: 'AI Content Studio — Create. Animate. Publish.',
-  description: 'AI video production studio for YouTube, Shorts, TikTok, Reels and documentaries: script, storyboard, prompt generation, collage splitting, voice-locked editing, subtitles and MP4 export.',
+  title: 'AI Content Studio — İçerik üreticisinin işletim sistemi',
+  description: 'Tek cümleyle fikrini söyle, Creator OS gerisini planlasın. Senaryo, storyboard, görsel, ses, altyazı ve yayın tek yerden yönetilir.',
 };
 
 export default function RootLayout({ children }) {

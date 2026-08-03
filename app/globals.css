@@ -2209,3 +2209,67 @@ button { font-family: var(--body); }
   .db-activity { flex-wrap: wrap; }
   .db-activity-when { width: auto; }
 }
+
+
+/* ============================================================
+   LANDING HERO — fikir kutusu (Sprint 6 / TASK-01)
+   ============================================================ */
+
+.lp-hero { text-align: center; padding: 56px 0 44px; }
+
+.lp-claim { font-family: var(--display); font-size: 46px; font-weight: 800;
+  color: var(--cream); letter-spacing: -1.6px; line-height: 1.1;
+  margin: 0 0 16px; }
+.lp-claim-2 { display: block; color: var(--lamp); }
+
+.lp-sub { max-width: 600px; margin: 0 auto 30px; color: var(--text-2);
+  font-size: 15.5px; line-height: 1.65; }
+
+/* Fikir kutusu */
+.lp-box { display: flex; gap: 9px; align-items: flex-end;
+  max-width: 660px; margin: 0 auto; }
+.lp-input { flex: 1; min-width: 0; resize: none;
+  font-family: inherit; font-size: 15.5px; line-height: 1.5;
+  color: var(--cream); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px;
+  padding: 14px 16px; transition: border-color .18s; }
+.lp-input::placeholder { color: var(--muted); }
+.lp-input:focus { outline: none; border-color: rgba(255,180,84,.5); }
+.lp-go { padding: 14px 26px; font-size: 15px; border-radius: 12px;
+  flex-shrink: 0; }
+
+/* Ne anladık */
+.lp-understood { display: inline-flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; justify-content: center;
+  margin-top: 14px; padding: 7px 14px; border-radius: 20px;
+  background: rgba(255,180,84,.08); border: 1px solid rgba(255,180,84,.24);
+  font-size: 13.5px; }
+.lp-understood-label { color: var(--muted); }
+.lp-understood-value { color: var(--lamp); font-weight: 600; }
+.lp-understood-amb { color: var(--muted); font-size: 12px; }
+
+/* Dönüşümlü örnekler */
+.lp-examples { display: flex; flex-wrap: wrap; gap: 8px;
+  justify-content: center; max-width: 700px; margin: 20px auto 0; }
+.lp-example { font-size: 13px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 20px; padding: 8px 16px;
+  cursor: pointer; transition: border-color .18s, color .18s, transform .18s;
+  animation: lp-fade .45s ease both; }
+.lp-example:hover { border-color: rgba(255,180,84,.45); color: var(--cream);
+  transform: translateY(-1px); }
+@keyframes lp-fade {
+  from { opacity: 0; transform: translateY(4px) }
+  to { opacity: 1; transform: none }
+}
+
+.lp-note { font-size: 13px; color: var(--muted); margin-top: 22px; }
+.lp-link { color: var(--lamp); text-decoration: none; }
+.lp-link:hover { text-decoration: underline; }
+
+@media (max-width: 700px) {
+  .lp-hero { padding: 38px 0 32px; }
+  .lp-claim { font-size: 31px; letter-spacing: -1px; }
+  .lp-sub { font-size: 14.5px; }
+  .lp-box { flex-direction: column; align-items: stretch; }
+  .lp-go { width: 100%; }
+}
