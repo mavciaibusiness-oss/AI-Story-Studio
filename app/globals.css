@@ -145,26 +145,7 @@ button { font-family: var(--body); }
   color: var(--lamp); margin-bottom: 18px; font-weight: 600; }
 
 /* İmza öğesi: film şeridi hattı */
-.filmstrip { margin: 64px auto 0; max-width: 900px; border: 1px solid var(--line); border-radius: 18px;
-  background: var(--ink-2); padding: 18px 14px; overflow-x: auto; }
-.filmstrip-track { display: flex; align-items: stretch; gap: 0; min-width: 720px; }
-.frame { flex: 1; border-top: 8px solid var(--line); border-bottom: 8px solid var(--line);
-  background:
-    linear-gradient(var(--line), var(--line)) left top / 100% 0 no-repeat,
-    repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 22px) top / 100% 4px no-repeat,
-    var(--panel);
-  padding: 22px 12px 18px; text-align: center; position: relative; border-right: 2px solid var(--ink); }
-.frame:first-child { border-radius: 10px 0 0 10px; }
-.frame:last-child { border-radius: 0 10px 10px 0; border-right: none; }
-.frame .f-icon { font-size: 24px; margin-bottom: 10px; }
-.frame .f-name { font-family: var(--display); font-size: 14px; font-weight: 700; letter-spacing: -.2px; }
-.frame .f-desc { font-size: 12.5px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
-.frame.lit { background: linear-gradient(180deg, rgba(255,180,84,.12), transparent 70%), var(--panel); }
-.frame.lit .f-name { color: var(--lamp); }
 
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-top: 28px; }
-.feature h3 { font-family: var(--display); font-size: 19px; font-weight: 600; margin-bottom: 8px; }
-.feature p { color: var(--muted); font-size: 14px; }
 
 .pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; max-width: 720px; margin: 26px auto 0; }
 .price-card { text-align: left; }
@@ -181,8 +162,6 @@ button { font-family: var(--body); }
 .landing-footer a { text-decoration: none; }
 .landing-footer a:hover { color: var(--lamp); }
 /* Landing kart tipografisi — başlıklar Manrope, gövde okunur */
-.feature h3 { font-family: var(--display); font-size: 18px; font-weight: 700; letter-spacing: -.4px; margin-bottom: 8px; }
-.feature p { font-size: 14.5px; color: var(--text-2); line-height: 1.6; }
 .price-card .amount { font-family: var(--display); font-weight: 800; letter-spacing: -1.4px; }
 .price-card li { font-size: 14.5px; color: var(--text-2); }
 
@@ -2281,4 +2260,64 @@ button { font-family: var(--body); }
   .lp-sub { font-size: 14.5px; }
   .lp-box { flex-direction: column; align-items: stretch; }
   .lp-go { width: 100%; }
+}
+
+
+/* ============================================================
+   LANDING BÖLÜMLERİ (Sprint 6 / TASK-01 Adım 4)
+   ============================================================ */
+
+/* Creator OS nedir */
+.lp-what { text-align: center; padding: 52px 0 44px;
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  margin: 40px 0; }
+.lp-what-title { font-family: var(--display); font-size: 40px; font-weight: 800;
+  color: var(--lamp); letter-spacing: -1.4px; margin: 0 0 8px; }
+.lp-what-lead { font-family: var(--display); font-size: 20px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.4px; margin: 0 0 16px; }
+.lp-what-body { max-width: 540px; margin: 0 auto; color: var(--text-2);
+  font-size: 15.5px; line-height: 1.7; }
+
+/* Beş adım */
+.lp-steps { list-style: none; margin: 0 auto; padding: 0; max-width: 620px; }
+.lp-step { display: flex; align-items: center; gap: 16px;
+  padding: 15px 0; position: relative; }
+.lp-step + .lp-step::before { content: ''; position: absolute;
+  left: 17px; top: -14px; height: 28px; width: 1px;
+  background: linear-gradient(180deg, transparent, rgba(255,180,84,.4)); }
+.lp-step-n { flex-shrink: 0; width: 35px; height: 35px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-family: var(--display); font-size: 15px; font-weight: 800;
+  color: var(--lamp); background: rgba(255,180,84,.1);
+  border: 1px solid rgba(255,180,84,.32); }
+.lp-step-text { font-size: 16px; color: var(--cream); line-height: 1.5; }
+.lp-steps-note { text-align: center; max-width: 500px; margin: 22px auto 0;
+  font-size: 14.5px; color: var(--lamp-soft); line-height: 1.6; }
+
+/* Yetenekler */
+.lp-caps-grid { display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px 22px; max-width: 800px; margin: 0 auto; }
+.lp-cap { display: flex; align-items: baseline; gap: 10px;
+  font-size: 14.5px; color: var(--text-2); padding: 5px 0; }
+.lp-cap-mark { color: var(--ok); font-size: 13px; flex-shrink: 0; }
+.lp-caps-note { text-align: center; margin-top: 20px;
+  font-size: 13.5px; color: var(--muted); }
+
+/* Günlük kullanım */
+.lp-daily-grid { display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 14px; max-width: 760px; margin: 0 auto; }
+.lp-daily-card { padding: 18px 20px; }
+.lp-daily-when { font-family: var(--display); font-size: 10px; font-weight: 700;
+  letter-spacing: 1.2px; text-transform: uppercase; color: var(--lamp);
+  margin-bottom: 7px; }
+.lp-daily-what { font-size: 14.5px; color: var(--text-2); line-height: 1.6; }
+
+@media (max-width: 700px) {
+  .lp-what { padding: 38px 0 32px; margin: 28px 0; }
+  .lp-what-title { font-size: 30px; }
+  .lp-what-lead { font-size: 17px; }
+  .lp-step-text { font-size: 14.5px; }
+  .lp-caps-grid { grid-template-columns: 1fr; }
 }

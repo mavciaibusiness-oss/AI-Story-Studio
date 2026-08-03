@@ -5,6 +5,9 @@ import { useT } from '@/lib/i18n';
 /* Sprint-6 TASK-01: hero artık fikir kutusu. Eski marka iddiası
    (Create. Animate. Publish.) yerini Creator OS mesajına bıraktı. */
 import HeroIdea from './HeroIdea';
+/* Sprint-6 TASK-01 Adım 4: Creator OS anlatımı. Eski "nasıl
+   çalışır" modül adlarını sayıyordu; artık beş adımlık akış. */
+import { WhatIsCreatorOS, HowItWorks, Capabilities, DailyUse } from './LandingSections';
 
 /*
   AÇILIŞ SAYFASI — pazarlama.
@@ -20,21 +23,6 @@ import HeroIdea from './HeroIdea';
   ekranda ne yapmak istediğini yazıyor ve Creator OS ne anladığını
   ANINDA gösteriyor. Vaat yerine kanıt.
 */
-
-const PIPELINE = [
-  { icon: '✍️', n: 'lp.p1n', d: 'lp.p1d' },
-  { icon: '▦',  n: 'lp.p2n', d: 'lp.p2d' },
-  { icon: '⌘',  n: 'lp.p3n', d: 'lp.p3d' },
-  { icon: '▣',  n: 'lp.p4n', d: 'lp.p4d' },
-  { icon: '♪',  n: 'lp.p5n', d: 'lp.p5d' },
-  { icon: '🎬', n: 'lp.p6n', d: 'lp.p6d' },
-  { icon: '↗',  n: 'lp.p7n', d: 'lp.p7d' },
-];
-
-const FEATURES = [
-  ['lp.f1t', 'lp.f1d'], ['lp.f2t', 'lp.f2d'], ['lp.f3t', 'lp.f3d'],
-  ['lp.f4t', 'lp.f4d'], ['lp.f5t', 'lp.f5d'], ['lp.f6t', 'lp.f6d'],
-];
 
 const FREE_FEATS = ['plan.f1', 'plan.f2', 'plan.f3', 'plan.f4', 'plan.f5'];
 const PRO_FEATS  = ['plan.p1', 'plan.p2', 'plan.p3', 'plan.p4', 'plan.p5'];
@@ -56,30 +44,13 @@ export default function Home() {
 
       <HeroIdea />
 
-      {/* ===== NASIL ÇALIŞIR ===== */}
-      <h2 className="section-title" id="nasil">{t('lp.howTitle')}</h2>
-      <div className="filmstrip" aria-label={t('lp.pipelineAria')}>
-        <div className="filmstrip-track">
-          {PIPELINE.map((f, i) => (
-            <div key={f.n} className={'frame' + (i === 5 ? ' lit' : '')}>
-              <div className="f-icon" aria-hidden="true">{f.icon}</div>
-              <div className="f-name">{t(f.n)}</div>
-              <div className="f-desc">{t(f.d)}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+      <WhatIsCreatorOS />
 
-      {/* ===== NE YAPAR ===== */}
-      <h2 className="section-title">{t('lp.whatTitle')}</h2>
-      <div className="features">
-        {FEATURES.map(([title, desc]) => (
-          <div className="card feature" key={title}>
-            <h3>{t(title)}</h3>
-            <p>{t(desc)}</p>
-          </div>
-        ))}
-      </div>
+      <HowItWorks />
+
+      <Capabilities />
+
+      <DailyUse />
 
       {/* ===== FİYATLANDIRMA ===== */}
       <h2 className="section-title" id="fiyat">{t('lp.priceTitle')}</h2>
