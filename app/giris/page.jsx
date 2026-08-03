@@ -12,6 +12,24 @@ function GirisFormu() {
   const params = useSearchParams();
   const next = params.get('next') || '/studio';
 
+  /*
+    Sprint-6 TASK-01 Adım 3: landing'de yazılan fikri göster.
+
+    Kullanıcı ana sayfada bir cümle yazdı ve buraya yönlendirildi.
+    O cümleyi burada göstermek iki işe yarıyor:
+
+      • Neden giriş yaptığını hatırlatıyor
+      • Fikrinin KAYBOLMADIĞINI gösteriyor — kayboldu sanıp
+        vazgeçmesin
+
+    Yalnızca gösteriyoruz; kullanmak Creator OS'un işi.
+  */
+  const [pending, setPending] = useState('');
+  useEffect(() => {
+    try { setPending(sessionStorage.getItem('cos:pending') || ''); }
+    catch { /* gizli mod */ }
+  }, []);
+
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [mode, setMode] = useState('login');
@@ -111,9 +129,17 @@ function GirisFormu() {
         <h1 style={{ fontFamily: 'var(--display)', fontSize: 24, marginBottom: 4 }}>
           {mode === 'login' ? t('auth.welcome') : t('auth.signup')}
         </h1>
-        <p className="hint" style={{ marginBottom: 22 }}>
+        <p className="hint" style={{ marginBottom: pending ? 14 : 22 }}>
           {mode === 'login' ? t('auth.welcomeSub') : t('auth.signupSub')}
         </p>
+
+        {/* Landing'de yazdığı fikir — kaybolmadığını görsün */}
+        {pending && (
+          <div className="auth-pending">
+            <span className="auth-pending-label">{t('auth.pendingLabel')}</span>
+            <span className="auth-pending-text">{pending}</span>
+          </div>
+        )}
 
         <form onSubmit={submit}>
           <div className="field">

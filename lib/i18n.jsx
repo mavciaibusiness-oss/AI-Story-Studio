@@ -159,6 +159,7 @@ const DICT = {
     'mem.editInSettings': 'Ayarlar\'da değiştir',
     'set.memoryLink': 'Creator OS senin hakkında ne biliyor? →',
     // --- Landing hero (Sprint 6 / TASK-01) ---
+    'auth.pendingLabel': 'Bunu yapmak istiyordun:',
     'lp.claim1': 'Tek cümleyle fikrini söyle.',
     'lp.claim2': 'Creator OS gerisini planlasın.',
     'lp.sub': 'Artık onlarca araç arasında geçiş yapmana gerek yok. Fikrini, planını, görsellerini, videolarını ve yayınını tek yerden yönet.',
@@ -1141,6 +1142,7 @@ const DICT = {
     'mem.editInSettings': 'Change in Settings',
     'set.memoryLink': 'What does Creator OS know about you? →',
     // --- Landing hero (Sprint 6 / TASK-01) ---
+    'auth.pendingLabel': 'You wanted to make this:',
     'lp.claim1': 'Say your idea in one sentence.',
     'lp.claim2': 'Let Creator OS plan the rest.',
     'lp.sub': 'No more switching between a dozen tools. Manage your idea, your plan, your visuals, your videos and your publishing from one place.',

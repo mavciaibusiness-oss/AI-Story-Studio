@@ -96,6 +96,10 @@ export default function CreatorView({ userId }) {
      biliyordu. Kullanıcı modüllerden doğrudan video ürettiyse o iş
      burada görünmüyordu. Artık /api/project'ten okunuyor. */
   const [projects, setProjects] = useState(null);
+  /* Hafıza denendi mi — başarılı ya da başarısız. Bekleyen fikri
+     başlatmadan önce beklenmesi gereken şey bu; `memory`'nin
+     dolması değil (kapalıysa hiç dolmaz). */
+  const [memoryTried, setMemoryTried] = useState(false);
   /* Workspace: bildirim kapatmaları ve widget düzeni.
 
      localStorage'da tutuluyor — kullanıcı tercihi, sunucuya taşımaya
@@ -153,7 +157,11 @@ export default function CreatorView({ userId }) {
           setMemory(r.memory);
           setProposals(r.proposals || []);
         }
-      } catch { /* hafıza kapalı ya da ağ hatası — Creator OS çalışmaya devam */ }
+      } catch {
+        /* hafıza kapalı ya da ağ hatası — Creator OS çalışmaya devam */
+      } finally {
+        if (!cancelled) setMemoryTried(true);
+      }
     })();
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,6 +271,39 @@ export default function CreatorView({ userId }) {
 
   useEffect(() => { loadProjectsRef.current = loadProjects; }, [loadProjects]);
   useEffect(() => { if (loaded) loadProjects(); }, [loaded, loadProjects]);
+
+  /*
+    ---------- LANDING'DEN GELEN FİKİR ----------
+
+    Sprint-6 TASK-01 Adım 3.
+
+    Kullanıcı ana sayfada bir cümle yazıp giriş yaptı. O cümle
+    sessionStorage'da bekliyor (`cos:pending`). Burada okuyup
+    doğrudan yol haritası kuruyoruz — kullanıcı aynı şeyi iki kez
+    yazmıyor.
+
+    ZAMANLAMA ÖNEMLİ: hafıza yüklenmeden başlatırsak
+    kişiselleştirme uygulanmaz ve kullanıcı alışkanlıklarına göre
+    ayarlanmamış bir plan görür. `memory` state'i beklemek yerine
+    `memoryTried` bayrağı kullanıyoruz: hafıza kapalıysa (migration
+    yok) `memory` hiç dolmaz ve fikir sonsuza kadar beklerdi.
+
+    TEK SEFERLİK: okur okumaz siliniyor. Kalırsa kullanıcı her
+    Workspace açılışında aynı planı yeniden kurardı.
+  */
+  const pendingDone = useRef(false);
+  useEffect(() => {
+    if (!loaded || !memoryTried || pendingDone.current) return;
+    let value = null;
+    try {
+      value = sessionStorage.getItem('cos:pending');
+      if (value) sessionStorage.removeItem('cos:pending');
+    } catch { /* gizli mod / kota — fikir kaybolur, akış bozulmaz */ }
+    pendingDone.current = true;
+    const v = String(value || '').trim();
+    if (v) start(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, memoryTried]);
 
   /* OTOMATİK İLERLEME: storyboard'da kanıt varsa görevi işaretle.
 

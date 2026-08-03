@@ -2211,6 +2211,15 @@ button { font-family: var(--body); }
 }
 
 
+/* Girişte bekleyen fikir */
+.auth-pending { padding: 10px 13px; border-radius: 9px; margin-bottom: 20px;
+  background: rgba(255,180,84,.07); border: 1px solid rgba(255,180,84,.22); }
+.auth-pending-label { display: block; font-family: var(--display);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--lamp); margin-bottom: 3px; }
+.auth-pending-text { font-size: 13.5px; color: var(--text-2);
+  line-height: 1.5; }
+
 /* ============================================================
    LANDING HERO — fikir kutusu (Sprint 6 / TASK-01)
    ============================================================ */
