@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
@@ -221,6 +221,12 @@ export default function CreatorView({ userId }) {
       if (document.visibilityState !== 'visible') return;
       const list = loadSessions(userId).map(s => markSuggested(upgradeSession(s)));
       setSessions(list);
+      /* TASK-05 Adım 6: projeler de tazeleniyor.
+
+         Adım 5'te yalnızca oturumlar yenileniyordu; kullanıcı modülde
+         video üretip Workspace'e dönünce "Videoların" panosu eski
+         veriyi gösteriyordu. */
+      loadProjectsRef.current?.();
       /* Açık oturum varsa güncel hâlini al — kullanıcı modülde
          bir adımı bitirmiş olabilir (dönüş şeridi yazmış olur). */
       setActive(prev => prev ? (list.find(x => x.id === prev.id) || prev) : prev);
@@ -229,7 +235,11 @@ export default function CreatorView({ userId }) {
     return () => document.removeEventListener('visibilitychange', refresh);
   }, [userId]);
 
-  /* Proje verisi — açılışta bir kez.
+  /* Tazeleme efekti loadProjects'ten ÖNCE tanımlı; ref ile
+     bağlıyoruz ki bağımlılık döngüsü olmasın. */
+  const loadProjectsRef = useRef(null);
+
+  /* Proje verisi — açılışta ve sekme geri geldiğinde.
 
      Hata olursa sessizce geçiyoruz: Workspace projeler olmadan da
      çalışmalı (oturum tabanlı akış bozulmasın). */
@@ -251,6 +261,7 @@ export default function CreatorView({ userId }) {
     } catch { /* proje verisi yok — Workspace çalışmaya devam eder */ }
   }, []);
 
+  useEffect(() => { loadProjectsRef.current = loadProjects; }, [loadProjects]);
   useEffect(() => { if (loaded) loadProjects(); }, [loaded, loadProjects]);
 
   /* OTOMATİK İLERLEME: storyboard'da kanıt varsa görevi işaretle.
