@@ -29,5 +29,5 @@ export default async function Dashboard() {
     credits: profile?.credits ?? 0
   };
 
-  return <DashboardView counts={counts} eps={eps} />;
+  return <DashboardView counts={counts} eps={eps} userId={user.id} />;
 }

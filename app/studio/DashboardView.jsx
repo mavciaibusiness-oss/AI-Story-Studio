@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useT, useI18n } from '@/lib/i18n';
 import { progressOf, FORMATS, emptyStoryboard } from '@/lib/storyboard';
@@ -8,6 +8,10 @@ import { useStudio } from '@/lib/store';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import PathChoice from '@/lib/PathChoice';
 import Link from 'next/link';
+/* TASK-06 Adım 3: rapor bölümleri. Mevcut Dashboard içeriğine
+   dokunulmuyor — bu katman altına ekleniyor. */
+import { DashboardSections } from './DashboardSections';
+import { loadSessions } from '@/lib/creator/session';
 
 /*
   Studio ana ekranı — iki durumlu:
@@ -20,7 +24,14 @@ import Link from 'next/link';
   pazarlama içindir ve seçim barındırmaz. Kartların kendisi lib/PathChoice.jsx
   içinde tek kaynaktan gelir.
 */
-export default function DashboardView({ counts, eps }) {
+export default function DashboardView({ counts, eps, userId }) {
+  /* Creator OS oturumları localStorage'da — sunucu göremiyor.
+     Dashboard'ın plan sayıları için gerekli. */
+  const [sessions, setSessions] = useState([]);
+  useEffect(() => {
+    try { setSessions(loadSessions(userId)); } catch { /* bozuk veri */ }
+  }, [userId]);
+
   const t = useT();
   const { locale } = useI18n();
   const { episodeId, openEpisode, profile } = useStudio();
@@ -241,6 +252,10 @@ export default function DashboardView({ counts, eps }) {
           );
         })}
       </div>
+
+      {/* Rapor katmanı — Dashboard'ın asıl işi (kullanıcının kararı:
+          /studio raporlama, /studio/creator çalışma merkezi) */}
+      <DashboardSections sessions={sessions} />
     </>
   );
 }

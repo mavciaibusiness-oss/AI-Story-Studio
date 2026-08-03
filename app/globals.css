@@ -2062,3 +2062,103 @@ button { font-family: var(--body); }
   .pj-metric { width: auto; }
   .pj-row, .pj-suggestion, .pj-version { flex-wrap: wrap; }
 }
+
+
+/* ============================================================
+   CREATOR DASHBOARD (Sprint 5 / TASK-06)
+   ============================================================ */
+
+.db { margin-top: 32px; }
+.db-title { font-family: var(--display); font-size: 20px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.5px; margin: 0 0 16px; }
+.db-section { padding: 16px 18px; margin-bottom: 14px; }
+.db-section-warn { border-left: 3px solid var(--lamp); }
+
+/* Sayaçlar */
+.db-stats { display: flex; flex-wrap: wrap; gap: 22px; margin: 10px 0 8px; }
+.db-credit-row { display: flex; gap: 30px; margin: 10px 0 14px; }
+.db-stat { min-width: 60px; }
+.db-num { font-family: var(--display); font-size: 26px; font-weight: 800;
+  color: var(--cream); letter-spacing: -1px; line-height: 1;
+  font-variant-numeric: tabular-nums; }
+.db-num-ok { color: var(--ok); }
+.db-num-lamp { color: var(--lamp); }
+.db-lbl { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  margin-top: 3px; }
+
+/* Üretim tablosu */
+.db-table { width: 100%; border-collapse: collapse; margin: 10px 0 8px; }
+.db-table th { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
+  text-align: right; padding: 0 6px 6px; }
+.db-table th:first-child { text-align: left; }
+.db-table td { padding: 6px; border-top: 1px solid var(--line); font-size: 13.5px; }
+.db-cat { color: var(--text-2); }
+.db-cell { text-align: right; color: var(--text-2);
+  font-variant-numeric: tabular-nums; width: 90px; }
+.db-cell-done { color: var(--ok); }
+.db-avg { font-size: 12.5px; color: var(--lamp); margin: 8px 0 0; }
+
+/* Öngörüler */
+.db-insight { display: flex; align-items: center; gap: 12px;
+  padding: 9px 0; border-top: 1px solid var(--line); }
+.db-insight:first-of-type { border-top: none; }
+.db-insight-text { flex: 1; min-width: 0; font-size: 13.5px; color: var(--text-2); }
+.db-insight-risk .db-insight-text { color: var(--err); }
+.db-insight-memory .db-insight-text { color: var(--lamp-soft); }
+
+/* Hedefler */
+.db-goal { display: flex; align-items: center; gap: 9px;
+  padding: 6px 0; border-top: 1px solid var(--line); }
+.db-goal:first-of-type { border-top: none; }
+.db-goal-mark { color: var(--muted); font-size: 13px; width: 14px; }
+.db-goal-done { color: var(--ok); }
+.db-goal-text { flex: 1; min-width: 0; font-size: 13.5px; color: var(--text-2); }
+.db-goal-target { font-size: 11.5px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+
+/* Etkinlik */
+.db-activity { display: flex; gap: 10px; align-items: baseline;
+  padding: 6px 0; border-top: 1px solid var(--line); font-size: 12.5px; }
+.db-activity:first-of-type { border-top: none; }
+.db-activity-when { color: var(--dim); width: 78px; flex-shrink: 0;
+  font-variant-numeric: tabular-nums; }
+.db-activity-what { color: var(--muted); flex-shrink: 0; }
+.db-activity-title { color: var(--text-2); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; }
+
+/* Sağlık */
+.db-ok { font-size: 13.5px; color: var(--ok); margin: 0; }
+.db-issue { display: flex; align-items: center; gap: 12px;
+  padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+.db-issue:first-of-type { border-top: none; }
+.db-issue span { flex: 1; min-width: 0; }
+.db-issue-warn span { color: var(--lamp); }
+.db-issue-info span { color: var(--text-2); }
+
+/* Ölçülmeyenler */
+.db-notmeasured { display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  padding-top: 12px; border-top: 1px solid var(--line); }
+.db-notmeasured-title { font-family: var(--display); font-size: 9.5px;
+  font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); }
+.db-notmeasured-item { font-size: 11.5px; color: var(--dim);
+  background: var(--panel-2); border: 1px dashed var(--line);
+  border-radius: 5px; padding: 3px 8px; }
+
+/* Kapalı bölümler */
+.db-off { padding: 13px 16px; border-radius: 10px;
+  background: rgba(255,180,84,.05); border: 1px solid rgba(255,180,84,.22); }
+.db-off-title { font-family: var(--display); font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--lamp);
+  margin-bottom: 6px; }
+.db-off-list { margin: 0; padding-left: 18px; }
+.db-off-list li { font-size: 12.5px; color: var(--text-2); line-height: 1.6; }
+
+@media (max-width: 620px) {
+  .db-stats { gap: 16px; }
+  .db-num { font-size: 22px; }
+  .db-activity { flex-wrap: wrap; }
+  .db-activity-when { width: auto; }
+}
