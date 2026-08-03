@@ -159,6 +159,12 @@ const DICT = {
     'mem.editInSettings': 'Ayarlar\'da değiştir',
     'set.memoryLink': 'Creator OS senin hakkında ne biliyor? →',
     // --- Creator Dashboard (Sprint 5 / TASK-06) ---
+    'db.dayRange': '{n} gün',
+    'db.allProjects': 'Tüm projeler →',
+    'db.upgrade': 'Planı yükselt →',
+    'db.startProducing': 'Üretmeye başla',
+    'db.noInsightsWhy': 'Henüz öne çıkan bir şey yok. Üretmeye devam ettikçe öneriler burada görünecek.',
+
     'db.title': 'Durum raporu',
     'db.summary': 'Genel durum',
     'db.done': 'Tamamlanan', 'db.active': 'Devam eden',
@@ -1125,6 +1131,12 @@ const DICT = {
     'mem.editInSettings': 'Change in Settings',
     'set.memoryLink': 'What does Creator OS know about you? →',
     // --- Creator Dashboard (Sprint 5 / TASK-06) ---
+    'db.dayRange': '{n} days',
+    'db.allProjects': 'All projects →',
+    'db.upgrade': 'Upgrade plan →',
+    'db.startProducing': 'Start producing',
+    'db.noInsightsWhy': 'Nothing stands out yet. As you keep producing, suggestions will appear here.',
+
     'db.title': 'Status report',
     'db.summary': 'Overview',
     'db.done': 'Completed', 'db.active': 'In progress',

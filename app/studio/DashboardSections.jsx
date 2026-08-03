@@ -34,6 +34,9 @@ export function DashboardSections({ sessions }) {
   const { locale } = useI18n();
   const [data, setData] = useState(null);
   const [err, setErr] = useState(null);
+  /* Zaman aralığı — üretim bölümü için. 7 gün varsayılan; aylık
+     bakmak isteyen 30'a geçebilir. */
+  const [days, setDays] = useState(7);
 
   const load = useCallback(async () => {
     try {
@@ -41,6 +44,7 @@ export function DashboardSections({ sessions }) {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'load',
+          days,
           /* Oturumlar localStorage'da — sunucu göremiyor.
              Yalnızca gerekli alanlar gidiyor (API tarafında da
              ikinci bir süzme var). */
@@ -53,7 +57,7 @@ export function DashboardSections({ sessions }) {
       if (r.error) { setErr(r.error); return; }
       setData(r);
     } catch (e) { setErr(String(e?.message || e)); }
-  }, [sessions]);
+  }, [sessions, days]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -64,7 +68,8 @@ export function DashboardSections({ sessions }) {
      Bölümler KAYBOLMUYOR, yalnızca sıra değişiyor. */
   const RENDER = {
     summary: () => <SummarySection key="summary" d={data} t={t} />,
-    productivity: () => <ProductivitySection key="productivity" d={data} t={t} />,
+    productivity: () => <ProductivitySection key="productivity" d={data} t={t}
+      days={days} onDays={setDays} />,
     insights: () => <InsightsSection key="insights" d={data} t={t} locale={locale} />,
     goals: () => <GoalsSection key="goals" d={data} t={t} />,
     activity: () => <ActivitySection key="activity" d={data} t={t} locale={locale} />,
@@ -98,11 +103,14 @@ function SummarySection({ d, t }) {
   return (
     <section className="card db-section">
       <div className="entry-label">{t('db.summary')}</div>
+      {/* Sayaçlar tıklanabilir — her biri ilgili ekrana götürüyor.
+          Bir sayı gösterip "peki nerede?" sorusunu cevapsız bırakmak
+          kullanıcıyı aramaya zorlar. */}
       <div className="db-stats">
-        <Stat n={s.done} label={t('db.done')} tone="ok" />
-        <Stat n={s.active} label={t('db.active')} tone="lamp" />
-        <Stat n={s.waiting} label={t('db.waiting')} />
-        <Stat n={s.openPlans} label={t('db.openPlans')} />
+        <Stat n={s.done} label={t('db.done')} tone="ok" href="/studio/projeler" />
+        <Stat n={s.active} label={t('db.active')} tone="lamp" href="/studio/projeler" />
+        <Stat n={s.waiting} label={t('db.waiting')} href="/studio/projeler" />
+        <Stat n={s.openPlans} label={t('db.openPlans')} href="/studio/creator" />
       </div>
       {/* Bugün dokunulan — gerçek ölçüm, hedef değil */}
       <p className="hint">
@@ -114,28 +122,46 @@ function SummarySection({ d, t }) {
   );
 }
 
-function Stat({ n, label, tone }) {
-  return (
-    <div className="db-stat">
+function Stat({ n, label, tone, href }) {
+  const body = (
+    <>
       <div className={'db-num' + (tone ? ' db-num-' + tone : '')}>{n}</div>
       <div className="db-lbl">{label}</div>
-    </div>
+    </>
   );
+  /* Sıfırsa bağlantı yok — boş bir listeye götürmek hayal kırıklığı. */
+  if (!href || !n) return <div className="db-stat">{body}</div>;
+  return <Link href={href} className="db-stat db-stat-link">{body}</Link>;
 }
 
 /* ---------- 2. Üretim ---------- */
 const CATEGORIES = ['video', 'shorts', 'ad', 'other'];
 
-function ProductivitySection({ d, t }) {
+function ProductivitySection({ d, t, days, onDays }) {
   const p = d.productivity;
 
   return (
     <section className="card db-section">
-      <div className="entry-label">{t('db.productivity')}</div>
-      <p className="hint">{t('db.lastDays', { n: p.days })}</p>
+      <div className="db-head">
+        <span className="entry-label" style={{ margin: 0 }}>{t('db.productivity')}</span>
+        {/* Zaman aralığı — 7 gün varsayılan, 30 gün aylık bakış.
+            Daha uzun aralık sunmuyoruz: "bu yıl" gibi bir pencere
+            günlük çalışma kararına yardımcı olmaz. */}
+        <span className="db-range">
+          {[7, 30].map(n => (
+            <button key={n} className={'db-range-btn' + (days === n ? ' db-range-on' : '')}
+              onClick={() => onDays(n)}>{t('db.dayRange', { n })}</button>
+          ))}
+        </span>
+      </div>
 
       {p.empty ? (
-        <p className="hint">{t('db.noProduction')}</p>
+        <>
+          <p className="hint">{t('db.noProduction')}</p>
+          <Link href="/studio/creator" className="btn btn-mini btn-primary">
+            {t('db.startProducing')}
+          </Link>
+        </>
       ) : (
         <>
           <table className="db-table">
@@ -186,7 +212,9 @@ function InsightsSection({ d, t, locale }) {
       <div className="entry-label">{t('db.insights')}</div>
 
       {list.length === 0 ? (
-        <p className="hint">{t('db.noInsights')}</p>
+        /* Öngörü yoksa NEDEN yok açıklanıyor — sistem bozuk sanılmasın.
+           Yeterli veri birikince öneriler gelecek. */
+        <p className="hint">{t('db.noInsightsWhy')}</p>
       ) : (
         list.map((i, idx) => (
           <div className={'db-insight db-insight-' + i.kind} key={idx}>
@@ -269,7 +297,10 @@ function ActivitySection({ d, t, locale }) {
       <div className="entry-label">{t('db.activity')}</div>
 
       {list.length === 0 ? (
-        <p className="hint">{t('db.noActivity')}</p>
+        <>
+          <p className="hint">{t('db.noActivity')}</p>
+          <Link href="/studio/creator" className="btn btn-mini">{t('db.startProducing')}</Link>
+        </>
       ) : (
         list.map((a, i) => (
           <div className="db-activity" key={i}>
@@ -287,6 +318,9 @@ function ActivitySection({ d, t, locale }) {
       )}
       {/* Export ve upload kaydedilmiyor — uydurmuyoruz */}
       <p className="hint">{t('db.activityNote')}</p>
+      {list.length > 0 && (
+        <Link href="/studio/projeler" className="db-link">{t('db.allProjects')}</Link>
+      )}
     </section>
   );
 }
@@ -343,6 +377,16 @@ function CreditsSection({ d, t }) {
         Render tarayıcıda çalışıyor ve depolama takibi yok. Uydurma
         sayı göstermektense yokluğunu söylemek doğru.
       */}
+      {/* Ücretsiz planda yükseltme yolu gösteriliyor. Pro/VIP'te
+          göstermek satış baskısı olur, göstermiyoruz.
+
+          Hedef /studio/ayarlar — yükseltme oradaki `upgrade()`
+          fonksiyonunda. İlk yazışta /fiyatlandirma yazmıştım ama
+          öyle bir rota YOK; ölü bağlantı olurdu. */}
+      {c.plan === 'free' && (
+        <Link href="/studio/ayarlar" className="db-link">{t('db.upgrade')}</Link>
+      )}
+
       <div className="db-notmeasured">
         <span className="db-notmeasured-title">{t('db.notMeasured')}</span>
         {(d.notMeasured || []).map(k => (

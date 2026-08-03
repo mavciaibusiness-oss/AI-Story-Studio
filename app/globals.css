@@ -2087,6 +2087,28 @@ button { font-family: var(--body); }
   letter-spacing: 1px; text-transform: uppercase; color: var(--muted);
   margin-top: 3px; }
 
+/* Tıklanabilir sayaç */
+.db-stat-link { display: block; text-decoration: none; border-radius: 7px;
+  padding: 4px 8px; margin: -4px -8px; transition: background .18s; }
+.db-stat-link:hover { background: var(--panel-2); }
+
+/* Bölüm başlığı + zaman aralığı */
+.db-head { display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.db-range { display: inline-flex; gap: 3px; }
+.db-range-btn { font-family: var(--display); font-size: 10px; font-weight: 700;
+  letter-spacing: .6px; color: var(--muted); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 5px; padding: 3px 9px;
+  cursor: pointer; transition: color .18s, border-color .18s; }
+.db-range-btn:hover { color: var(--cream); }
+.db-range-on { color: var(--lamp); border-color: rgba(255,180,84,.4);
+  background: rgba(255,180,84,.08); }
+
+/* Bölüm içi bağlantı */
+.db-link { display: inline-block; font-size: 12.5px; color: var(--lamp);
+  text-decoration: none; margin-top: 8px; }
+.db-link:hover { text-decoration: underline; }
+
 /* Üretim tablosu */
 .db-table { width: 100%; border-collapse: collapse; margin: 10px 0 8px; }
 .db-table th { font-family: var(--display); font-size: 9.5px; font-weight: 700;
