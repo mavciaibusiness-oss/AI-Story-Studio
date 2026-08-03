@@ -7,6 +7,41 @@ import { useT } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 
+/*
+  Google logosu — inline SVG.
+
+  Dış kaynaktan görsel çekmiyoruz: ağ isteği, gizlilik ve görselin
+  yüklenmeme riski. Marka renkleri Google'ın kendi yönergesinden.
+*/
+function GoogleMark() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.4 46 24 46z"/>
+      <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.2-2.9.7-4.2v-5.7H4.5C2.9 17.3 2 20.5 2 24s.9 6.7 2.5 9.9l7.3-5.7z"/>
+      <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+    </svg>
+  );
+}
+
+/*
+  Google akışının hataları.
+
+  En sık görülen: Supabase panelinde sağlayıcı açık değil. Ham
+  İngilizce mesaj yerine ne yapabileceğini söylüyoruz.
+*/
+function googleHata(msg) {
+  const m = String(msg || '').toLowerCase();
+  if (m.includes('provider is not enabled') || m.includes('unsupported provider')) {
+    return 'Google girişi henüz açık değil. E-posta ile devam edebilirsin.';
+  }
+  if (m.includes('popup') || m.includes('closed')) {
+    return 'Google penceresi kapandı. Tekrar dene.';
+  }
+  return msg;
+}
+
+
 function GirisFormu() {
   const t = useT();
   const params = useSearchParams();
@@ -54,6 +89,45 @@ function GirisFormu() {
     if (m.includes('rate limit') || m.includes('too many')) return 'Çok fazla deneme yapıldı. Birkaç dakika bekle.';
     if (m.includes('unable to validate email')) return 'E-posta adresi geçersiz görünüyor.';
     return message;
+  }
+
+  /*
+    ---------- GOOGLE İLE DEVAM ET ----------
+
+    Sprint-6 TASK-01 Adım 5.
+
+    Spec: "Şifre oluşturma zorunlu değildir."
+
+    Supabase OAuth akışı PKCE kullanıyor — kullanıcı Google'a gider,
+    döndüğünde `?code=` ile /auth/callback'e düşer. O rota ZATEN
+    `exchangeCodeForSession` çağırıyor (e-posta onayı için yazılmıştı);
+    OAuth için yeni bir şey gerekmiyor.
+
+    `next` korunuyor: landing'den fikir yazıp gelen kullanıcı Google
+    ile girse de Creator OS'a düşer ve fikri kurulur.
+
+    YAPILANDIRMA GEREKİYOR: Supabase panelinde Google sağlayıcısı
+    açık olmalı. Kapalıysa Supabase hata döndürür ve kullanıcıya
+    okunur bir mesaj gösteriyoruz — sessizce başarısız olmuyoruz.
+  */
+  async function googleSignIn() {
+    setErr(null);
+    setBusy(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`
+        }
+      });
+      /* Hata yoksa tarayıcı Google'a yönlendiriliyor; bu satırdan
+         sonrası çalışmıyor. Hata varsa burada kalıyoruz. */
+      if (error) { setErr(googleHata(error.message)); setBusy(false); }
+    } catch (e) {
+      setErr(googleHata(String(e?.message || e)));
+      setBusy(false);
+    }
   }
 
   async function submit(e) {
@@ -140,6 +214,16 @@ function GirisFormu() {
             <span className="auth-pending-text">{pending}</span>
           </div>
         )}
+
+        {/* Google — şifresiz yol önce geliyor. Spec: "Şifre
+            oluşturma zorunlu değildir." */}
+        <button type="button" className="btn auth-google"
+          onClick={googleSignIn} disabled={busy}>
+          <GoogleMark />
+          {t('auth.google')}
+        </button>
+
+        <div className="auth-or"><span>{t('auth.or')}</span></div>
 
         <form onSubmit={submit}>
           <div className="field">

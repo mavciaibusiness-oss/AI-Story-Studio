@@ -38,6 +38,25 @@ import { sliceAt, ROTATE_MS } from '@/lib/landing/examples';
    iki yerde farklı davranmak tutarsız hissettirir. */
 const DEBOUNCE_MS = 220;
 
+/*
+  Google logosu — inline SVG (giriş sayfasındakiyle aynı).
+
+  Landing'de OAuth akışını BAŞLATMIYORUZ: Supabase istemcisini
+  landing paketine sokmak sayfayı ağırlaştırır ve ziyaretçilerin
+  çoğu giriş yapmayacak. Düğme giriş sayfasına götürüyor, akış
+  orada başlıyor.
+*/
+function GoogleMark() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 48 48" aria-hidden="true">
+      <path fill="#4285F4" d="M45.1 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h11.8c-.5 2.7-2 5-4.4 6.6v5.5h7.1c4.1-3.8 6.6-9.4 6.6-16.1z"/>
+      <path fill="#34A853" d="M24 46c5.9 0 10.9-2 14.5-5.4l-7.1-5.5c-2 1.3-4.5 2.1-7.4 2.1-5.7 0-10.5-3.8-12.2-9H4.5v5.7C8.1 41.1 15.4 46 24 46z"/>
+      <path fill="#FBBC05" d="M11.8 28.2c-.4-1.3-.7-2.7-.7-4.2s.2-2.9.7-4.2v-5.7H4.5C2.9 17.3 2 20.5 2 24s.9 6.7 2.5 9.9l7.3-5.7z"/>
+      <path fill="#EA4335" d="M24 10.8c3.2 0 6.1 1.1 8.4 3.3l6.3-6.3C34.9 4.2 29.9 2 24 2 15.4 2 8.1 6.9 4.5 14.1l7.3 5.7c1.7-5.2 6.5-9 12.2-9z"/>
+    </svg>
+  );
+}
+
 export default function HeroIdea() {
   const t = useT();
   const { locale } = useI18n();
@@ -149,6 +168,27 @@ export default function HeroIdea() {
           ))}
         </div>
       )}
+
+      {/*
+        Google ile devam — spec: "Landing'de büyük buton."
+
+        Fikir kutusunun ALTINDA duruyor, üstünde değil: asıl davet
+        fikri yazmak. Giriş yolu ikincil.
+
+        Fikir yazılmışsa o da saklanıyor — kullanıcı Google'a gidip
+        dönünce planı kurulmuş oluyor (Adım 3'teki akış).
+      */}
+      <div className="lp-auth">
+        <button type="button" className="btn auth-google lp-google"
+          onClick={() => {
+            const v = text.trim();
+            if (v) { try { sessionStorage.setItem('cos:pending', v); } catch {} }
+            router.push('/giris?next=/studio/creator');
+          }}>
+          <GoogleMark />
+          {t('auth.google')}
+        </button>
+      </div>
 
       <p className="lp-note">
         {t('lp.note')}{' '}

@@ -189,6 +189,8 @@ const DICT = {
     'lp.daily.evening.when': 'Gün sonunda',
     'lp.daily.evening.what': 'Ne ürettiğini, ne kaldığını ve nerede takıldığını gösterir.',
     // --- Landing hero (Sprint 6 / TASK-01) ---
+    'auth.google': 'Google ile Devam Et',
+    'auth.or': 'ya da',
     'auth.pendingLabel': 'Bunu yapmak istiyordun:',
     'lp.claim1': 'Tek cümleyle fikrini söyle.',
     'lp.claim2': 'Creator OS gerisini planlasın.',
@@ -1187,6 +1189,8 @@ const DICT = {
     'lp.daily.evening.when': 'At the end of the day',
     'lp.daily.evening.what': 'Shows what you produced, what is left and where you are stuck.',
     // --- Landing hero (Sprint 6 / TASK-01) ---
+    'auth.google': 'Continue with Google',
+    'auth.or': 'or',
     'auth.pendingLabel': 'You wanted to make this:',
     'lp.claim1': 'Say your idea in one sentence.',
     'lp.claim2': 'Let Creator OS plan the rest.',
