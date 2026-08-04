@@ -68,6 +68,8 @@ function GirisFormu() {
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
   const [mode, setMode] = useState('login');
+  /* Bilgi mesajı — hatadan ayrı. Şifre sıfırlama "hata" değil. */
+  const [info, setInfo] = useState(null);
   const [msg, setMsg] = useState(null);
   const [err, setErr] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -110,6 +112,40 @@ function GirisFormu() {
     açık olmalı. Kapalıysa Supabase hata döndürür ve kullanıcıya
     okunur bir mesaj gösteriyoruz — sessizce başarısız olmuyoruz.
   */
+  /*
+    ---------- ŞİFREMİ UNUTTUM ----------
+
+    Sprint-6 TASK-01 Adım 6.
+
+    Supabase sıfırlama e-postası gönderiyor; bağlantı
+    /auth/callback?type=recovery&next=/sifre-yenile adresine
+    düşüyor. Callback oturumu açıyor, kullanıcı yeni şifresini
+    orada belirliyor.
+
+    GİZLİLİK: e-posta kayıtlı olsa da olmasa da AYNI mesajı
+    veriyoruz. Farklı mesaj vermek, hangi adreslerin sistemde
+    kayıtlı olduğunu sızdırır (kullanıcı numaralandırma).
+  */
+  async function resetPassword() {
+    setErr(null);
+    const addr = email.trim();
+    if (!addr) { setErr(t('auth.needEmail')); return; }
+
+    setBusy(true);
+    try {
+      const supabase = getSupabaseBrowser();
+      await supabase.auth.resetPasswordForEmail(addr, {
+        redirectTo: `${window.location.origin}/auth/callback?type=recovery&next=${encodeURIComponent('/sifre-yenile')}`
+      });
+      /* Hata olsa bile aynı mesaj — bkz. gizlilik notu. */
+      setInfo(t('auth.resetSent'));
+    } catch {
+      setInfo(t('auth.resetSent'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function googleSignIn() {
     setErr(null);
     setBusy(true);
@@ -237,6 +273,15 @@ function GirisFormu() {
               autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
               onChange={e => setPass(e.target.value)} placeholder={t('auth.passPh')} />
           </div>
+          {/* Şifremi unuttum — YALNIZCA giriş modunda.
+              Kayıt olurken göstermek anlamsız, henüz şifresi yok. */}
+          {mode === 'login' && (
+            <button type="button" className="auth-forgot"
+              onClick={resetPassword} disabled={busy}>
+              {t('auth.forgot')}
+            </button>
+          )}
+
           <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center' }} disabled={busy}>
             {busy ? t('common.busy') : mode === 'login' ? t('auth.signin') : t('auth.signup')}
           </button>
@@ -244,6 +289,7 @@ function GirisFormu() {
 
         {err && <span className="err">{err}</span>}
         {msg && <span className="okmsg">{msg}</span>}
+        {info && <span className="okmsg">{info}</span>}
 
         {onaySiz && (
           <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid var(--line)' }}>
