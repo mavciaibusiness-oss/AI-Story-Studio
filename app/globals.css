@@ -2347,3 +2347,37 @@ button { font-family: var(--body); }
   .lp-step-text { font-size: 14.5px; }
   .lp-caps-grid { grid-template-columns: 1fr; }
 }
+
+
+/* ============================================================
+   PLAN ÖZETİ (Sprint 6 / TASK-02)
+   ============================================================ */
+
+.pb { padding: 13px 16px; border-radius: 10px; margin-bottom: 16px;
+  background: rgba(255,180,84,.05); border: 1px solid rgba(255,180,84,.2); }
+
+.pb-head { display: flex; align-items: baseline; gap: 9px;
+  flex-wrap: wrap; margin-bottom: 8px; }
+.pb-intent { font-family: var(--display); font-size: 15px; font-weight: 700;
+  color: var(--cream); letter-spacing: -.2px; }
+.pb-amb { font-size: 11.5px; color: var(--muted); }
+
+.pb-facts { display: flex; flex-wrap: wrap; gap: 7px; }
+.pb-fact { font-size: 12px; color: var(--text-2); background: var(--panel-2);
+  border: 1px solid var(--line); border-radius: 5px; padding: 3px 9px;
+  font-variant-numeric: tabular-nums; }
+.pb-time { color: var(--lamp); border-color: rgba(255,180,84,.3);
+  cursor: help; }
+.pb-later { color: var(--dim); border-style: dashed; }
+
+.pb-needs { font-size: 12.5px; color: var(--lamp); margin: 9px 0 0; }
+
+.pb-tools { font-size: 12px; color: var(--muted); margin: 8px 0 0;
+  line-height: 1.5; }
+.pb-tools-label { color: var(--dim); }
+.pb-pref { color: var(--lamp-soft); }
+
+@media (max-width: 620px) {
+  .pb-facts { gap: 5px; }
+  .pb-fact { font-size: 11.5px; padding: 3px 7px; }
+}

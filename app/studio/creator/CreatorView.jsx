@@ -29,7 +29,11 @@ import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
 /* Workspace görünüm bileşenleri — CreatorView 1123 satıra çıkmıştı,
    çizim katmanı ayrıldı. */
 import { DirectorPanel, EntryPanel, StateBar, EmptyState,
-         NotificationBar, Widget, QuickActions } from './WorkspaceParts';
+         NotificationBar, Widget, QuickActions, PlanBrief,
+         SmartWarning, EventLog } from './WorkspaceParts';
+/* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
+import { buildBrief } from '@/lib/creator/brief';
+import { taskTimings } from '@/lib/creator/timing';
 
 /*
   CREATOR OS — giriş ekranı.
@@ -345,6 +349,27 @@ export default function CreatorView({ userId }) {
   const state = workState({ sessions, active, storyboard });
   const summary = workSummary({ sessions, active });
   const built = buildLayout(wsCtx, layout);
+
+  /*
+    Plan özeti — aktif oturum için.
+
+    Süre ölçümleri TÜM oturumlardan geliyor: kullanıcının geçmiş
+    hızı bu planın tahminini besliyor. Tek oturumdan ölçüm çıkarmak
+    yetersiz olurdu.
+  */
+  const timings = taskTimings(sessions);
+  const brief = active
+    ? buildBrief({
+        classified: active.intent
+          ? { intent: active.intent, label: active.intentLabel,
+              confidence: active.confidence, ambiguous: active.ambiguous,
+              modifiers: active.modifiers }
+          : null,
+        workflow: active.workflow,
+        memory,
+        timings
+      })
+    : null;
   const badge = actionCount(notifications);
 
   /*
@@ -440,6 +465,7 @@ export default function CreatorView({ userId }) {
               showAdd={showAdd} setShowAdd={setShowAdd}
               storyboard={storyboard}
               memChanges={memChanges}
+              brief={brief}
               onUpdate={update}
               onBack={() => setActive(null)}
               onDiscard={() => discard(active.id)} />
@@ -497,7 +523,7 @@ export default function CreatorView({ userId }) {
 /* ------------------------------------------------------------------ */
 
 function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
-                        storyboard, memChanges, onUpdate, onBack, onDiscard }) {
+                        storyboard, memChanges, brief, onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
   const [showLog, setShowLog] = useState(false);
@@ -572,6 +598,9 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
           </div>
         </div>
       )}
+
+      {/* PLAN ÖZETİ — kaç adım, hangi ekranlar, ne gerekiyor */}
+      <PlanBrief brief={brief} t={t} locale={locale} />
 
       {/* KİŞİSELLEŞTİRME RAPORU — spec: kullanıcı kontrolü kaybetmemeli.
           Hafıza yol haritasını değiştirdiyse ne yaptığını söylüyoruz. */}
@@ -695,53 +724,6 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
   );
 }
 
-
-/* Akıllı uyarı kutusu — spec'in "[Yine de Devam Et]" akışı */
-function SmartWarning({ taskKey, tasks, t, L, onProceed, onCancel }) {
-  const w = warningsFor(taskKey, tasks)[0];
-  if (!w) return null;
-  return (
-    <div className="cos-warn">
-      <div className="cos-warn-title">
-        {t('cos.warnTitle', { missing: w.labels.map(l => L(l)).join(', ') })}
-      </div>
-      <p className="cos-warn-desc">{t('cos.warnDesc')}</p>
-      <div className="cos-warn-actions">
-        <button className="btn btn-mini" onClick={onProceed}>{t('cos.proceedAnyway')}</button>
-        <button className="btn btn-mini" onClick={onCancel}>{t('cos.cancel')}</button>
-      </div>
-    </div>
-  );
-}
-
-/* Olay günlüğü — metin burada kuruluyor, kayıtta anahtar var. */
-function EventLog({ session, t, L }) {
-  const [showBlocking, setShowBlocking] = useState(false);
-  const entries = readLog(session, { limit: 20, includeBlocking: showBlocking });
-
-  return (
-    <div className="cos-log">
-      <div className="cos-log-head">
-        <span className="entry-label" style={{ margin: 0 }}>{t('cos.logTitle')}</span>
-        <button className="btn btn-mini" onClick={() => setShowBlocking(!showBlocking)}>
-          {showBlocking ? t('cos.hideBlocking') : t('cos.showBlocking')}
-        </button>
-      </div>
-      {entries.map(e => (
-        <div className="cos-log-row" key={e.id}>
-          <span className="cos-log-icon">{e.icon}</span>
-          <span className="cos-log-text">
-            {e.taskLabel ? L(e.taskLabel) + ' ' : ''}{t('cos.ev.' + e.type)}
-          </span>
-          <span className="cos-log-time">
-            {new Date(e.at).toLocaleTimeString(undefined,
-              { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen,
                   evidence, total, last }) {

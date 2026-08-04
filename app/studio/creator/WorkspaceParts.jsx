@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { workflowStatus, reasonKey } from '@/lib/creator/suggest';
 import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
+import { briefSummary } from '@/lib/creator/brief';
 
 
 /*
@@ -441,3 +442,139 @@ export function QuickActions({ t, locale, memory, sessions, onStart }) {
     </section>
   );
 }
+
+
+/*
+  PLAN ÖZETİ — Sprint-6 TASK-02, Adım 3.
+
+  Spec'in karşılama çıktısı:
+
+    "Hedefini analiz ettim. Senin için şu çalışma planını hazırladım.
+     ✓ ...  Tahmini süre: 26 dakika"
+
+  ---------------------------------------------------------------
+  SÜRE YOKSA SATIR YOK
+
+  `brief.estimate.known` false ise süre HİÇ gösterilmiyor — "süre
+  hesaplanamadı" bile demiyoruz. Kullanıcı adım sayısını görüyor ve
+  o yeterli bilgi.
+
+  Ölçüm biriktikçe satır kendiliğinden beliriyor (lib/creator/timing.js).
+  ---------------------------------------------------------------
+
+  ZORUNLU DOSYA ÖNDEN
+
+  Video analizi akışı videosuz çalışmıyor. Kullanıcı 7 adımlık plan
+  kurup 1. adımda takılmasındansa baştan bilsin.
+*/
+export function PlanBrief({ brief, t, locale }) {
+  if (!brief || !brief.steps) return null;
+  const L = (o) => o?.[locale] || o?.tr || '';
+  const s = briefSummary(brief);
+
+  return (
+    <div className="pb">
+      <div className="pb-head">
+        {/* Ne anladık — sınıflandırma sonucu, iddia değil */}
+        <span className="pb-intent">{L(brief.intentLabel)}</span>
+        {brief.ambiguous && <span className="pb-amb">{t('pb.notSure')}</span>}
+      </div>
+
+      <div className="pb-facts">
+        <span className="pb-fact">{t('pb.steps', { n: s.steps })}</span>
+        <span className="pb-fact">{t('pb.modules', { n: s.modules })}</span>
+        {/* SÜRE: yalnızca gerçekten ölçülmüşse */}
+        {s.hasEstimate && (
+          <span className="pb-fact pb-time"
+            title={t('pb.timeBasis', { n: brief.estimate.measured, m: brief.estimate.tasks })}>
+            {t('pb.about', { n: s.minutes })}
+          </span>
+        )}
+        {brief.futureSteps > 0 && (
+          <span className="pb-fact pb-later">
+            {t('pb.later', { n: brief.futureSteps })}
+          </span>
+        )}
+      </div>
+
+      {/* ZORUNLU DOSYA — baştan uyarı */}
+      {brief.blockingInput && (
+        <p className="pb-needs">
+          {t('pb.needsFile', { kind: t('pb.kind.' + brief.blockingInput.kind) })}
+        </p>
+      )}
+
+      {/* AI araçları — SEÇMİYORUZ, gerekeni söylüyoruz */}
+      {brief.tools.length > 0 && (
+        <p className="pb-tools">
+          <span className="pb-tools-label">{t('pb.toolsLabel')}</span>
+          {brief.tools.map((tool, i) => (
+            <span className="pb-tool" key={tool.kind}>
+              {i > 0 && ' · '}
+              {t('pb.tool.' + tool.kind)}
+              {tool.preferred && (
+                <span className="pb-pref">{t('pb.usually', { name: tool.preferred })}</span>
+              )}
+            </span>
+          ))}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/*
+  TASK-02 Adım 3'te taşındı: CreatorView 900 satırı aştı.
+
+  İkisi de SAF ÇİZİM — oturum durumunu değiştirmiyorlar, aldıkları
+  veriyi gösteriyorlar. Bölme ölçütü Adım 4'te (TASK-04) koyduğumuz
+  ölçütün aynısı.
+*/
+/* Akıllı uyarı kutusu — spec'in "[Yine de Devam Et]" akışı */
+export function SmartWarning({ taskKey, tasks, t, L, onProceed, onCancel }) {
+  const w = warningsFor(taskKey, tasks)[0];
+  if (!w) return null;
+  return (
+    <div className="cos-warn">
+      <div className="cos-warn-title">
+        {t('cos.warnTitle', { missing: w.labels.map(l => L(l)).join(', ') })}
+      </div>
+      <p className="cos-warn-desc">{t('cos.warnDesc')}</p>
+      <div className="cos-warn-actions">
+        <button className="btn btn-mini" onClick={onProceed}>{t('cos.proceedAnyway')}</button>
+        <button className="btn btn-mini" onClick={onCancel}>{t('cos.cancel')}</button>
+      </div>
+    </div>
+  );
+}
+
+
+/* Olay günlüğü — metin burada kuruluyor, kayıtta anahtar var. */
+export function EventLog({ session, t, L }) {
+  const [showBlocking, setShowBlocking] = useState(false);
+  const entries = readLog(session, { limit: 20, includeBlocking: showBlocking });
+
+  return (
+    <div className="cos-log">
+      <div className="cos-log-head">
+        <span className="entry-label" style={{ margin: 0 }}>{t('cos.logTitle')}</span>
+        <button className="btn btn-mini" onClick={() => setShowBlocking(!showBlocking)}>
+          {showBlocking ? t('cos.hideBlocking') : t('cos.showBlocking')}
+        </button>
+      </div>
+      {entries.map(e => (
+        <div className="cos-log-row" key={e.id}>
+          <span className="cos-log-icon">{e.icon}</span>
+          <span className="cos-log-text">
+            {e.taskLabel ? L(e.taskLabel) + ' ' : ''}{t('cos.ev.' + e.type)}
+          </span>
+          <span className="cos-log-time">
+            {new Date(e.at).toLocaleTimeString(undefined,
+              { hour: '2-digit', minute: '2-digit' })}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
