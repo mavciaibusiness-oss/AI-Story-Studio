@@ -467,13 +467,40 @@ export function QuickActions({ t, locale, memory, sessions, onStart }) {
   Video analizi akışı videosuz çalışmıyor. Kullanıcı 7 adımlık plan
   kurup 1. adımda takılmasındansa baştan bilsin.
 */
-export function PlanBrief({ brief, t, locale }) {
+export function PlanBrief({ brief, t, locale, fresh, nextTask, onStart }) {
   if (!brief || !brief.steps) return null;
   const L = (o) => o?.[locale] || o?.tr || '';
   const s = briefSummary(brief);
 
   return (
-    <div className="pb">
+    <div className={'pb' + (fresh ? ' pb-fresh' : '')}>
+      {/*
+        ---------- KARŞILAMA ----------
+
+        Kullanıcının kararı (Sprint-6 TASK-02):
+          "Creator OS hiçbir zaman 'Bu planı onaylıyor musun?' diye
+           sormamalı. Plan her zaman canlıdır."
+
+        Onay adımı YOK. Bu mesaj bağlam veriyor: planı Creator OS
+        hazırladı, değiştirilebilir, şimdi başlanabilir.
+
+        YALNIZCA YENİ PLANDA: kullanıcı üç gün sonra dönüp "seni
+        anladım, plan hazırladım" mesajını tekrar görmemeli — o
+        zaten çalışıyor. `fresh` bayrağı hiç görev tamamlanmamışsa
+        true; ilk iş bitince mesaj kendiliğinden kayboluyor.
+      */}
+      {fresh && (
+        <div className="pb-welcome">
+          <p className="pb-welcome-text">{t('pb.welcome')}</p>
+          {nextTask && (
+            <button className="btn btn-primary btn-mini pb-go"
+              onClick={onStart}>
+              {t('pb.startFirst', { task: L(nextTask.label) })}
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="pb-head">
         {/* Ne anladık — sınıflandırma sonucu, iddia değil */}
         <span className="pb-intent">{L(brief.intentLabel)}</span>

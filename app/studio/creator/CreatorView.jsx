@@ -600,7 +600,15 @@ function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
       )}
 
       {/* PLAN ÖZETİ — kaç adım, hangi ekranlar, ne gerekiyor */}
-      <PlanBrief brief={brief} t={t} locale={locale} />
+      {/* Plan özeti + karşılama. `fresh`: hiç görev tamamlanmamış.
+          İlk iş bitince karşılama kayboluyor. */}
+      <PlanBrief brief={brief} t={t} locale={locale}
+        fresh={status?.done === 0}
+        nextTask={status?.suggestion?.task || null}
+        onStart={() => {
+          const task = status?.suggestion?.task;
+          if (task?.route) openTask(task);
+        }} />
 
       {/* KİŞİSELLEŞTİRME RAPORU — spec: kullanıcı kontrolü kaybetmemeli.
           Hafıza yol haritasını değiştirdiyse ne yaptığını söylüyoruz. */}
