@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase-server';
-import { buildActionRow, summarizeSignals, workingHours,
-         ACTIONS, normalizePrompt } from '@/lib/intel/actions';
+import { buildActionRow, summarizeSignals, workingHours, pruneTargets,
+         shouldRescore, ACTIONS } from '@/lib/intel/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,12 +92,42 @@ export async function POST(req) {
               .maybeSingle();
 
             if (existing) {
-              await supabase.from('prompt_history').update({
-                signal_count: (existing.signal_count || 0) + 1,
+              const nextCount = (existing.signal_count || 0) + 1;
+
+              /*
+                PUAN GÜNCELLEME — her sinyalde değil.
+
+                Her kopyalamada tüm sinyalleri okuyup yeniden
+                hesaplamak gereksiz sorgu. `shouldRescore` eşiği
+                geçtiğinde ve her 5 sinyalde bir güncelliyor.
+
+                Aksi halde eski puan kalıyor — biraz eskimiş olması
+                her tıklamada ek sorgudan iyi.
+              */
+              let score;
+              if (shouldRescore(nextCount)) {
+                try {
+                  const { data: sig } = await supabase.from('user_actions')
+                    .select('action, created_at')
+                    .eq('user_id', user.id)
+                    .eq('target_kind', 'prompt').eq('target_id', row.target_id)
+                    .order('created_at', { ascending: false }).limit(MAX_ROWS);
+                  score = summarizeSignals(sig || []).score;
+                } catch { /* okunamadı — puan eski kalır */ }
+              }
+
+              const patch = {
+                signal_count: nextCount,
                 use_count: (existing.use_count || 0) + (isUse ? 1 : 0),
-                last_used_at: isUse ? new Date().toISOString() : undefined,
                 updated_at: new Date().toISOString()
-              }).eq('id', existing.id);
+              };
+              if (isUse) patch.last_used_at = new Date().toISOString();
+              /* score undefined ise sütuna dokunmuyoruz; null ise
+                 bilinçli olarak "yetersiz veri" yazıyoruz */
+              if (score !== undefined) patch.score = score;
+
+              await supabase.from('prompt_history').update(patch)
+                .eq('id', existing.id);
             } else {
               await supabase.from('prompt_history').insert({
                 user_id: user.id,
@@ -217,10 +247,54 @@ export async function POST(req) {
         });
       }
 
+      /* ---------- BUDAMA ----------
+
+         Olay tablosu sınırsız büyüyemez. Kullanıcı başına son
+         10.000 kayıt, 180 günden eski olanlar siliniyor.
+
+         ÖZET KAYBOLMUYOR: silinen olayların katkısı zaten
+         prompt_history'de (signal_count, use_count, score). Ham
+         olaylar yeniden hesaplama ve denetim için duruyordu.
+
+         İstemci bunu çağırmıyor — arka plan görevi ya da elle
+         bakım için. Otomatik tetikleme eklemedim: her sinyalde
+         budama kontrolü yapmak yazma maliyetini ikiye katlardı. */
+      case 'prune': {
+        try {
+          const { data, error } = await supabase.from('user_actions')
+            .select('id, created_at')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(20000);
+          if (error) throw error;
+
+          const doomed = pruneTargets(data || []);
+          if (!doomed.length) {
+            return NextResponse.json({ ok: true, removed: 0, kept: (data || []).length });
+          }
+
+          /* Toplu silme parça parça — tek sorguda 10.000 id
+             göndermek istek boyutunu şişirir */
+          let removed = 0;
+          for (let i = 0; i < doomed.length; i += 500) {
+            const chunk = doomed.slice(i, i + 500);
+            const { error: delErr } = await supabase.from('user_actions')
+              .delete().eq('user_id', user.id).in('id', chunk);
+            if (!delErr) removed += chunk.length;
+          }
+          return NextResponse.json({
+            ok: true, removed, kept: (data || []).length - removed
+          });
+        } catch {
+          return NextResponse.json({ ok: true, removed: 0, unavailable: true });
+        }
+      }
+
       default:
         return NextResponse.json({
           error: 'unknown-action',
-          actions: ['record', 'prompts', 'signals', 'hours', 'forget', 'reset']
+          actions: ['record', 'prompts', 'signals', 'hours', 'forget',
+                    'reset', 'prune']
         }, { status: 400 });
     }
   } catch (e) {

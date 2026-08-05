@@ -6,6 +6,9 @@ import { useStudio, callAI, parseJSONLoose } from '@/lib/store';
 import EpisodeBar from '@/lib/EpisodeBar';
 import { STYLES, flattenPrompt } from '@/lib/storyboard';
 import { useT } from '@/lib/i18n';
+/* Creator Intelligence: davranış sinyalleri (Adım 2).
+   Sessiz — hata kullanıcının işini bozmuyor. */
+import { trackPrompt } from '@/lib/intel/track';
 import { triggerDownload } from '@/lib/engine';
 import PromptQualityBadge from '@/lib/PromptQualityBadge';
 import { analyzePrompt } from '@/lib/prompt/analyze';
@@ -196,6 +199,20 @@ export default function Promptlar() {
 
   /* Onay: yeni katmanları sahneye yaz. Kullanıcı görmeden uygulanmaz. */
   function applyRewrite(i, layers) {
+    /*
+      Kabul = ESKİ prompt zayıftı sinyali.
+
+      Eski metni DEĞİŞMEDEN ÖNCE alıyoruz; patchScene sonrası
+      sahne artık yeni hali taşıyor.
+    */
+    const before = storyboard?.scenes?.[i];
+    if (before) {
+      trackPrompt('accept', flattenPrompt(before, view), {
+        episodeId, sceneIndex: i,
+        generator: storyboard?.generator || null,
+        style: storyboard?.style || null
+      });
+    }
     patchScene(i, layers);
     const rewriteId = rewrites[i]?.rewriteId;
     setRewrites(r => { const n = { ...r }; delete n[i]; return n; });
@@ -212,6 +229,20 @@ export default function Promptlar() {
   }
 
   function discardRewrite(i) {
+    /*
+      Ret = mevcut prompt ZATEN YETERLİYDİ sinyali.
+
+      Kullanıcı AI'ın önerisine baktı ve kendisininkini tercih etti.
+      Bu olumlu bir sinyal — WEIGHTS.reject pozitif.
+    */
+    const cur = storyboard?.scenes?.[i];
+    if (cur) {
+      trackPrompt('reject', flattenPrompt(cur, view), {
+        episodeId, sceneIndex: i,
+        generator: storyboard?.generator || null,
+        style: storyboard?.style || null
+      });
+    }
     setRewrites(r => { const n = { ...r }; delete n[i]; return n; });
   }
 
@@ -311,7 +342,18 @@ export default function Promptlar() {
                     rewriteResult={rewrites[i]}
                     onApply={applyRewrite}
                     onDiscard={discardRewrite} />
-                  <button className="btn btn-mini" onClick={() => navigator.clipboard.writeText(flattenPrompt(s, view))}>
+                  <button className="btn btn-mini" onClick={() => {
+                    const text = flattenPrompt(s, view);
+                    navigator.clipboard.writeText(text);
+                    /* Kopyalama, kullanıcının bu prompt'u gerçekten
+                       kullanmaya götürdüğünün en güçlü işareti. */
+                    trackPrompt('copy', text, {
+                      episodeId, sceneIndex: i,
+                      generator: storyboard?.generator || null,
+                      style: storyboard?.style || null,
+                      genre: storyboard?.genre || null
+                    });
+                  }}>
                     {t('common.copy')}
                   </button>
                 </div>

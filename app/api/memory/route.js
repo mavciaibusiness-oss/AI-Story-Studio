@@ -275,7 +275,36 @@ export async function POST(req) {
       const next = resetMemory(memory, { keepStated: !!body?.keepStated });
       const w = await writeMemory(supabase, user.id, next);
       if (w.error) return NextResponse.json({ error: w.error }, { status: 500 });
-      return NextResponse.json({ ok: true, memory: next, summary: summarize(next) });
+
+      /*
+        CREATOR INTELLIGENCE TABLOLARI DA SİLİNİYOR.
+
+        Kullanıcı kararı (Sprint-6 TASK-03): "resetMemory kapsamına
+        prompt_history ve user_actions da dahil edilecek."
+
+        Kullanıcı "hafızamı sil" dediğinde prompt geçmişinin ve
+        davranış sinyallerinin kalması sözümüzü tutmamak olur —
+        ikisi de onun hakkında öğrenilmiş veri.
+
+        `keepStated` bunları KORUMUYOR: o seçenek kullanıcının
+        kendi girdiği bilgiler (kanal, marka, hedef) içindi.
+        Prompt geçmişi ve sinyaller türetilmiş veri.
+
+        Tablo yoksa (v11 uygulanmamış) sessizce geçiliyor —
+        hafıza sıfırlaması bu yüzden başarısız olmamalı.
+      */
+      const intelCleared = [];
+      for (const table of ['prompt_history', 'user_actions']) {
+        try {
+          const { error } = await supabase.from(table)
+            .delete().eq('user_id', user.id);
+          if (!error) intelCleared.push(table);
+        } catch { /* v11 yok */ }
+      }
+
+      return NextResponse.json({
+        ok: true, memory: next, summary: summarize(next), intelCleared
+      });
     }
 
     /* ---------- KANAL / MARKA / HEDEF ----------
