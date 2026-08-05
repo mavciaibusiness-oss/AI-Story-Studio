@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useT, useI18n } from '@/lib/i18n';
 import { useStudio } from '@/lib/store';
+/* Niyet anahtarlarını okunur etikete çevirmek için (TASK-02) */
+import { intentByKey } from '@/lib/creator/intent';
 
 /*
   CREATOR MEMORY EKRANI — Sprint 5 / TASK-03, Adım 5.
@@ -173,7 +175,8 @@ export default function MemoryView() {
       <ProfileCard memory={memory} t={t} busy={busy} onSet={run} />
 
       {/* --- Öğrenilen --- */}
-      <LearnedCard memory={memory} summary={summary} t={t} busy={busy} onRun={run} />
+      <LearnedCard memory={memory} summary={summary} t={t} busy={busy}
+        onRun={run} locale={locale} />
 
       {/* --- Kanallar / Markalar / Hedefler --- */}
       <EntityCard kind="channel" items={memory.channels} entities={entities}
@@ -322,6 +325,10 @@ function ProfileCard({ memory, t, busy, onSet }) {
 
 /* Öğrenilen bölümler — her kayıt silinebilir */
 const LEARNED_SECTIONS = [
+  /* Sprint-6 TASK-02: niyetler. TASK-03'ün kuralı gereği burada
+     olmalı — kullanıcı hafızasında ne olduğunu görebilmeli ve
+     silebilmeli. Adım 5'te eklenmiş ama ekrana bağlanmamıştı. */
+  { group: 'intents', table: 'keys',       path: 'intents.keys' },
   { group: 'content', table: 'genres',     path: 'content.genres' },
   { group: 'content', table: 'formats',    path: 'content.formats' },
   { group: 'style',   table: 'styles',     path: 'style.styles' },
@@ -332,7 +339,7 @@ const LEARNED_SECTIONS = [
   { group: 'feedback', table: 'rejected',  path: 'feedback.rejected' }
 ];
 
-function LearnedCard({ memory, summary, t, busy, onRun }) {
+function LearnedCard({ memory, summary, t, busy, onRun, locale }) {
   const anything = LEARNED_SECTIONS.some(s =>
     Object.keys(memory[s.group]?.[s.table] || {}).length > 0);
 
@@ -347,6 +354,13 @@ function LearnedCard({ memory, summary, t, busy, onRun }) {
         const table = memory[sec.group]?.[sec.table] || {};
         const rows = Object.entries(table).sort((a, b) => b[1] - a[1]);
         if (!rows.length) return null;
+
+        /* Niyet anahtarları teknik (video.horror) — kullanıcıya
+           okunur etiketiyle gösteriliyor. Bulunamazsa ham anahtar
+           kalıyor; sessizce boş göstermek yanlış olur. */
+        const readable = (k) => sec.group === 'intents'
+          ? (intentByKey(k)?.label?.[locale] || intentByKey(k)?.label?.tr || k)
+          : k;
 
         /* Bu bölümün baskın tercihi ve güveni (varsa) */
         const learnedKey = { 'content.genres': 'genre', 'content.formats': 'format',
@@ -373,8 +387,8 @@ function LearnedCard({ memory, summary, t, busy, onRun }) {
             </div>
             <div className="mem-chips">
               {rows.map(([key, count]) => (
-                <span className="mem-chip" key={key}>
-                  {key} <b>{count}</b>
+                <span className="mem-chip" key={key} title={key}>
+                  {readable(key)} <b>{count}</b>
                   <button className="mem-chip-x" disabled={busy}
                     title={t('mem.forgetOne')}
                     onClick={() => onRun('forgetKey',

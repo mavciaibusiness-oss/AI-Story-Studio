@@ -204,6 +204,7 @@ const DICT = {
     'pw.sameAsOld': 'Yeni şifre eskisiyle aynı olamaz.',
     'pw.done': 'Şifren güncellendi. Yönlendiriliyorsun…',
     // --- Plan özeti (Sprint 6 / TASK-02) ---
+    'mem.sec.intents.keys': 'İstediklerin',
     'pb.welcome': 'Seni anladım. Hedefin için en uygun çalışma planını hazırladım. Bu planı istediğin zaman değiştirebilir, yeni adımlar ekleyebilir ya da birlikte geliştirebiliriz.',
     'pb.startFirst': '▶ {task} ile başla',
 
@@ -1235,6 +1236,7 @@ const DICT = {
     'pw.sameAsOld': 'The new password cannot be the same as the old one.',
     'pw.done': 'Your password has been updated. Redirecting…',
     // --- Plan brief (Sprint 6 / TASK-02) ---
+    'mem.sec.intents.keys': 'What you ask for',
     'pb.welcome': 'I understood you. I put together the plan that fits your goal best. You can change it any time, add steps, or we can develop it together.',
     'pb.startFirst': '▶ Start with {task}',
 
