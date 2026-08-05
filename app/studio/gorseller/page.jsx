@@ -7,6 +7,8 @@ import { useT } from '@/lib/i18n';
 import EpisodeBar from '@/lib/EpisodeBar';
 import { splitCollageFile, naturalSortBy, measureVideo, formatDur } from '@/lib/engine';
 import { mediaBreakdown, sceneHasMedia } from '@/lib/storyboard';
+/* Creator Intelligence: sahne tamamlanma sinyali (Adım 2). */
+import { trackPrompt, trackScene } from '@/lib/intel/track';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,6 +102,28 @@ export default function Gorseller() {
   }
 
   async function assignOne(i, f) {
+    /*
+      Sahne medyayla doldu — o sahnenin PROMPT'undan çıkan sonuç
+      kabul edildi demek.
+
+      Sinyal hem sahneye hem prompt'a işleniyor: sahne "bu adım
+      tamamlandı" der, prompt "bu prompt işe yaradı" der.
+
+      DİKKAT: kullanıcı kendi görselini de yükleyebilir — o zaman
+      prompt kullanılmamış olabilir. Ama prompt varsa ve sahne
+      dolduysa, prompt'un o sahne için üretildiği kesin; hangi
+      araçla üretildiği bizi ilgilendirmiyor.
+    */
+    const scene = sb?.scenes?.[i];
+    trackScene('complete', { episodeId, sceneIndex: i });
+    if (scene?.imagePrompt) {
+      trackPrompt('complete', scene.imagePrompt, {
+        episodeId, sceneIndex: i,
+        generator: sb?.generator || null,
+        style: sb?.style || null
+      });
+    }
+
     if (f.type.startsWith('video/')) {
       let d = 0;
       try { d = await measureVideo(f); } catch (e) {}

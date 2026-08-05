@@ -5,6 +5,10 @@ import { useStudio } from '@/lib/store';
 import { DIRECTOR_KINDS, KIND_KEYS } from '@/lib/director/model';
 import { formatDuration } from '@/lib/timeline';
 import EpisodeBar from '@/lib/EpisodeBar';
+/* Creator Intelligence: öneri kabul/ret sinyali (Adım 2).
+   director_actions tablosu zaten kaydediyor; bu ONUN YERİNE değil,
+   tüm sinyaller tek yerden okunabilsin diye. */
+import { trackSuggestion } from '@/lib/intel/track';
 
 /*
   AI DIRECTOR EKRANI — Sprint 4 / TASK-06, Adım 3.
@@ -82,6 +86,7 @@ export default function DirectorView() {
      söylüyoruz — yoksaydığını sanıp sayfayı yenileyince geri
      gelmesine şaşırmasın. */
   async function ignore(id) {
+    trackSuggestion('reject', { key: 'director:' + id, episodeId });
     const data = await call('ignore', { id });
     if (!data) return;
     setDir(data.director);
@@ -114,6 +119,7 @@ export default function DirectorView() {
   }
 
   async function apply(id) {
+    trackSuggestion('accept', { key: 'director:' + id, episodeId });
     const data = await call('apply', { id });
     if (!data) return;
     /* Sunucu storyboard'u yazdı; istemci durumunu HEMEN eşitle ki

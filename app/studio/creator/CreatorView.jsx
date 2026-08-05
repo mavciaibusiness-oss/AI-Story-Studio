@@ -33,6 +33,10 @@ import { DirectorPanel, EntryPanel, StateBar, EmptyState,
          SmartWarning, EventLog } from './WorkspaceParts';
 /* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
 import { buildBrief } from '@/lib/creator/brief';
+/* Creator Intelligence: görev sinyalleri (Adım 2). Olay günlüğü
+   localStorage'da tutuyor ama o cihaza bağlı — çalışma saati
+   analizi için sunucuda da olmalı. */
+import { trackTask } from '@/lib/intel/track';
 import { taskTimings } from '@/lib/creator/timing';
 
 /*
@@ -802,12 +806,18 @@ function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen,
               {t('cos.open')}
             </Link>
             <button className="btn btn-mini"
-              onClick={() => onUpdate(live.done(session, task.key))}>
+              onClick={() => {
+                trackTask('complete', task.key, { episodeId: session.episodeId });
+                onUpdate(live.done(session, task.key));
+              }}>
               {t('cos.markDone')}
             </button>
             {task.optional && (
               <button className="btn btn-mini"
-                onClick={() => onUpdate(live.skip(session, task.key))}>
+                onClick={() => {
+                  trackTask('skip', task.key, { episodeId: session.episodeId });
+                  onUpdate(live.skip(session, task.key));
+                }}>
                 {t('cos.skip')}
               </button>
             )}
