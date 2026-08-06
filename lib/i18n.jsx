@@ -203,6 +203,13 @@ const DICT = {
     'pw.mismatch': 'İki şifre aynı değil.',
     'pw.sameAsOld': 'Yeni şifre eskisiyle aynı olamaz.',
     'pw.done': 'Şifren güncellendi. Yönlendiriliyorsun…',
+    // --- Prompt geçmişi (Sprint 6 / Creator Intelligence) ---
+    'ph.title': 'En çok kullandığın promptlar',
+    'ph.sub': '{n} prompt kayıtlı.',
+    'ph.uses': '{n} kez kullanıldı',
+    'ph.expand': 'Tamamını göster',
+    'ph.forget': 'Bu promptu unut',
+    'ph.note': 'Burada kaç kez kopyaladığın sayılıyor — promptun iyi sonuç verip vermediğini ölçemiyoruz.',
     // --- Plan özeti (Sprint 6 / TASK-02) ---
     'mem.sec.intents.keys': 'İstediklerin',
     'pb.welcome': 'Seni anladım. Hedefin için en uygun çalışma planını hazırladım. Bu planı istediğin zaman değiştirebilir, yeni adımlar ekleyebilir ya da birlikte geliştirebiliriz.',
@@ -1235,6 +1242,13 @@ const DICT = {
     'pw.mismatch': 'The two passwords do not match.',
     'pw.sameAsOld': 'The new password cannot be the same as the old one.',
     'pw.done': 'Your password has been updated. Redirecting…',
+    // --- Prompt history (Sprint 6 / Creator Intelligence) ---
+    'ph.title': 'Prompts you use most',
+    'ph.sub': '{n} prompts saved.',
+    'ph.uses': 'used {n} times',
+    'ph.expand': 'Show the full text',
+    'ph.forget': 'Forget this prompt',
+    'ph.note': 'This counts how often you copied it — we cannot measure whether a prompt produced a good result.',
     // --- Plan brief (Sprint 6 / TASK-02) ---
     'mem.sec.intents.keys': 'What you ask for',
     'pb.welcome': 'I understood you. I put together the plan that fits your goal best. You can change it any time, add steps, or we can develop it together.',

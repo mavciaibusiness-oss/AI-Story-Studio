@@ -5,6 +5,8 @@ import { useT, useI18n } from '@/lib/i18n';
 import { useStudio } from '@/lib/store';
 /* Niyet anahtarlarını okunur etikete çevirmek için (TASK-02) */
 import { intentByKey } from '@/lib/creator/intent';
+/* Creator Intelligence: prompt geçmişi (Adım 4). Ayrı tabloda
+   tutuluyor, ayrı yönetiliyor — kullanıcının kararı. */
 
 /*
   CREATOR MEMORY EKRANI — Sprint 5 / TASK-03, Adım 5.
@@ -183,6 +185,11 @@ export default function MemoryView() {
         t={t} busy={busy} onRun={run} locale={locale} />
       <EntityCard kind="brand" items={memory.brands} entities={entities}
         t={t} busy={busy} onRun={run} locale={locale} />
+      {/* Prompt geçmişi — creator_memory'den AYRI tablo.
+          Kullanıcı kararı: "UI tarafında ayrı yönetilebilir
+          olacak (silme desteği)." */}
+      <PromptHistoryCard t={t} locale={locale} />
+
       <EntityCard kind="goal" items={memory.goals} entities={entities}
         t={t} busy={busy} onRun={run} locale={locale} />
 
@@ -497,6 +504,108 @@ function EntityCard({ kind, items, t, busy, onRun, locale }) {
           </button>
         </div>
       )}
+    </section>
+  );
+}
+
+
+/*
+  PROMPT GEÇMİŞİ KARTI — Sprint-6 Creator Intelligence, Adım 4.
+
+  ---------------------------------------------------------------
+  "EN BAŞARILI" DEĞİL, "EN ÇOK KULLANDIĞIN"
+
+  Kullanıcı kararı: "İlk sürümde kullanıcıya skor göstermiyoruz."
+
+  Ölçtüğümüz şey KULLANIM: kaç kez kopyaladı, kaç sahne doldu.
+  Başarı iddiası verimizin ötesinde — bir prompt'un iyi sonuç
+  verip vermediğini bilemeyiz, görsele bakan bir sistem yok.
+
+  Puan arka planda hesaplanıyor (prompt_history.score) ama
+  gösterilmiyor. Yeterli gerçek veri birikince açılabilir.
+  ---------------------------------------------------------------
+
+  AYRI TABLO, AYRI YÖNETİM
+
+  creator_memory "özet tercihler" tutuyor; bu kart kullanıcının
+  KENDİ ÜRETTİĞİ metinleri gösteriyor. İkisi farklı şeyler, ayrı
+  silinebilmeleri gerekiyor.
+*/
+function PromptHistoryCard({ t, locale }) {
+  const [items, setItems] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [off, setOff] = useState(false);
+  const [open, setOpen] = useState(null);   // açık prompt'un hash'i
+
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch('/api/actions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'prompts', limit: 30 })
+      }).then(x => x.json());
+      if (r?.unavailable) { setOff(true); setItems([]); return; }
+      setItems(r?.prompts || []);
+    } catch { setOff(true); setItems([]); }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  async function forget(hash) {
+    setBusy(true);
+    try {
+      await fetch('/api/actions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'forget', promptHash: hash })
+      });
+      await load();
+    } finally { setBusy(false); }
+  }
+
+  /* Veri yoksa kart HİÇ görünmüyor — boş kutu yer israfı.
+     Migration eksikse de aynı: kullanıcı düzeltemeyeceği bir
+     eksikliği görmesin, Dashboard'daki "kapalı bölümler" zaten
+     söylüyor. */
+  if (items === null) return null;
+  if (off || !items.length) return null;
+
+  const loc = locale === 'en' ? 'en-GB' : 'tr';
+
+  return (
+    <section className="card mem-card">
+      <div className="entry-label">{t('ph.title')}</div>
+      <p className="hint">{t('ph.sub', { n: items.length })}</p>
+
+      {items.map(p => (
+        <div className="ph-row" key={p.prompt_hash}>
+          <button className="ph-text"
+            onClick={() => setOpen(open === p.prompt_hash ? null : p.prompt_hash)}
+            title={t('ph.expand')}>
+            {open === p.prompt_hash
+              ? p.prompt_text
+              : (p.prompt_text.length > 90
+                  ? p.prompt_text.slice(0, 90) + '…'
+                  : p.prompt_text)}
+          </button>
+
+          <div className="ph-meta">
+            {/* KULLANIM sayısı — puan değil */}
+            <span className="ph-uses">{t('ph.uses', { n: p.use_count })}</span>
+            {p.generator && <span className="ph-tag">{p.generator}</span>}
+            {p.style && <span className="ph-tag">{p.style}</span>}
+            {p.last_used_at && (
+              <span className="ph-when">
+                {new Date(p.last_used_at).toLocaleDateString(loc)}
+              </span>
+            )}
+            <button className="mem-chip-x" disabled={busy}
+              title={t('ph.forget')}
+              onClick={() => forget(p.prompt_hash)}>×</button>
+          </div>
+        </div>
+      ))}
+
+      {/* Ne ölçtüğümüzü açıkça söylüyoruz */}
+      <p className="hint ph-note">{t('ph.note')}</p>
     </section>
   );
 }
