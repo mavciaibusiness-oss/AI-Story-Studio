@@ -243,6 +243,7 @@ const DICT = {
     'dc.today': '{n}. gün.',
     'cmp.go': 'Başla',
     'cmp.smallPlaceholder': 'Yeni bir fikir yaz…',
+    'db.archive': 'Geçmiş ve ayrıntılar',
     // --- Prompt geçmişi (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'En çok kullandığın promptlar',
     'ph.sub': '{n} prompt kayıtlı.',
@@ -1322,6 +1323,7 @@ const DICT = {
     'dc.today': 'Day {n}.',
     'cmp.go': 'Start',
     'cmp.smallPlaceholder': 'Write a new idea…',
+    'db.archive': 'History and details',
     // --- Prompt history (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'Prompts you use most',
     'ph.sub': '{n} prompts saved.',

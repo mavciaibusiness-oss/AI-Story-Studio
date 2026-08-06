@@ -2,6 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useT, useI18n } from '@/lib/i18n';
+/* TASK-07: bölümler günlük / arşiv diye ayrılıyor. */
+import { groupSections } from '@/lib/dashboard/summary';
 
 /*
   CREATOR DASHBOARD — bölüm bileşenleri.
@@ -37,6 +39,8 @@ export function DashboardSections({ sessions }) {
   /* Zaman aralığı — üretim bölümü için. 7 gün varsayılan; aylık
      bakmak isteyen 30'a geçebilir. */
   const [days, setDays] = useState(7);
+  /* Arşiv katlanmış başlıyor — her açılışta. Bkz. gruplama notu. */
+  const [archiveOpen, setArchiveOpen] = useState(false);
   /* İlk yükleme ile yenileme farklı: ilkinde iskelet, yenilemede
      mevcut veri duruyor ve üstte ince bir belirteç çıkıyor.
      Veriyi silip iskelet göstermek "kayboldu" hissi verir. */
@@ -139,6 +143,21 @@ export function DashboardSections({ sessions }) {
     memHealth: () => <MemHealthSection key="memHealth" d={data} t={t} />
   };
 
+  /*
+    ---------- GÜNLÜK / ARŞİV ----------
+
+    On bölüm alt alta çok uzun. Sorun sayı değil, hepsinin aynı
+    önemde görünmesi.
+
+    Günlük olanlar açık; arşiv katlanmış. Bilgi SİLİNMİYOR —
+    istendiğinde açılıyor.
+
+    Katlanma durumu hatırlanmıyor: her açılışta arşiv kapalı
+    başlıyor. Kullanıcı dün açtı diye bugün de açık gelmesi,
+    sadeleştirmeyi bozardı.
+  */
+  const groups = groupSections(data.order);
+
   return (
     <div className="db">
       <div className="db-head-row">
@@ -163,7 +182,26 @@ export function DashboardSections({ sessions }) {
         )}
         {refreshing && <span className="db-refreshing">{t('db.refreshing')}</span>}
       </div>
-      {(data.order || Object.keys(RENDER)).map(k => RENDER[k]?.() || null)}
+      {/* Günlük — her zaman açık */}
+      {groups.daily.map(k => RENDER[k]?.() || null)}
+
+      {/* Arşiv — katlanmış */}
+      {groups.archive.length > 0 && (
+        <div className="db-archive">
+          <button className="db-archive-head"
+            onClick={() => setArchiveOpen(!archiveOpen)}
+            aria-expanded={archiveOpen}>
+            <span className="db-archive-title">{t('db.archive')}</span>
+            <span className="db-archive-n">{groups.archive.length}</span>
+            <span className="db-archive-caret">{archiveOpen ? '−' : '+'}</span>
+          </button>
+          {archiveOpen && (
+            <div className="db-archive-body">
+              {groups.archive.map(k => RENDER[k]?.() || null)}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Kapalı bölümler — neden kapalı olduğu yazıyor */}
       {data.unavailable?.length > 0 && (

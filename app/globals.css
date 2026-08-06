@@ -2520,3 +2520,32 @@ button { font-family: var(--body); }
   .cmp-row { flex-direction: column; align-items: stretch; }
   .cmp-go { width: 100%; }
 }
+
+
+/* ============================================================
+   DASHBOARD ARŞİVİ (Sprint 6 / TASK-07)
+   Günlük olan açık, arşiv katlanmış.
+   ============================================================ */
+
+.db-archive { margin-top: 6px; }
+
+.db-archive-head { display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 13px 18px; border-radius: 10px;
+  background: var(--panel); border: 1px solid var(--line);
+  cursor: pointer; transition: border-color .18s; }
+.db-archive-head:hover { border-color: rgba(244,241,234,.22); }
+
+.db-archive-title { font-family: var(--display); font-size: 13px;
+  font-weight: 700; letter-spacing: -.2px; color: var(--text-2); }
+.db-archive-n { font-size: 11px; color: var(--muted);
+  background: var(--panel-2); border-radius: 10px; padding: 2px 8px;
+  font-variant-numeric: tabular-nums; }
+.db-archive-caret { margin-left: auto; font-size: 16px; color: var(--muted);
+  line-height: 1; }
+
+.db-archive-body { margin-top: 12px;
+  animation: db-open .22s ease both; }
+@keyframes db-open {
+  from { opacity: 0; transform: translateY(-4px) }
+  to { opacity: 1; transform: none }
+}
