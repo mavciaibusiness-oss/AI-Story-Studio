@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { getSupabaseBrowser } from '@/lib/supabase-browser';
@@ -28,9 +28,12 @@ import { workState, workSummary } from '@/lib/creator/workstate';
 import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
 /* Workspace görünüm bileşenleri — CreatorView 1123 satıra çıkmıştı,
    çizim katmanı ayrıldı. */
-import { DirectorPanel, EntryPanel, StateBar, EmptyState,
+import { DirectorPanel, EntryPanel, StateBar,
          NotificationBar, Widget, QuickActions, PlanBrief,
-         SmartWarning, EventLog } from './WorkspaceParts';
+         SmartWarning, EventLog, DailyWelcome,
+         AmbiguityPicker, IntentFallback } from './WorkspaceParts';
+/* TASK-05 Adım 2: günlük karşılama — Creator OS'un kalbi */
+import { dailyBrief } from '@/lib/creator/daily';
 /* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
 import { buildBrief } from '@/lib/creator/brief';
 /* Creator Intelligence: görev sinyalleri (Adım 2). Olay günlüğü
@@ -108,6 +111,15 @@ export default function CreatorView({ userId }) {
      başlatmadan önce beklenmesi gereken şey bu; `memory`'nin
      dolması değil (kapalıysa hiç dolmaz). */
   const [memoryTried, setMemoryTried] = useState(false);
+  /* Son açılış — "sen yokken ne oldu" için. Okunduktan SONRA
+     güncelleniyor; yoksa her zaman "hiçbir şey" derdik. */
+  const [lastVisit, setLastVisit] = useState(null);
+  useEffect(() => {
+    try {
+      setLastVisit(localStorage.getItem('cos:lastVisit'));
+      localStorage.setItem('cos:lastVisit', new Date().toISOString());
+    } catch { /* gizli mod */ }
+  }, []);
   /* Workspace: bildirim kapatmaları ve widget düzeni.
 
      localStorage'da tutuluyor — kullanıcı tercihi, sunucuya taşımaya
@@ -361,6 +373,23 @@ export default function CreatorView({ userId }) {
     hızı bu planın tahminini besliyor. Tek oturumdan ölçüm çıkarmak
     yetersiz olurdu.
   */
+  /*
+    GÜNLÜK ÖZET — Creator OS açılışının kalbi.
+
+    Saat dilimi İSTEMCİDEN: kullanıcının günü kendi gece yarısında
+    biter, sunucununkinde değil.
+
+    `since` localStorage'dan — son açılış zamanı. Cihaza özgü ama
+    "sen yokken ne oldu" sorusu zaten cihaz bazlı yaşanıyor.
+  */
+  const daily = useMemo(() => dailyBrief({
+    /* `/api/project` ÖZET dönüyor — ham storyboard yok. daily.js
+       özet nesneleri doğrudan kabul ediyor. */
+    episodes: projects?.all || [],
+    since: lastVisit,
+    tzOffsetMin: new Date().getTimezoneOffset()
+  }), [projects, lastVisit]);
+
   const timings = taskTimings(sessions);
   const brief = active
     ? buildBrief({
@@ -474,9 +503,10 @@ export default function CreatorView({ userId }) {
               onBack={() => setActive(null)}
               onDiscard={() => discard(active.id)} />
           ) : (
-            <EmptyState unfinished={unfinished} t={t} locale={locale}
-              onboarding={onboardingState({ memory, sessions })}
-              onResume={setActive} onStart={start} />
+            <DailyWelcome daily={daily} unfinished={unfinished}
+              t={t} locale={locale}
+              onResume={setActive} onStart={() => setText('')}
+              onOpenProject={openProject} />
           )}
         </main>
 
@@ -831,48 +861,3 @@ function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onOpen,
   );
 }
 
-/* Kararsızlıkta seçenek sunma — motorun aday listesinden */
-function AmbiguityPicker({ session, t, locale, onUpdate }) {
-  const candidates = classifyIntent(session.input).candidates || [];
-  if (candidates.length < 2) return null;
-
-  return (
-    <div className="cos-ambiguous">
-      <div className="cos-ambiguous-title">{t('cos.whichOne')}</div>
-      <div className="cos-ambiguous-list">
-        {candidates.map(c => (
-          <button key={c.key}
-            className={'cos-choice' + (c.key === session.intent ? ' on' : '')}
-            onClick={() => onUpdate(reclassify(session, c.key))}>
-            {c.label?.[locale] || c.label?.tr}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-/* Niyet hiç tanınmadıysa: en yaygın başlangıçları öner.
-   Spec kuralı 3 — boş ekran yok. */
-const FALLBACK_INTENTS = ['video.generic', 'video.horror', 'video.kids',
-                          'video.shorts', 'improve.video'];
-
-function IntentFallback({ t, locale, session, onUpdate }) {
-  return (
-    <div className="cos-ambiguous">
-      <div className="cos-ambiguous-title">{t('cos.cannotTell')}</div>
-      <div className="cos-ambiguous-list">
-        {FALLBACK_INTENTS.map(k => {
-          const d = intentByKey(k);
-          if (!d) return null;
-          return (
-            <button key={k} className="cos-choice"
-              onClick={() => onUpdate(reclassify(session, k))}>
-              {d.label[locale] || d.label.tr}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}

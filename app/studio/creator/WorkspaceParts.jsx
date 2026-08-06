@@ -164,50 +164,6 @@ function formatDur(sec) {
 }
 
 
-/*
-  Boş durum — spec: "Workspace boş görünmeyecek. Her zaman bir durum
-  gösterecek."
-
-  Yarım plan varsa onu öneriyor, yoksa ne yapabileceğini anlatıyor.
-*/
-export function EmptyState({ unfinished, t, locale, onboarding, onResume }) {
-  if (unfinished.length > 0) {
-    return (
-      <div className="card ws-empty">
-        <div className="ws-empty-title">{t('ws.resumeTitle')}</div>
-        <div className="cos-resume-list">
-          {unfinished.slice(0, 4).map(s => {
-            const p = workflowStatus(s);
-            return (
-              <button className="cos-resume-item" key={s.id} onClick={() => onResume(s)}>
-                <span className="cos-resume-title">{s.title}</span>
-                <span className="cos-resume-meta">{p.done}/{p.doable} · {p.percent}%</span>
-                <span className="cos-resume-bar"><i style={{ width: p.percent + '%' }} /></span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  }
-
-  /* Deneyim seviyesine göre farklı karşılama.
-
-     Deneyimli kullanıcıya her gün "ne yapabilirsin" anlatmak can
-     sıkıcı; o zaten biliyor. Yeni kullanıcıya ise yönlendirme şart. */
-  const stage = onboarding?.stage || 'first-time';
-
-  return (
-    <div className="card ws-empty">
-      <div className="ws-empty-title">{t('ws.stage.' + stage + '.title')}</div>
-      {onboarding?.showGuide && (
-        <p className="hint">{t('ws.stage.' + stage + '.hint')}</p>
-      )}
-    </div>
-  );
-}
-
-
 /* Bildirim çubuğu */
 export function NotificationBar({ items, t, locale, onClose, onOpenSession, onOpenProject }) {
   const L = (o) => o?.[locale] || o?.tr || '';
@@ -605,3 +561,205 @@ export function EventLog({ session, t, L }) {
   );
 }
 
+
+/*
+  GÜNLÜK KARŞILAMA — Creator OS'un kalbi.
+
+  Sprint 6 / TASK-05, Adım 2.
+
+  ---------------------------------------------------------------
+  İLK 5 SANİYEDE ÜÇ SORU
+
+    1. Bugün ne yapacağım?     → tek büyük eylem
+    2. Nereden devam edeceğim? → proje adı + kaldığı yer
+    3. Neden tekrar geldim?    → seri + son ziyaretten beri
+
+  AZ METİN, ÇOK ANLAM. Kullanıcının kararı: "mümkün olduğunca az
+  metin, daha fazla anlam, daha fazla yönlendirme."
+
+  Bu yüzden burada paragraf yok. Bir sayı, bir isim, bir düğme.
+  ---------------------------------------------------------------
+
+  ESKİ EmptyState'İN YERİNE GEÇİYOR
+
+  Eski ekran "henüz planın yok" diyordu ve yarım kalanları
+  listeliyordu — bilgi doğruydu ama YÖNLENDİRME yoktu. Kullanıcı
+  hangisine tıklayacağına kendi karar veriyordu.
+
+  Yeni ekran TEK bir şey öneriyor. Liste hâlâ var ama altta,
+  ikincil.
+*/
+export function DailyWelcome({ daily, unfinished, t, locale, onResume, onStart, onOpenProject }) {
+  const L = (o) => o?.[locale] || o?.tr || '';
+  if (!daily) return null;
+
+  const { streak, focus, since, firstDay } = daily;
+
+  return (
+    <div className="dw">
+      {/*
+        ---- 3. NEDEN TEKRAR GELDİM ----
+        Seri en üstte ve küçük. Gurur verici ama ekranın konusu
+        değil — konusu bugün ne yapacağı.
+
+        SERİ YOKSA HİÇ GÖSTERİLMİYOR. "0 gün" yazmak suçluluk
+        üretir (kullanıcının kararı).
+      */}
+      {streak?.active && streak.current > 0 && (
+        <div className="dw-streak">
+          <span className="dw-streak-n">{streak.current}</span>
+          <span className="dw-streak-l">
+            {t('dw.streak', { n: streak.current })}
+            {streak.best > streak.current && ' · ' + t('dw.best', { n: streak.best })}
+          </span>
+        </div>
+      )}
+
+      {/*
+        ---- 1 + 2. BUGÜN NE, NEREDEN ----
+        Ekranın merkezi. Tek eylem, tek düğme.
+      */}
+      {focus?.kind === 'fresh-start' && (
+        <div className="dw-main">
+          <h2 className="dw-title">{t(firstDay ? 'dw.firstTime' : 'dw.freshTitle')}</h2>
+          <button className="btn btn-primary dw-go" onClick={() => onStart?.()}>
+            {t('dw.startNew')}
+          </button>
+        </div>
+      )}
+
+      {focus?.kind === 'continue-today' && (
+        <div className="dw-main">
+          <span className="dw-kicker">{t('dw.todayKicker')}</span>
+          <h2 className="dw-title">{focus.project.title}</h2>
+          <div className="dw-meta">
+            <ProgressPill p={focus.project} t={t} />
+          </div>
+          <button className="btn btn-primary dw-go"
+            onClick={() => onOpenProject?.(focus.project.id)}>
+            {t('dw.continue')}
+          </button>
+        </div>
+      )}
+
+      {focus?.kind === 'resume' && (
+        <div className="dw-main">
+          {/* Bekleme süresi SUÇLAMA DEĞİL, bilgi. "3 gündür
+              dokunmadın" değil, "3 gündür bekliyor". */}
+          <span className="dw-kicker">
+            {focus.idleDays != null && focus.idleDays > 0
+              ? t('dw.waiting', { n: focus.idleDays })
+              : t('dw.resumeKicker')}
+          </span>
+          <h2 className="dw-title">{focus.project.title}</h2>
+          <div className="dw-meta">
+            <ProgressPill p={focus.project} t={t} />
+          </div>
+          <button className="btn btn-primary dw-go"
+            onClick={() => onOpenProject?.(focus.project.id)}>
+            {t('dw.continue')}
+          </button>
+        </div>
+      )}
+
+      {/*
+        ---- SON ZİYARETTEN BERİ ----
+        Yalnızca gerçekten bir şey değiştiyse. "0 değişiklik"
+        yazmak gürültü.
+      */}
+      {since?.total > 0 && (
+        <p className="dw-since">{t('dw.since', { n: since.total })}</p>
+      )}
+
+      {/*
+        ---- İKİNCİL: diğer yarım işler ----
+        En fazla 3. Ana eylem zaten seçildi; bunlar alternatif.
+      */}
+      {unfinished?.length > 1 && (
+        <div className="dw-others">
+          <span className="dw-others-label">{t('dw.others')}</span>
+          {unfinished
+            .filter(p => p.id !== focus?.project?.id)
+            .slice(0, 3)
+            .map(p => (
+              <button className="dw-other" key={p.id}
+                onClick={() => onOpenProject?.(p.id)}>
+                {p.title}
+              </button>
+            ))}
+        </div>
+      )}
+
+      {/* Yeni bir şey başlatmak her zaman mümkün — ama ikincil */}
+      {focus?.kind !== 'fresh-start' && (
+        <button className="dw-new" onClick={() => onStart?.()}>
+          {t('dw.orNew')}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* İlerleme rozeti — sayı değil, durum. "9/14 sahne" bilgi verir
+   ama "%64" soyut kalır. */
+function ProgressPill({ p, t }) {
+  if (!p?.ready?.total) return null;
+  return (
+    <span className="dw-pill">
+      {t('dw.scenes', { a: p.ready.media, b: p.ready.total })}
+    </span>
+  );
+}
+
+/*
+  TASK-05 Adım 2'de taşındı: CreatorView 900 satırı aştı.
+
+  İkisi de SAF ÇİZİM — oturum durumunu değiştirmiyorlar, aldıkları
+  geri çağrıyı çağırıyorlar.
+*/
+/* Kararsızlıkta seçenek sunma — motorun aday listesinden */
+export function AmbiguityPicker({ session, t, locale, onUpdate }) {
+  const candidates = classifyIntent(session.input).candidates || [];
+  if (candidates.length < 2) return null;
+
+  return (
+    <div className="cos-ambiguous">
+      <div className="cos-ambiguous-title">{t('cos.whichOne')}</div>
+      <div className="cos-ambiguous-list">
+        {candidates.map(c => (
+          <button key={c.key}
+            className={'cos-choice' + (c.key === session.intent ? ' on' : '')}
+            onClick={() => onUpdate(reclassify(session, c.key))}>
+            {c.label?.[locale] || c.label?.tr}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* Niyet hiç tanınmadıysa: en yaygın başlangıçları öner.
+   Spec kuralı 3 — boş ekran yok. */
+const FALLBACK_INTENTS = ['video.generic', 'video.horror', 'video.kids',
+                          'video.shorts', 'improve.video'];
+
+
+export function IntentFallback({ t, locale, session, onUpdate }) {
+  return (
+    <div className="cos-ambiguous">
+      <div className="cos-ambiguous-title">{t('cos.cannotTell')}</div>
+      <div className="cos-ambiguous-list">
+        {FALLBACK_INTENTS.map(k => {
+          const d = intentByKey(k);
+          if (!d) return null;
+          return (
+            <button key={k} className="cos-choice"
+              onClick={() => onUpdate(reclassify(session, k))}>
+              {d.label[locale] || d.label.tr}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

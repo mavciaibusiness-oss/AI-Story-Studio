@@ -2422,3 +2422,55 @@ button { font-family: var(--body); }
 
 .ph-note { margin-top: 12px; padding-top: 10px;
   border-top: 1px solid var(--line); }
+
+
+/* ============================================================
+   GÜNLÜK KARŞILAMA (Sprint 6 / TASK-05)
+   Creator OS'un kalbi: az metin, çok yönlendirme.
+   ============================================================ */
+
+.dw { padding: 30px 0 20px; text-align: center; }
+
+/* Seri — küçük, üstte. Gurur verici ama ekranın konusu değil. */
+.dw-streak { display: inline-flex; align-items: baseline; gap: 8px;
+  padding: 6px 14px; border-radius: 20px; margin-bottom: 26px;
+  background: rgba(255,180,84,.09); border: 1px solid rgba(255,180,84,.24); }
+.dw-streak-n { font-family: var(--display); font-size: 19px; font-weight: 800;
+  color: var(--lamp); line-height: 1; font-variant-numeric: tabular-nums; }
+.dw-streak-l { font-size: 12.5px; color: var(--text-2); }
+
+/* Merkez — tek eylem */
+.dw-main { max-width: 480px; margin: 0 auto; }
+.dw-kicker { display: block; font-family: var(--display); font-size: 10px;
+  font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 9px; }
+.dw-title { font-family: var(--display); font-size: 30px; font-weight: 800;
+  color: var(--cream); letter-spacing: -.9px; line-height: 1.2;
+  margin: 0 0 14px; word-break: break-word; }
+.dw-meta { margin-bottom: 20px; }
+.dw-pill { font-size: 12.5px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 20px; padding: 5px 13px; }
+.dw-go { font-size: 15px; padding: 12px 30px; border-radius: 10px; }
+
+.dw-since { font-size: 12.5px; color: var(--muted); margin: 22px 0 0; }
+
+/* İkincil — diğer yarım işler */
+.dw-others { margin-top: 30px; padding-top: 20px;
+  border-top: 1px solid var(--line); }
+.dw-others-label { display: block; font-family: var(--display);
+  font-size: 9.5px; font-weight: 700; letter-spacing: 1.1px;
+  text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
+.dw-other { font-size: 13px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 18px; padding: 6px 15px;
+  margin: 0 4px 6px; cursor: pointer; transition: border-color .18s, color .18s; }
+.dw-other:hover { border-color: rgba(255,180,84,.4); color: var(--cream); }
+
+.dw-new { display: block; margin: 22px auto 0; background: none; border: none;
+  font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.dw-new:hover { color: var(--lamp); text-decoration: underline; }
+
+@media (max-width: 620px) {
+  .dw { padding: 20px 0 16px; }
+  .dw-title { font-size: 23px; }
+  .dw-go { width: 100%; }
+}
