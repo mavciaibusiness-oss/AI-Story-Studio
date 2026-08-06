@@ -237,6 +237,10 @@ const DICT = {
     'dw.since': 'Son gelişinden beri {n} projeye dokunuldu.',
     'dw.others': 'Diğerleri',
     'dw.orNew': 'ya da yeni bir şey başlat',
+    'dw.usual': 'Genellikle {what} üretiyorsun.',
+    'dc.back': '{n} gün sonra tekrar buradasın.',
+    'dc.continue': '{n} günlük serin sürüyor.',
+    'dc.today': '{n}. gün.',
     // --- Prompt geçmişi (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'En çok kullandığın promptlar',
     'ph.sub': '{n} prompt kayıtlı.',
@@ -1310,6 +1314,10 @@ const DICT = {
     'dw.since': '{n} projects changed since your last visit.',
     'dw.others': 'Others',
     'dw.orNew': 'or start something new',
+    'dw.usual': 'You usually make {what}.',
+    'dc.back': 'Back after {n} days.',
+    'dc.continue': 'Your {n}-day streak is alive.',
+    'dc.today': 'Day {n}.',
     // --- Prompt history (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'Prompts you use most',
     'ph.sub': '{n} prompts saved.',

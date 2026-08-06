@@ -31,9 +31,9 @@ import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
 import { DirectorPanel, EntryPanel, StateBar,
          NotificationBar, Widget, QuickActions, PlanBrief,
          SmartWarning, EventLog, DailyWelcome,
-         AmbiguityPicker, IntentFallback } from './WorkspaceParts';
+         AmbiguityPicker, IntentFallback, DailyContext } from './WorkspaceParts';
 /* TASK-05 Adım 2: günlük karşılama — Creator OS'un kalbi */
-import { dailyBrief } from '@/lib/creator/daily';
+import { dailyBrief, activeContext } from '@/lib/creator/daily';
 /* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
 import { buildBrief } from '@/lib/creator/brief';
 /* Creator Intelligence: görev sinyalleri (Adım 2). Olay günlüğü
@@ -472,7 +472,8 @@ export default function CreatorView({ userId }) {
 
       {/* Çalışma durumu — spec: "Her zaman bir durum gösterecek."
           Gerçek veriden: kaç adım kaldı, sahnelerin kaçı hazır. */}
-      <StateBar state={state} summary={summary} t={t} locale={locale} />
+      <StateBar state={state} summary={summary} t={t} locale={locale}
+        extra={<DailyContext ctx={activeContext({ daily })} t={t} />} />
 
       {/* Bildirimler — Director panelinin hemen altında, dikkat çeksin */}
       {notifications.length > 0 && (
@@ -504,6 +505,7 @@ export default function CreatorView({ userId }) {
               onDiscard={() => discard(active.id)} />
           ) : (
             <DailyWelcome daily={daily} unfinished={unfinished}
+              personalization={personalization}
               t={t} locale={locale}
               onResume={setActive} onStart={() => setText('')}
               onOpenProject={openProject} />

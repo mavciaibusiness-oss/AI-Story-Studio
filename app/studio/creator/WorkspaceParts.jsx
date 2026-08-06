@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { workflowStatus, reasonKey } from '@/lib/creator/suggest';
 import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
 import { briefSummary } from '@/lib/creator/brief';
+/* Niyet anahtarını okunur etikete çevirmek için (Adım 3) */
+import { intentByKey } from '@/lib/creator/intent';
 
 
 /*
@@ -101,7 +103,7 @@ export function EntryPanel({ t, locale, text, setText, preview, onStart }) {
   işi olamaz. Sahte ilerleme göstermek yerine gerçek durumu
   gösteriyoruz (bkz. lib/creator/workstate.js).
 */
-export function StateBar({ state, summary, t, locale }) {
+export function StateBar({ state, summary, t, locale, extra }) {
   const L = (o) => o?.[locale] || o?.tr || '';
   const d = state.data || {};
 
@@ -127,6 +129,10 @@ export function StateBar({ state, summary, t, locale }) {
   return (
     <div className={'ws-state ws-state-' + state.kind}>
       <span className="ws-state-text">{text}</span>
+
+      {/* Günlük bağlam — aktif planda tek satır (Adım 3).
+          Söylenecek bir şey yoksa null geliyor. */}
+      {extra}
 
       {/* Üretim ilerlemesi — gerçek sahne sayıları */}
       {prod?.steps?.length > 0 && (
@@ -589,7 +595,8 @@ export function EventLog({ session, t, L }) {
   Yeni ekran TEK bir şey öneriyor. Liste hâlâ var ama altta,
   ikincil.
 */
-export function DailyWelcome({ daily, unfinished, t, locale, onResume, onStart, onOpenProject }) {
+export function DailyWelcome({ daily, unfinished, personalization,
+                              t, locale, onResume, onStart, onOpenProject }) {
   const L = (o) => o?.[locale] || o?.tr || '';
   if (!daily) return null;
 
@@ -622,6 +629,20 @@ export function DailyWelcome({ daily, unfinished, t, locale, onResume, onStart, 
       {focus?.kind === 'fresh-start' && (
         <div className="dw-main">
           <h2 className="dw-title">{t(firstDay ? 'dw.firstTime' : 'dw.freshTitle')}</h2>
+          {/*
+            ÖĞRENİLEN BİLGİ BURADA KULLANILIYOR.
+
+            `usual-intent` TASK-02 Adım 5'te hafızaya eklenmişti ama
+            hiçbir ekranda gösterilmiyordu — TASK-03'teki
+            `feedbackWeights` hatasının aynısını yapmıştım.
+
+            Boş ekranda anlamlı: kullanıcı ne yazacağını
+            düşünüyorsa, geçmişi ona ipucu veriyor.
+
+            Aktif planda göstermiyoruz — orada zaten ne yaptığı
+            belli.
+          */}
+          <UsualIntent p={personalization} t={t} locale={locale} />
           <button className="btn btn-primary dw-go" onClick={() => onStart?.()}>
             {t('dw.startNew')}
           </button>
@@ -761,5 +782,50 @@ export function IntentFallback({ t, locale, session, onUpdate }) {
         })}
       </div>
     </div>
+  );
+}
+
+
+/*
+  Alışkanlık ipucu — "genellikle korku videosu üretiyorsun".
+
+  Hafıza (TASK-03) bunu öğreniyor, `personalizationSummary` üretiyor.
+  Adım 3'e kadar hiçbir yerde gösterilmiyordu.
+
+  EŞİK HAFIZADA: `dominant` en az 3 örnek ve %40 baskınlık istiyor.
+  Burada ek kontrol yok — az veride zaten `usual-intent` üretilmiyor.
+*/
+function UsualIntent({ p, t, locale }) {
+  const r = (p?.reasons || []).find(x => x.kind === 'usual-intent');
+  if (!r?.key) return null;
+
+  const label = intentByKey(r.key)?.label;
+  const name = label?.[locale] || label?.tr || r.key;
+
+  return (
+    <p className="dw-usual">{t('dw.usual', { what: name })}</p>
+  );
+}
+
+/*
+  AKTİF PLANDA GÜNLÜK BAĞLAM — tek satır.
+
+  Adım 2'de karşılama yalnızca boş durumda görünüyordu. Plan
+  üzerinde çalışan kullanıcı günlük bağlamı hiç görmüyordu.
+
+  Ama aktif planda ekran zaten dolu. Bu yüzden karşılama değil,
+  TEK SATIR: "5 gün sonra döndün" ya da "3. günün".
+
+  Söylenecek bir şey yoksa hiç görünmüyor.
+*/
+export function DailyContext({ ctx, t }) {
+  if (!ctx) return null;
+
+  return (
+    <span className={'dc dc-' + ctx.kind}>
+      {ctx.kind === 'welcome-back' && t('dc.back', { n: ctx.days })}
+      {ctx.kind === 'continue-streak' && t('dc.continue', { n: ctx.days })}
+      {ctx.kind === 'streak-today' && t('dc.today', { n: ctx.days })}
+    </span>
   );
 }
