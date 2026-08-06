@@ -241,6 +241,8 @@ const DICT = {
     'dc.back': '{n} gün sonra tekrar buradasın.',
     'dc.continue': '{n} günlük serin sürüyor.',
     'dc.today': '{n}. gün.',
+    'cmp.go': 'Başla',
+    'cmp.smallPlaceholder': 'Yeni bir fikir yaz…',
     // --- Prompt geçmişi (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'En çok kullandığın promptlar',
     'ph.sub': '{n} prompt kayıtlı.',
@@ -1318,6 +1320,8 @@ const DICT = {
     'dc.back': 'Back after {n} days.',
     'dc.continue': 'Your {n}-day streak is alive.',
     'dc.today': 'Day {n}.',
+    'cmp.go': 'Start',
+    'cmp.smallPlaceholder': 'Write a new idea…',
     // --- Prompt history (Sprint 6 / Creator Intelligence) ---
     'ph.title': 'Prompts you use most',
     'ph.sub': '{n} prompts saved.',

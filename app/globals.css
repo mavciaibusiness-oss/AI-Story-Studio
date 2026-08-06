@@ -2483,3 +2483,40 @@ button { font-family: var(--body); }
   .dw-title { font-size: 23px; }
   .dw-go { width: 100%; }
 }
+
+
+/* ============================================================
+   COMPOSER — tek giriş noktası (Sprint 6 / TASK-06)
+   ============================================================ */
+
+.cmp { max-width: 520px; margin: 0 auto; }
+.cmp-row { display: flex; gap: 8px; align-items: flex-end; }
+
+.cmp-input { flex: 1; min-width: 0; resize: none;
+  font-family: inherit; font-size: 14px; line-height: 1.5;
+  padding: 11px 14px; border-radius: 10px; }
+.cmp-go { flex-shrink: 0; padding: 11px 22px; border-radius: 10px; }
+
+/* Büyük hâl — boş ekranda, ana eylem */
+.cmp-big { max-width: 560px; }
+.cmp-big .cmp-input { font-size: 15.5px; padding: 14px 16px; border-radius: 12px; }
+.cmp-big .cmp-go { padding: 14px 28px; font-size: 15px; border-radius: 12px; }
+
+/* Ne anladık — landing'dekiyle aynı dil */
+.cmp-preview { display: inline-flex; align-items: center; gap: 8px;
+  flex-wrap: wrap; justify-content: center;
+  margin-top: 12px; padding: 6px 13px; border-radius: 18px;
+  background: rgba(255,180,84,.08); border: 1px solid rgba(255,180,84,.22);
+  font-size: 12.5px; }
+.cmp-preview-l { color: var(--muted); }
+.cmp-preview-v { color: var(--lamp); font-weight: 600; }
+.cmp-preview-a { color: var(--muted); font-size: 11.5px; }
+
+/* İkincil yuva — devam edilecek iş varken altta */
+.dw-composer-slot { margin-top: 26px; padding-top: 20px;
+  border-top: 1px solid var(--line); }
+
+@media (max-width: 620px) {
+  .cmp-row { flex-direction: column; align-items: stretch; }
+  .cmp-go { width: 100%; }
+}

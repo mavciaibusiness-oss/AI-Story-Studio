@@ -28,7 +28,7 @@ import { workState, workSummary } from '@/lib/creator/workstate';
 import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
 /* Workspace görünüm bileşenleri — CreatorView 1123 satıra çıkmıştı,
    çizim katmanı ayrıldı. */
-import { DirectorPanel, EntryPanel, StateBar,
+import { DirectorPanel, StateBar,
          NotificationBar, Widget, QuickActions, PlanBrief,
          SmartWarning, EventLog, DailyWelcome,
          AmbiguityPicker, IntentFallback, DailyContext } from './WorkspaceParts';
@@ -465,16 +465,23 @@ export default function CreatorView({ userId }) {
           Aktif plan varsa sonraki adımı, yoksa giriş sorusunu
           gösteriyor. İkisi de aynı yeri kaplıyor — kullanıcı her
           zaman aynı noktaya bakıyor. */}
-      <section className="ws-director">
-        {active ? (
+      {/*
+        TASK-06: fikir kutusu MERKEZE taşındı.
+
+        Eskiden aktif plan yokken burada EntryPanel duruyordu —
+        kutu sol kenarda, karşılama merkezde. Kullanıcı "yeni
+        başlat"a basınca kenara odaklanıyordu.
+
+        Şimdi kutu karşılamanın içinde. Bu panel yalnızca aktif
+        planda Director'ı gösteriyor; boşta hiç görünmüyor ve
+        merkez tek odak noktası oluyor.
+      */}
+      {active && (
+        <section className="ws-director">
           <DirectorPanel session={active} status={status} t={t} locale={locale}
             onOpen={() => {}} onBack={() => setActive(null)} />
-        ) : (
-          <EntryPanel t={t} locale={locale} text={text} setText={setText}
-            inputRef={entryRef}
-            preview={preview} onStart={start} />
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Çalışma durumu — spec: "Her zaman bir durum gösterecek."
           Gerçek veriden: kaç adım kaldı, sahnelerin kaçı hazır. */}
@@ -512,27 +519,12 @@ export default function CreatorView({ userId }) {
           ) : (
             <DailyWelcome daily={daily} unfinished={unfinished}
               personalization={personalization}
+              /* TASK-06: fikir kutusu artık MERKEZDE, kenarda değil.
+                 Aynı state; iki kopya olsaydı ayrışırlardı. */
+              composer={{ text, setText, preview, onStart: start,
+                          inputRef: entryRef }}
               t={t} locale={locale}
               onResume={setActive}
-              onStart={() => {
-                /*
-                  BOŞ EKRANDAN ÜRETİME EN KISA YOL.
-
-                  Eskiden yalnızca kutuyu temizliyordu — kullanıcı
-                  düğmeye basıp hiçbir şey olmadığını görüyordu.
-
-                  Şimdi kutuya odaklanıyor: bir sonraki hareket
-                  yazmak, ve imleç zaten orada.
-                */
-                setText('');
-                requestAnimationFrame(() => {
-                  const el = entryRef.current;
-                  if (!el) return;
-                  el.focus();
-                  /* Kutu ekranın dışındaysa görünür yap */
-                  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-                });
-              }}
               onOpenProject={openProject} />
           )}
         </main>

@@ -64,41 +64,6 @@ export function DirectorPanel({ session, status, t, locale }) {
 }
 
 
-/* Giriş paneli — plan yokken. Creator OS'un tek cümle girişi. */
-export function EntryPanel({ t, locale, text, setText, preview, onStart, inputRef }) {
-  return (
-    <div className="ws-entry">
-      <div className="cos-greet">{t('cos.greet')}</div>
-      <h1 className="ws-question">{t('cos.question')}</h1>
-
-      <div className="ws-input-wrap">
-        <textarea className="input cos-input" rows={2}
-          /* Karşılamadaki "yeni bir şey başlat" buraya odaklanıyor
-             (Adım 5). Düğmeye basıp hiçbir şey olmaması, kullanıcıya
-             sistemin cevap vermediğini düşündürür. */
-          ref={inputRef}
-          placeholder={t('cos.placeholder')}
-          value={text} onChange={e => setText(e.target.value)}
-          onKeyDown={e => {
-            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onStart(); }
-          }} />
-        <button className="btn btn-primary cos-start"
-          onClick={() => onStart()} disabled={!text.trim()}>
-          {t('cos.start')}
-        </button>
-      </div>
-
-      {preview?.intent && (
-        <div className="cos-preview">
-          {t('cos.understood')}: <b>{preview.label?.[locale] || preview.label?.tr}</b>
-          {preview.ambiguous && <span className="cos-preview-amb">{t('cos.notSure')}</span>}
-        </div>
-      )}
-    </div>
-  );
-}
-
-
 /*
   Çalışma durumu şeridi.
 
@@ -600,6 +565,7 @@ export function EventLog({ session, t, L }) {
   ikincil.
 */
 export function DailyWelcome({ daily, unfinished, personalization,
+                              composer,
                               t, locale, onResume, onStart, onOpenProject }) {
   const L = (o) => o?.[locale] || o?.tr || '';
   if (!daily) return null;
@@ -647,9 +613,21 @@ export function DailyWelcome({ daily, unfinished, personalization,
             belli.
           */}
           <UsualIntent p={personalization} t={t} locale={locale} />
-          <button className="btn btn-primary dw-go" onClick={() => onStart?.()}>
-            {t('dw.startNew')}
-          </button>
+
+          {/*
+            COMPOSER — Sprint 6 / TASK-06.
+
+            Kullanıcı kararı: "Landing'deki fikir kutusu Creator
+            OS'un merkezine taşınacak. Kullanıcı düşünmeden üretime
+            başlayabilmeli."
+
+            Eskiden burada "Yeni bir şey başlat" DÜĞMESİ vardı ve
+            sol kenardaki kutuya odaklanıyordu. İki adım: bas, sonra
+            yaz.
+
+            Şimdi kutu BURADA. Tek adım: yaz.
+          */}
+          <Composer {...composer} t={t} locale={locale} big />
         </div>
       )}
 
@@ -715,11 +693,15 @@ export function DailyWelcome({ daily, unfinished, personalization,
         </div>
       )}
 
-      {/* Yeni bir şey başlatmak her zaman mümkün — ama ikincil */}
+      {/*
+        Devam edilecek iş varken composer İKİNCİL — küçük ve altta.
+        Ana eylem "devam et"; yeni fikir yazmak da mümkün ama
+        ekranın konusu o değil.
+      */}
       {focus?.kind !== 'fresh-start' && (
-        <button className="dw-new" onClick={() => onStart?.()}>
-          {t('dw.orNew')}
-        </button>
+        <div className="dw-composer-slot">
+          <Composer {...composer} t={t} locale={locale} />
+        </div>
       )}
     </div>
   );
@@ -831,5 +813,75 @@ export function DailyContext({ ctx, t }) {
       {ctx.kind === 'continue-streak' && t('dc.continue', { n: ctx.days })}
       {ctx.kind === 'streak-today' && t('dc.today', { n: ctx.days })}
     </span>
+  );
+}
+
+
+/*
+  COMPOSER — tek giriş noktası.
+
+  Sprint 6 / TASK-06.
+
+  ---------------------------------------------------------------
+  LANDING'DEKİ KUTUYLA AYNI DAVRANIŞ
+
+  Landing'de (TASK-01) kullanıcı yazarken Creator OS ne anladığını
+  gösteriyordu. Creator OS içinde de aynı şey olmalı — iki yerde
+  farklı davranan bir kutu, öğrenilen davranışı bozar.
+
+  Fark: landing'de dönüşümlü örnekler var (ne yazılabileceğini
+  bilmeyen ziyaretçi için). Creator OS'ta kullanıcı zaten biliyor;
+  örnekler yerine ALIŞKANLIĞI gösteriyoruz ("genellikle korku
+  videosu üretiyorsun") — o da hemen üstte.
+  ---------------------------------------------------------------
+
+  İKİ BOYUT
+
+  `big` — boş ekranda, merkezde. Ana eylem.
+  varsayılan — devam edilecek iş varken, altta. İkincil.
+
+  Aynı bileşen; yalnızca sınıf değişiyor. İki ayrı kutu yazmak
+  ikisinin ayrışmasına yol açardı.
+*/
+export function Composer({ text, setText, preview, onStart, inputRef,
+                           t, locale, big }) {
+  const busy = !String(text || '').trim();
+
+  return (
+    <div className={'cmp' + (big ? ' cmp-big' : '')}>
+      <div className="cmp-row">
+        <textarea className="input cmp-input" rows={big ? 2 : 1}
+          ref={inputRef}
+          placeholder={t(big ? 'cos.placeholder' : 'cmp.smallPlaceholder')}
+          value={text || ''}
+          onChange={e => setText?.(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); onStart?.(); }
+          }}
+          aria-label={t('cos.placeholder')} />
+        <button className="btn btn-primary cmp-go"
+          onClick={() => onStart?.()} disabled={busy}>
+          {t('cmp.go')}
+        </button>
+      </div>
+
+      {/*
+        NE ANLADIK — landing'dekiyle aynı.
+
+        Vaat değil, gerçek sınıflandırma sonucu. Kullanıcı
+        Enter'a basmadan önce doğru anlaşıldığını görüyor.
+      */}
+      {preview?.intent && (
+        <div className="cmp-preview">
+          <span className="cmp-preview-l">{t('cos.understood')}</span>
+          <span className="cmp-preview-v">
+            {preview.label?.[locale] || preview.label?.tr}
+          </span>
+          {preview.ambiguous && (
+            <span className="cmp-preview-a">{t('cos.notSure')}</span>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
