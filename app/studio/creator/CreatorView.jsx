@@ -33,7 +33,7 @@ import { DirectorPanel, EntryPanel, StateBar,
          SmartWarning, EventLog, DailyWelcome,
          AmbiguityPicker, IntentFallback, DailyContext } from './WorkspaceParts';
 /* TASK-05 Adım 2: günlük karşılama — Creator OS'un kalbi */
-import { dailyBrief, activeContext } from '@/lib/creator/daily';
+import { dailyBrief, activeContext, returnGap } from '@/lib/creator/daily';
 /* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
 import { buildBrief } from '@/lib/creator/brief';
 /* Creator Intelligence: görev sinyalleri (Adım 2). Olay günlüğü
@@ -360,8 +360,11 @@ export default function CreatorView({ userId }) {
     projects: projects?.all || [],
     unfinished: projects?.unfinished || []
   };
+  /* Bildirimler günlük bağlamı biliyor: uzun aradan dönende
+     sıralama ve sayı değişiyor (Adım 4). */
   const notifications = buildNotifications({
-    sessions, active, memory, proposals, projects, dismissed });
+    sessions, active, memory, proposals, projects, dismissed,
+    gap: returnGap(daily?.since?.since) });
   const state = workState({ sessions, active, storyboard });
   const summary = workSummary({ sessions, active });
   const built = buildLayout(wsCtx, layout);
