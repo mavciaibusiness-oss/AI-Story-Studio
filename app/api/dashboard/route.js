@@ -9,6 +9,8 @@ import { emptyMemory } from '@/lib/creator/memory';
 /* Creator Intelligence Adım 5: toplam istatistikler + çalışma
    alışkanlığı. "19 kanal" gibi ölçülemeyenler YOK. */
 import { lifetimeStats, workHabit, headlineStat } from '@/lib/intel/stats';
+/* Adım 6: hafıza sağlığı — marka güncelliği. Logo/CTA ölçülmüyor. */
+import { memoryHealth } from '@/lib/intel/health';
 import { activeProposals } from '@/lib/creator/manager';
 
 export const dynamic = 'force-dynamic';
@@ -232,6 +234,18 @@ export async function POST(req) {
 
       /* Çalışma alışkanlığı — yetersiz veride known:false */
       habits: workHabit(actionRows, episodes),
+
+      /*
+        Hafıza sağlığı — marka kaydı güncelliği.
+
+        Marka yoksa `hasBrands:false` dönüyor ve arayüz bölümü hiç
+        göstermiyor: "sağlıklı" demek yanıltıcı olurdu, söyleyecek
+        bir şey yok demek.
+      */
+      memHealth: memoryHealth({
+        brands: memory?.brands || [],
+        episodes: episodes.map(e => ({ id: e.id, createdAt: e.created_at }))
+      }),
       /*
         NEYİ GÖSTEREMİYORUZ — açıkça bildiriliyor.
 

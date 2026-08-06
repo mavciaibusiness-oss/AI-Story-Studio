@@ -203,6 +203,15 @@ const DICT = {
     'pw.mismatch': 'İki şifre aynı değil.',
     'pw.sameAsOld': 'Yeni şifre eskisiyle aynı olamaz.',
     'pw.done': 'Şifren güncellendi. Yönlendiriliyorsun…',
+    // --- Hafıza sağlığı (Creator Intelligence) ---
+    'mh.title': 'Marka güncelliği',
+    'mh.ok': 'Marka bilgilerin güncel.',
+    'mh.drift': '{name} markasını güncelledin — {n} proje bundan önce üretilmişti.',
+    'mh.gaps': '{name} markasında eksik alanlar var: {fields}',
+    'mh.empty': '{name} markası henüz doldurulmamış.',
+    'mh.f.voice': 'ton', 'mh.f.colors': 'renkler',
+    'mh.f.bannedWords': 'yasak kelimeler', 'mh.f.slogan': 'slogan',
+    'mh.nm.logo': 'Logo', 'mh.nm.cta': 'CTA metni',
     // --- Toplam üretim + alışkanlık (Creator Intelligence) ---
     'lt.title': 'Bugüne kadar',
     'lt.detail': '{all} projeden {done} tanesi tamamlandı · {s} sahne · {d} gündür üretiyorsun',
@@ -1253,6 +1262,15 @@ const DICT = {
     'pw.mismatch': 'The two passwords do not match.',
     'pw.sameAsOld': 'The new password cannot be the same as the old one.',
     'pw.done': 'Your password has been updated. Redirecting…',
+    // --- Memory health (Creator Intelligence) ---
+    'mh.title': 'Brand freshness',
+    'mh.ok': 'Your brand details are up to date.',
+    'mh.drift': 'You updated the {name} brand — {n} projects were made before that.',
+    'mh.gaps': 'The {name} brand has empty fields: {fields}',
+    'mh.empty': 'The {name} brand has not been filled in yet.',
+    'mh.f.voice': 'tone', 'mh.f.colors': 'colours',
+    'mh.f.bannedWords': 'banned words', 'mh.f.slogan': 'slogan',
+    'mh.nm.logo': 'Logo', 'mh.nm.cta': 'CTA text',
     // --- Lifetime + habits (Creator Intelligence) ---
     'lt.title': 'All time',
     'lt.detail': '{done} of {all} projects completed · {s} scenes · producing for {d} days',

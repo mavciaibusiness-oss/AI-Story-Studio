@@ -135,7 +135,8 @@ export function DashboardSections({ sessions }) {
     health: () => <HealthSection key="health" d={data} t={t} />,
     credits: () => <CreditsSection key="credits" d={data} t={t} />,
     lifetime: () => <LifetimeSection key="lifetime" d={data} t={t} />,
-    habits: () => <HabitsSection key="habits" d={data} t={t} />
+    habits: () => <HabitsSection key="habits" d={data} t={t} />,
+    memHealth: () => <MemHealthSection key="memHealth" d={data} t={t} />
   };
 
   return (
@@ -554,6 +555,56 @@ function HabitsSection({ d, t }) {
       {!h.rhythm?.known && h.rhythm?.reason === 'too-new' && (
         <p className="hint">{t('hb.tooNew', { n: h.rhythm.minWeeks })}</p>
       )}
+    </section>
+  );
+}
+
+
+/* ---------- Hafıza sağlığı ----------
+
+   Spec maddesi 13: "Marka tonu değişti / Logo güncel değil /
+   Eski CTA kullanılıyor"
+
+   UYARI DEĞİL, GÖZLEM. Kullanıcı markasını bilinçli güncellemiş
+   olabilir ve eski projeleri öyle bırakmak isteyebilir. Söylediğimiz
+   sadece: "bu projeler marka güncellemenden önce üretildi."
+
+   Logo ve CTA ÖLÇÜLMÜYOR — logo yükleme akışı yok, CTA alanı yok.
+   Gizlemek yerine söylüyoruz. */
+function MemHealthSection({ d, t }) {
+  const h = d.memHealth;
+  /* Marka kaydı yoksa bölüm hiç görünmüyor */
+  if (!h?.hasBrands) return null;
+
+  return (
+    <section className="card db-section">
+      <div className="entry-label">{t('mh.title')}</div>
+
+      {h.healthy ? (
+        <p className="db-ok">{t('mh.ok')}</p>
+      ) : (
+        h.items.map((it, i) => (
+          <div className="db-issue db-issue-info" key={i}>
+            <span>
+              {it.kind === 'brand-drift' &&
+                t('mh.drift', { name: it.brandName || '—', n: it.count })}
+              {it.kind === 'brand-gaps' &&
+                t('mh.gaps', { name: it.brandName || '—',
+                  fields: it.missing.map(f => t('mh.f.' + f)).join(', ') })}
+              {it.kind === 'brand-empty' &&
+                t('mh.empty', { name: it.brandName || '—' })}
+            </span>
+            <Link href="/studio/hafiza" className="btn btn-mini">{t('db.review')}</Link>
+          </div>
+        ))
+      )}
+
+      <div className="db-notmeasured">
+        <span className="db-notmeasured-title">{t('db.notMeasured')}</span>
+        {(h.notMeasured || []).map(k => (
+          <span className="db-notmeasured-item" key={k}>{t('mh.nm.' + k)}</span>
+        ))}
+      </div>
     </section>
   );
 }
