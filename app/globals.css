@@ -2163,6 +2163,11 @@ button { font-family: var(--body); }
 .db-issue-warn span { color: var(--lamp); }
 .db-issue-info span { color: var(--text-2); }
 
+/* Çalışma alışkanlığı */
+.hb-line { font-size: 14px; color: var(--text-2); line-height: 1.6;
+  margin: 0 0 7px; }
+.hb-line:last-of-type { margin-bottom: 0; }
+
 /* Ölçülmeyenler */
 .db-notmeasured { display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
   padding-top: 12px; border-top: 1px solid var(--line); }

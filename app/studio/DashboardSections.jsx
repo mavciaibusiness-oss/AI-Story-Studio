@@ -133,7 +133,9 @@ export function DashboardSections({ sessions }) {
     goals: () => <GoalsSection key="goals" d={data} t={t} />,
     activity: () => <ActivitySection key="activity" d={data} t={t} locale={locale} />,
     health: () => <HealthSection key="health" d={data} t={t} />,
-    credits: () => <CreditsSection key="credits" d={data} t={t} />
+    credits: () => <CreditsSection key="credits" d={data} t={t} />,
+    lifetime: () => <LifetimeSection key="lifetime" d={data} t={t} />,
+    habits: () => <HabitsSection key="habits" d={data} t={t} />
   };
 
   return (
@@ -473,6 +475,85 @@ function CreditsSection({ d, t }) {
           <span className="db-notmeasured-item" key={k}>{t('db.nm.' + k)}</span>
         ))}
       </div>
+    </section>
+  );
+}
+
+
+/* ---------- Toplam üretim ----------
+
+   Spec: "Bugüne kadar 432 video, 97 reklam, 82 Shorts, 19 kanal"
+
+   İlk üçü gerçek. "19 kanal" YOK — kanal kavramı yok, kullanıcının
+   kararıyla eklenmedi. Ölçemediklerimizi de söylüyoruz. */
+function LifetimeSection({ d, t }) {
+  const lt = d.lifetime;
+  if (!lt || !lt.totals?.started) return null;
+
+  const CATS = ['video', 'shorts', 'ad'];
+  return (
+    <section className="card db-section">
+      <div className="entry-label">{t('lt.title')}</div>
+
+      <div className="db-stats">
+        {CATS.filter(k => lt.byCategory[k].started > 0).map(k => (
+          <div className="db-stat" key={k}>
+            <div className="db-num">{lt.byCategory[k].started}</div>
+            <div className="db-lbl">{t('db.cat.' + k)}</div>
+          </div>
+        ))}
+      </div>
+
+      <p className="hint">
+        {t('lt.detail', {
+          done: lt.totals.completed, all: lt.totals.started,
+          s: lt.scenes, d: lt.activeDays
+        })}
+      </p>
+
+      {/* Ölçemediklerimiz — gizlemiyoruz */}
+      <div className="db-notmeasured">
+        <span className="db-notmeasured-title">{t('db.notMeasured')}</span>
+        {(lt.notMeasured || []).map(k => (
+          <span className="db-notmeasured-item" key={k}>{t('lt.nm.' + k)}</span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ---------- Çalışma alışkanlığı ----------
+
+   Spec: "Sabah mı çalışıyor? Akşam mı? Haftada kaç proje?"
+
+   YETERSİZ VERİDE SÖYLEMİYORUZ. 10 sinyalden az varsa "sen
+   sabahçısın" demek uydurma olur — bölüm hiç görünmüyor. */
+function HabitsSection({ d, t }) {
+  const h = d.habits;
+  if (!h?.known) return null;
+
+  return (
+    <section className="card db-section">
+      <div className="entry-label">{t('hb.title')}</div>
+
+      {h.hours?.known && h.hours.dominant && (
+        <p className="hb-line">
+          {t('hb.when', { block: t('hb.' + h.hours.dominant) })}
+        </p>
+      )}
+      {h.hours?.known && !h.hours.dominant && (
+        /* Baskın dilim yok — bu da bir bilgi, sessiz geçmiyoruz */
+        <p className="hb-line">{t('hb.spread')}</p>
+      )}
+
+      {h.rhythm?.known && (
+        <p className="hb-line">
+          {t('hb.rhythm', { n: h.rhythm.perWeek, w: h.rhythm.weeks })}
+        </p>
+      )}
+      {!h.rhythm?.known && h.rhythm?.reason === 'too-new' && (
+        <p className="hint">{t('hb.tooNew', { n: h.rhythm.minWeeks })}</p>
+      )}
     </section>
   );
 }

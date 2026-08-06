@@ -6,6 +6,9 @@ import { creatorSummary, productivity, aiInsights, goalProgress,
 import { projectSuggestions } from '@/lib/project/compare';
 import { buildVersions } from '@/lib/project/versions';
 import { emptyMemory } from '@/lib/creator/memory';
+/* Creator Intelligence Adım 5: toplam istatistikler + çalışma
+   alışkanlığı. "19 kanal" gibi ölçülemeyenler YOK. */
+import { lifetimeStats, workHabit, headlineStat } from '@/lib/intel/stats';
 import { activeProposals } from '@/lib/creator/manager';
 
 export const dynamic = 'force-dynamic';
@@ -172,6 +175,28 @@ export async function POST(req) {
       }
     } catch { /* v5 yok */ }
 
+    /*
+      ---------- Çalışma alışkanlığı ----------
+
+      user_actions'tan okunuyor. v11 uygulanmamışsa sessizce
+      atlanıyor — Dashboard'ın geri kalanı çalışmaya devam ediyor.
+
+      Yalnızca zaman damgası çekiliyor; eylem türü bu hesap için
+      gerekmiyor ve gereksiz veri taşımıyoruz.
+    */
+    let actionRows = [];
+    try {
+      const { data, error } = await supabase.from('user_actions')
+        .select('created_at')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      if (error) throw error;
+      actionRows = data || [];
+    } catch {
+      unavailable.push('habits');
+    }
+
     /* ---------- Hesapla ---------- */
     const sessions = safeSessions(body.sessions);
     const summary = creatorSummary({ episodes, sessions });
@@ -193,6 +218,20 @@ export async function POST(req) {
       credits: creditStatus(profile),
       /* Bölüm sırası — kişiye özel (spec: Dynamic Dashboard) */
       order: sectionOrder(memory, summary),
+
+      /*
+        TOPLAM ÜRETİM — "bugüne kadar".
+
+        `productivity` haftalık sayıyor; bu tüm zamanlar. İkisi
+        farklı sorular ve ikisi de gerçek.
+      */
+      lifetime: (() => {
+        const st = lifetimeStats(episodes);
+        return { ...st, headline: headlineStat(st) };
+      })(),
+
+      /* Çalışma alışkanlığı — yetersiz veride known:false */
+      habits: workHabit(actionRows, episodes),
       /*
         NEYİ GÖSTEREMİYORUZ — açıkça bildiriliyor.
 
