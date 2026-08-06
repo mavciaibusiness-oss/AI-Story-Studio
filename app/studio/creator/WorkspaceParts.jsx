@@ -65,7 +65,7 @@ export function DirectorPanel({ session, status, t, locale }) {
 
 
 /* Giriş paneli — plan yokken. Creator OS'un tek cümle girişi. */
-export function EntryPanel({ t, locale, text, setText, preview, onStart }) {
+export function EntryPanel({ t, locale, text, setText, preview, onStart, inputRef }) {
   return (
     <div className="ws-entry">
       <div className="cos-greet">{t('cos.greet')}</div>
@@ -73,6 +73,10 @@ export function EntryPanel({ t, locale, text, setText, preview, onStart }) {
 
       <div className="ws-input-wrap">
         <textarea className="input cos-input" rows={2}
+          /* Karşılamadaki "yeni bir şey başlat" buraya odaklanıyor
+             (Adım 5). Düğmeye basıp hiçbir şey olmaması, kullanıcıya
+             sistemin cevap vermediğini düşündürür. */
+          ref={inputRef}
           placeholder={t('cos.placeholder')}
           value={text} onChange={e => setText(e.target.value)}
           onKeyDown={e => {

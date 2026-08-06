@@ -266,6 +266,8 @@ export default function CreatorView({ userId }) {
   /* Tazeleme efekti loadProjects'ten ÖNCE tanımlı; ref ile
      bağlıyoruz ki bağımlılık döngüsü olmasın. */
   const loadProjectsRef = useRef(null);
+  /* Fikir kutusu — karşılamadan odaklanmak için (Adım 5) */
+  const entryRef = useRef(null);
 
   /* Proje verisi — açılışta ve sekme geri geldiğinde.
 
@@ -469,6 +471,7 @@ export default function CreatorView({ userId }) {
             onOpen={() => {}} onBack={() => setActive(null)} />
         ) : (
           <EntryPanel t={t} locale={locale} text={text} setText={setText}
+            inputRef={entryRef}
             preview={preview} onStart={start} />
         )}
       </section>
@@ -510,7 +513,26 @@ export default function CreatorView({ userId }) {
             <DailyWelcome daily={daily} unfinished={unfinished}
               personalization={personalization}
               t={t} locale={locale}
-              onResume={setActive} onStart={() => setText('')}
+              onResume={setActive}
+              onStart={() => {
+                /*
+                  BOŞ EKRANDAN ÜRETİME EN KISA YOL.
+
+                  Eskiden yalnızca kutuyu temizliyordu — kullanıcı
+                  düğmeye basıp hiçbir şey olmadığını görüyordu.
+
+                  Şimdi kutuya odaklanıyor: bir sonraki hareket
+                  yazmak, ve imleç zaten orada.
+                */
+                setText('');
+                requestAnimationFrame(() => {
+                  const el = entryRef.current;
+                  if (!el) return;
+                  el.focus();
+                  /* Kutu ekranın dışındaysa görünür yap */
+                  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                });
+              }}
               onOpenProject={openProject} />
           )}
         </main>
