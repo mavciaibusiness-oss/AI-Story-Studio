@@ -475,6 +475,24 @@ export default function CreatorView({ userId }) {
   };
   /* Bildirimler günlük bağlamı biliyor: uzun aradan dönende
      sıralama ve sayı değişiyor (Adım 4). */
+  const daily = useMemo(() => dailyBrief({
+    /* `/api/project` ÖZET dönüyor — ham storyboard yok. daily.js
+       özet nesneleri doğrudan kabul ediyor. */
+    episodes: projects?.all || [],
+    since: lastVisit,
+    tzOffsetMin: new Date().getTimezoneOffset()
+  }), [projects, lastVisit]);
+
+  /*
+    DİKKAT — SIRA ÖNEMLİ.
+
+    `daily` bildirimlerden ÖNCE tanımlı olmalı: buildNotifications
+    onu okuyor. Sıra bozulursa JavaScript "Cannot access 'daily'
+    before initialization" atıyor.
+
+    BUILD BUNU YAKALAMIYOR — yalnızca çalışma anında çıkıyor.
+  */
+
   const notifications = buildNotifications({
     sessions, active, memory, proposals, projects, dismissed,
     gap: returnGap(daily?.since?.since) });
@@ -498,13 +516,6 @@ export default function CreatorView({ userId }) {
     `since` localStorage'dan — son açılış zamanı. Cihaza özgü ama
     "sen yokken ne oldu" sorusu zaten cihaz bazlı yaşanıyor.
   */
-  const daily = useMemo(() => dailyBrief({
-    /* `/api/project` ÖZET dönüyor — ham storyboard yok. daily.js
-       özet nesneleri doğrudan kabul ediyor. */
-    episodes: projects?.all || [],
-    since: lastVisit,
-    tzOffsetMin: new Date().getTimezoneOffset()
-  }), [projects, lastVisit]);
 
   /* AI bağlamı — plan açıkken hangi içerikler kullanılabiliyor,
      hangileri henüz okunamıyor (lib/assets/model.js) */
