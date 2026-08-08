@@ -38,7 +38,9 @@ import { dailyBrief, activeContext, returnGap } from '@/lib/creator/daily';
 /* TASK-08: AI Context — kullanıcının konuşmaya eklediği içerikler */
 import { WorkflowCard } from './WorkflowCard';
 import { makeAsset, detectType } from '@/lib/assets/model';
-import { putAsset, listAssets, removeAsset } from '@/lib/assets/store';
+import { putAsset, listAssets, listLoose, removeAsset,
+         attachToSession, clearSession } from '@/lib/assets/store';
+import { contextSummary } from '@/lib/assets/model';
 /* TASK-02 Adım 3: plan özeti — modüller, araçlar, dosyalar, süre */
 import { buildBrief } from '@/lib/creator/brief';
 import { taskTimings } from '@/lib/creator/timing';
@@ -222,6 +224,22 @@ export default function CreatorView({ userId }) {
     }
 
     s = markSuggested(s);
+
+    /*
+      VARLIKLARI PLANA BAĞLA.
+
+      Kullanıcı önce dosyayı ekledi, sonra ne istediğini yazdı.
+      O dosyalar artık bu planla yaşıyor — planla birlikte
+      siliniyor, plan açıkken bağlamda görünüyor.
+
+      Composer'ın listesi temizleniyor: dosyalar kaybolmuyor,
+      planın bağlamına geçiyor.
+    */
+    if (assets.length) {
+      const ids = assets.map(a => a.id);
+      attachToSession(s.id, ids).catch(() => {});
+      setAssets([]);
+    }
     const list = upsertSession(sessions, s);
     persist(list);
     setActive(s);
@@ -282,9 +300,19 @@ export default function CreatorView({ userId }) {
   */
   const [assets, setAssets] = useState([]);
 
+  /* Composer BAĞSIZ varlıkları gösteriyor: kullanıcı yazmadan
+     önce eklediği dosyalar. Plana bağlananlar orada değil, planın
+     kendi bağlamında. */
   useEffect(() => {
-    listAssets().then(list => setAssets(list || []));
+    listLoose().then(list => setAssets(list || []));
   }, []);
+
+  /* Aktif planın varlıkları — AI bağlamı için */
+  const [planAssets, setPlanAssets] = useState([]);
+  useEffect(() => {
+    if (!active?.id) { setPlanAssets([]); return; }
+    listAssets(active.id).then(list => setPlanAssets(list || []));
+  }, [active?.id]);
 
   /*
     Dosya ekleme.
@@ -405,6 +433,13 @@ export default function CreatorView({ userId }) {
   }, [active?.id, storyboard, episodeId]);
 
   function discard(id) {
+    /*
+      Plan silinince varlıkları da gitmeli.
+
+      Yoksa IndexedDB sınırsız büyür ve kullanıcının sildiğini
+      sandığı dosyalar durmaya devam eder.
+    */
+    clearSession(id).catch(() => {});
     persist(removeSession(sessions, id));
     if (active?.id === id) setActive(null);
   }
@@ -451,6 +486,10 @@ export default function CreatorView({ userId }) {
     since: lastVisit,
     tzOffsetMin: new Date().getTimezoneOffset()
   }), [projects, lastVisit]);
+
+  /* AI bağlamı — plan açıkken hangi içerikler kullanılabiliyor,
+     hangileri henüz okunamıyor (lib/assets/model.js) */
+  const aiContext = contextSummary(planAssets);
 
   const timings = taskTimings(sessions);
   const brief = active
@@ -570,6 +609,7 @@ export default function CreatorView({ userId }) {
               storyboard={storyboard}
               memChanges={memChanges}
               brief={brief}
+              aiContext={aiContext}
               onUpdate={update}
               onBack={() => setActive(null)}
               onDiscard={() => discard(active.id)} />

@@ -22,7 +22,8 @@ import { PlanBrief, SmartWarning, EventLog,
 */
 
 export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
-                        storyboard, memChanges, brief, onUpdate, onBack, onDiscard }) {
+                        storyboard, memChanges, brief, aiContext,
+                        onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
   const [showLog, setShowLog] = useState(false);
@@ -101,6 +102,10 @@ export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
       {/* PLAN ÖZETİ — kaç adım, hangi ekranlar, ne gerekiyor */}
       {/* Plan özeti + karşılama. `fresh`: hiç görev tamamlanmamış.
           İlk iş bitince karşılama kayboluyor. */}
+      {/* AI bağlamı — bu planda hangi içerikler kullanılıyor.
+          Kullanıcı neyle çalışıldığını görsün. */}
+      <ContextBar ctx={aiContext} t={t} />
+
       <PlanBrief brief={brief} t={t} locale={locale}
         fresh={status?.done === 0}
         nextTask={status?.suggestion?.task || null}
@@ -327,3 +332,54 @@ export function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onO
   );
 }
 
+
+
+/*
+  AI BAĞLAMI ŞERİDİ — Sprint 6 / TASK-08, Adım 3.
+
+  ---------------------------------------------------------------
+  SESSİZ YOK SAYMA YOK
+
+  Kullanıcının kuralı: "AI hiçbir zaman sessizce dosyayı yok
+  saymayacak. Bir içerik henüz işlenemiyorsa bunu doğal bir
+  şekilde söyleyecek."
+
+  Bu şerit iki şey söylüyor:
+    • neyle çalışılıyor  ("3 görsel, 1 logo")
+    • ne henüz okunamıyor ("PDF'i ekledim ama içeriğini henüz
+      okuyamıyorum")
+
+  Teknik hata dili yok — "desteklenmiyor", "hata", "başarısız"
+  geçmiyor.
+  ---------------------------------------------------------------
+*/
+function ContextBar({ ctx, t }) {
+  /* Hiç içerik yoksa şerit görünmüyor — boş kutu yer israfı */
+  if (!ctx || ctx.empty) return null;
+
+  /* "3 görsel · 1 logo" — tür bazlı, sayı ile */
+  const parts = Object.entries(ctx.byType || {})
+    .map(([type, n]) => t('ac.count.' + type, { n }))
+    .filter(Boolean);
+
+  return (
+    <div className="ctxbar">
+      <span className="ctxbar-label">{t('ac.working')}</span>
+      <span className="ctxbar-list">{parts.join(' · ')}</span>
+
+      {/*
+        BEKLEYENLER — okunamayan içerikler.
+
+        Ayrı satır: kullanıcı neyin çalıştığını, neyin beklediğini
+        karıştırmasın.
+      */}
+      {ctx.pending.length > 0 && (
+        <p className="ctxbar-pending">
+          {t('ac.pendingNote', {
+            what: ctx.pending.map(p => t('ac.type.' + p.type)).join(', ')
+          })}
+        </p>
+      )}
+    </div>
+  );
+}

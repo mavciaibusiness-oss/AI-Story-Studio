@@ -245,6 +245,14 @@ const DICT = {
     'cmp.smallPlaceholder': 'Yeni bir fikir yaz…',
     'db.archive': 'Geçmiş ve ayrıntılar',
     // --- AI Context (Sprint 6 / TASK-08) ---
+    'ac.working': 'Bununla çalışıyorum:',
+    'ac.pendingNote': '{what} da ekli — içeriğini henüz okuyamıyorum, istersen diğerleriyle devam edelim.',
+    'ac.count.image': '{n} görsel', 'ac.count.video': '{n} video',
+    'ac.count.logo': '{n} logo', 'ac.count.brand': '{n} marka görseli',
+    'ac.count.audio': '{n} ses', 'ac.count.pdf': '{n} PDF',
+    'ac.count.docx': '{n} belge', 'ac.count.website': '{n} web sitesi',
+    'ac.count.youtube': '{n} YouTube videosu',
+
     'ac.add': 'Ekle',
     'ac.soon': 'yakında',
     'ac.remove': 'Kaldır',
@@ -1338,6 +1346,14 @@ const DICT = {
     'cmp.smallPlaceholder': 'Write a new idea…',
     'db.archive': 'History and details',
     // --- AI Context (Sprint 6 / TASK-08) ---
+    'ac.working': 'Working with:',
+    'ac.pendingNote': '{what} is attached too — I cannot read it yet, we can carry on with the rest if you like.',
+    'ac.count.image': '{n} images', 'ac.count.video': '{n} videos',
+    'ac.count.logo': '{n} logos', 'ac.count.brand': '{n} brand images',
+    'ac.count.audio': '{n} audio files', 'ac.count.pdf': '{n} PDFs',
+    'ac.count.docx': '{n} documents', 'ac.count.website': '{n} websites',
+    'ac.count.youtube': '{n} YouTube videos',
+
     'ac.add': 'Add',
     'ac.soon': 'soon',
     'ac.remove': 'Remove',
