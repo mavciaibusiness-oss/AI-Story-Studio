@@ -2561,7 +2561,14 @@ button { font-family: var(--body); }
 .ctxbar-label { font-family: var(--display); font-size: 9.5px;
   font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
   color: var(--muted); margin-right: 8px; }
-.ctxbar-list { font-size: 13px; color: var(--text-2); }
+.ctxbar-row { display: flex; align-items: center; gap: 10px; }
+.ctxbar-list { flex: 1; min-width: 0; font-size: 13px; color: var(--text-2); }
+/* İçerik yokken şerit yalnızca ekleme davetiyesi */
+.ctxbar-empty { border-style: dashed; }
+.ctxbar-empty .ctxbar-label { flex: 1; }
+.ctxbar-strip { margin-top: 10px; }
+/* Şerit içindeki + düğmesi daha küçük */
+.ctxbar .ac-add-btn { width: 30px; height: 30px; font-size: 16px; }
 .ctxbar-pending { font-size: 12.5px; color: var(--lamp-soft);
   margin: 7px 0 0; line-height: 1.5; }
 

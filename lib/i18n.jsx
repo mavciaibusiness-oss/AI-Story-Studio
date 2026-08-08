@@ -245,6 +245,7 @@ const DICT = {
     'cmp.smallPlaceholder': 'Yeni bir fikir yaz…',
     'db.archive': 'Geçmiş ve ayrıntılar',
     // --- AI Context (Sprint 6 / TASK-08) ---
+    'ac.addToPlan': 'Bu plana içerik ekle',
     'ac.working': 'Bununla çalışıyorum:',
     'ac.pendingNote': '{what} da ekli — içeriğini henüz okuyamıyorum, istersen diğerleriyle devam edelim.',
     'ac.count.image': '{n} görsel', 'ac.count.video': '{n} video',
@@ -1346,6 +1347,7 @@ const DICT = {
     'cmp.smallPlaceholder': 'Write a new idea…',
     'db.archive': 'History and details',
     // --- AI Context (Sprint 6 / TASK-08) ---
+    'ac.addToPlan': 'Add content to this plan',
     'ac.working': 'Working with:',
     'ac.pendingNote': '{what} is attached too — I cannot read it yet, we can carry on with the rest if you like.',
     'ac.count.image': '{n} images', 'ac.count.video': '{n} videos',

@@ -8,6 +8,9 @@ import { TASKS } from '@/lib/creator/workflow';
    Taşırken import unutulmuştu; build geçiyordu, tıklayınca
    patlardı. */
 import { trackTask } from '@/lib/intel/track';
+/* TASK-08 Adım 4: plan açıkken de içerik eklenebiliyor */
+import { AddMenu, AssetStrip, UrlInput, FilePicker } from './AssetParts';
+import { typeOf } from '@/lib/assets/model';
 import { PlanBrief, SmartWarning, EventLog,
          AmbiguityPicker, IntentFallback } from './WorkspaceParts';
 
@@ -23,6 +26,7 @@ import { PlanBrief, SmartWarning, EventLog,
 
 export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
                         storyboard, memChanges, brief, aiContext,
+                        planAssets, onAddFiles, onAddUrl, onRemoveAsset,
                         onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
@@ -104,7 +108,9 @@ export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
           İlk iş bitince karşılama kayboluyor. */}
       {/* AI bağlamı — bu planda hangi içerikler kullanılıyor.
           Kullanıcı neyle çalışıldığını görsün. */}
-      <ContextBar ctx={aiContext} t={t} />
+      <ContextBar ctx={aiContext} assets={planAssets} t={t} locale={locale}
+        onAddFiles={onAddFiles} onAddUrl={onAddUrl}
+        onRemove={onRemoveAsset} />
 
       <PlanBrief brief={brief} t={t} locale={locale}
         fresh={status?.done === 0}
@@ -353,19 +359,65 @@ export function TaskRow({ task, index, t, L, session, onUpdate, isSuggested, onO
   geçmiyor.
   ---------------------------------------------------------------
 */
-function ContextBar({ ctx, t }) {
-  /* Hiç içerik yoksa şerit görünmüyor — boş kutu yer israfı */
-  if (!ctx || ctx.empty) return null;
+function ContextBar({ ctx, assets, t, locale, onAddFiles, onAddUrl, onRemove }) {
+  /*
+    ADIM 4: plan açıkken de içerik eklenebiliyor.
+
+    Eskiden Composer yalnızca boş ekrandaydı — kullanıcı çalışmaya
+    başladıktan sonra bağlama bir şey katamıyordu. Oysa iş
+    ortasında "bir de şu görseli kullan" demek en doğal istek.
+
+    Şerit artık iki iş yapıyor: neyle çalışıldığını söylüyor VE
+    ekleme sunuyor.
+  */
+  const [open, setOpen] = useState(false);
+  const [urlOpen, setUrlOpen] = useState(false);
+  const [pickType, setPickType] = useState(null);
+
+  function pick(type) {
+    const tt = typeOf(type);
+    if (tt?.kind === 'url') { setUrlOpen(true); setPickType(null); }
+    else { setUrlOpen(false); setPickType(type); }
+  }
+
+  /* Hiç içerik YOKSA da şerit görünüyor — ama yalnızca ekleme
+     düğmesi olarak. Eskiden tamamen gizliydi ve kullanıcı plan
+     açıkken dosya ekleyemiyordu. */
+  const empty = !ctx || ctx.empty;
 
   /* "3 görsel · 1 logo" — tür bazlı, sayı ile */
-  const parts = Object.entries(ctx.byType || {})
+  const parts = Object.entries(ctx?.byType || {})
     .map(([type, n]) => t('ac.count.' + type, { n }))
     .filter(Boolean);
 
   return (
-    <div className="ctxbar">
-      <span className="ctxbar-label">{t('ac.working')}</span>
-      <span className="ctxbar-list">{parts.join(' · ')}</span>
+    <div className={'ctxbar' + (empty ? ' ctxbar-empty' : '')}>
+      <div className="ctxbar-row">
+        <span className="ctxbar-label">
+          {empty ? t('ac.addToPlan') : t('ac.working')}
+        </span>
+        {!empty && <span className="ctxbar-list">{parts.join(' · ')}</span>}
+        <AddMenu onPick={pick} t={t} />
+      </div>
+
+      {/* Eklenen dosyalar — hangi dosya olduğu görünsün.
+          Adım 3'te yalnızca sayı vardı. */}
+      {!empty && (
+        <div className="ctxbar-strip">
+          <AssetStrip assets={assets} onRemove={onRemove} t={t} locale={locale} />
+        </div>
+      )}
+
+      {urlOpen && (
+        <UrlInput t={t}
+          onAdd={(kind, url) => { onAddUrl?.(kind, url); setUrlOpen(false); }}
+          onCancel={() => setUrlOpen(false)} />
+      )}
+      {pickType && (
+        <FilePicker type={pickType}
+          onFiles={(type, files) => onAddFiles?.(type, files)}
+          onDone={() => setPickType(null)} />
+      )}
 
       {/*
         BEKLEYENLER — okunamayan içerikler.
@@ -373,7 +425,7 @@ function ContextBar({ ctx, t }) {
         Ayrı satır: kullanıcı neyin çalıştığını, neyin beklediğini
         karıştırmasın.
       */}
-      {ctx.pending.length > 0 && (
+      {ctx?.pending?.length > 0 && (
         <p className="ctxbar-pending">
           {t('ac.pendingNote', {
             what: ctx.pending.map(p => t('ac.type.' + p.type)).join(', ')

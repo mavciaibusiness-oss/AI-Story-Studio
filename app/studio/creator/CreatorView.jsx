@@ -320,6 +320,19 @@ export default function CreatorView({ userId }) {
     `type` null gelirse (sürükle-bırak) MIME'dan çıkarılıyor.
     Tanınmayan tür SESSİZCE ATLANMIYOR — kullanıcıya söylüyoruz.
   */
+  /*
+    ADIM 4: aktif plan varsa dosya DOĞRUDAN ona bağlanıyor.
+
+    Kullanıcı iş ortasında "bir de şu görseli kullan" diyebiliyor.
+    Plan yoksa bağsız kalıyor ve plan kurulunca bağlanacak (Adım 3).
+  */
+  const boundTo = active?.id || null;
+
+  function afterAdd(asset) {
+    if (boundTo) setPlanAssets(a => [...a, asset]);
+    else setAssets(a => [...a, asset]);
+  }
+
   async function addFiles(type, files) {
     const next = [];
     const rejected = [];
@@ -333,11 +346,14 @@ export default function CreatorView({ userId }) {
 
       /* Kalıcı sakla. Başarısız olursa (kota/gizli mod) varlık
          yine listede kalıyor — kullanıcıya teknik mesaj yok. */
-      await putAsset(r.asset, file, null);
+      await putAsset(r.asset, file, boundTo);
       next.push(r.asset);
     }
 
-    if (next.length) setAssets(a => [...a, ...next]);
+    if (next.length) {
+      if (boundTo) setPlanAssets(a => [...a, ...next]);
+      else setAssets(a => [...a, ...next]);
+    }
     if (rejected.length) setErr(t('ac.notSupported', { n: rejected.length }));
     else if (next.length) setErr(null);
   }
@@ -345,13 +361,16 @@ export default function CreatorView({ userId }) {
   async function addUrl(kind, url) {
     const r = makeAsset({ type: kind, url });
     if (r.error) return;
-    await putAsset(r.asset, null, null);
-    setAssets(a => [...a, r.asset]);
+    await putAsset(r.asset, null, boundTo);
+    afterAdd(r.asset);
   }
 
+  /* Kaldırma her iki listeden de düşürüyor — hangisinde olduğunu
+     aramaya gerek yok. */
   async function dropAsset(id) {
     await removeAsset(id);
     setAssets(a => a.filter(x => x.id !== id));
+    setPlanAssets(a => a.filter(x => x.id !== id));
   }
 
   /* Proje verisi — açılışta ve sekme geri geldiğinde.
@@ -610,6 +629,9 @@ export default function CreatorView({ userId }) {
               memChanges={memChanges}
               brief={brief}
               aiContext={aiContext}
+              planAssets={planAssets}
+              onAddFiles={addFiles} onAddUrl={addUrl}
+              onRemoveAsset={dropAsset}
               onUpdate={update}
               onBack={() => setActive(null)}
               onDiscard={() => discard(active.id)} />
