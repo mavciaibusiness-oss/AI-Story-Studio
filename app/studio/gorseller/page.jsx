@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useStudio } from '@/lib/store';
 import { useT } from '@/lib/i18n';
 import EpisodeBar from '@/lib/EpisodeBar';
-import { splitCollageFile, naturalSortBy, measureVideo, formatDur } from '@/lib/engine';
+import { splitCollageFile, naturalSortBy, measureVideo, detectVideoAudio,
+         formatDur } from '@/lib/engine';
 import { mediaBreakdown, sceneHasMedia } from '@/lib/storyboard';
 /* Creator Intelligence: sahne tamamlanma sinyali (Adım 2). */
 import { trackPrompt, trackScene } from '@/lib/intel/track';
@@ -127,14 +128,41 @@ export default function Gorseller() {
     if (f.type.startsWith('video/')) {
       let d = 0;
       try { d = await measureVideo(f); } catch (e) {}
-      patchScene(i, { media: 'video', video: { blob: f, url: URL.createObjectURL(f), name: f.name }, videoDuration: d });
+
+      /*
+        VİDEONUN SESİ VAR MI — kullanıcının üçüncü kuralı için.
+
+        `null` dönerse tarayıcı söyleyemedi; "ses yok" DEĞİL
+        "bilmiyoruz". O durumda seslendirme gerekli sayılıyor
+        (güvenli taraf) ama kullanıcı isterse elle açabiliyor.
+      */
+      let hasAudio = null;
+      try { hasAudio = await detectVideoAudio(f); } catch (e) {}
+
+      patchScene(i, {
+        media: 'video',
+        video: { blob: f, url: URL.createObjectURL(f), name: f.name },
+        videoDuration: d,
+        videoHasAudio: hasAudio,
+        /*
+          KULLANICI KARARI — biz varsaymıyoruz.
+
+          Sesi olan bir video eklendiğinde kullanıcı muhtemelen o
+          sesi kullanmak istiyor, ama "muhtemelen" yetmez:
+          anlatım eklemek isteyebilir. Varsayılan kapalı, seçim
+          onun.
+        */
+        useVideoAudio: false
+      });
     } else {
       patchScene(i, { media: 'image', image: { blob: f, url: URL.createObjectURL(f), name: f.name } });
     }
   }
   function clearOne(i) {
     const s = sb.scenes[i];
-    patchScene(i, s.media === 'video' ? { video: null, videoDuration: 0 } : { image: null });
+    patchScene(i, s.media === 'video'
+      ? { video: null, videoDuration: 0, videoHasAudio: null, useVideoAudio: false }
+      : { image: null });
   }
   function toggleMedia(i) {
     patchScene(i, { media: sb.scenes[i].media === 'video' ? 'image' : 'video' });

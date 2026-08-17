@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { useT, useI18n } from '@/lib/i18n';
 import { useStudio } from '@/lib/store';
 import { scanVideo, probeVideo } from '@/lib/rebuild/extract';
@@ -302,22 +303,22 @@ function ScriptBox({ script, setScript, onApply, caps, locked, t, busy }) {
 /* Sağlık sayfası da bu bloğu kullanıyor (dış video analizi) —
    iki yerde iki ayrı skor kartı çizmek ikisinin ayrışmasına yol
    açardı. */
-export function ScoreBlock({ rep, projection, t }) {
+export function ScoreBlock({ rep, projection, t, onNeed }) {
   const h = rep.health;
   const measured = h.coverage.measured;
 
   return (
     <div className="card rb-score">
       {h.overall === null ? (
+        /*
+          Puan hâlâ verilemiyor — ama artık bu çok nadir: dört
+          kategori ölçülemeyecek kadar kısa/bozuk bir video demek.
+
+          "Ölçülemedi" dili kaldırıldı; ne gerektiğini söylüyoruz.
+        */
         <div className="rb-noscore">
-          <div className="rb-noscore-title">{t('rb.noOverall')}</div>
-          <p className="hint">
-            {t('rb.noOverallWhy', {
-              p: Math.round(h.coverage.weightCovered * 100),
-              n: measured.length,
-              m: h.coverage.total
-            })}
-          </p>
+          <div className="rb-noscore-title">{t('rb.needMore')}</div>
+          <p className="hint">{t('rb.needMoreWhy')}</p>
         </div>
       ) : (
         <div className="rb-sum-scores">
@@ -355,6 +356,81 @@ export function ScoreBlock({ rep, projection, t }) {
       )}
       {projection?.available > 0 && projection.current === null && (
         <p className="hint">{t('rb.availableGain', { n: projection.available })}</p>
+      )}
+      {/*
+        ---------- EKSİK VERİ = CTA ----------
+
+        Kullanıcı kararı: "eksik veri bir HATA değil, kullanıcıyı
+        bir sonraki adıma götüren bir CTA olmalı."
+
+        `needs` her eksik veri için hangi analizin açılacağını
+        söylüyor (lib/rebuild/report.js).
+      */}
+      {h.needs?.length > 0 && (
+        <div className="rb-needs">
+          {h.needs.map((n, i) => (
+            <div className="rb-need" key={i}>
+              <span className="rb-need-text">
+                {t('rb.need.' + n.data, { n: n.unlocks.length })}
+              </span>
+              {onNeed && (
+                <button className="btn btn-mini btn-primary"
+                  onClick={() => onNeed(n.data)}>
+                  {t('rb.need.cta')}
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Şeffaflık: puan neye dayanıyor (kullanıcı kararı) */}
+      {h.overall !== null && (
+        <p className="rb-basis">
+          {t('rb.basis', {
+            n: measured.length, m: h.coverage.total,
+            cats: measured.map(k => t('sh.cat.' + k)).join(', ')
+          })}
+        </p>
+      )}
+
+
+      {/*
+        ---------- PUAN NEYE DAYANIYOR ----------
+
+        Kullanıcı kararı: "puanın neye dayandığı küçük yazıyla
+        görünsün". Kaç kategori ve toplam ağırlığın yüzde kaçı.
+      */}
+      {rep.basis && h.overall !== null && (
+        <p className="rb-basis">
+          {t('rb.basis', { n: rep.basis.measured, all: rep.basis.total,
+                           p: rep.basis.weightPct })}
+        </p>
+      )}
+
+      {/*
+        ---------- EKSİK VERİ → CTA ----------
+
+        "Ölçülemedi" DEĞİL. Ne verirsen ne açılır.
+
+        En çok kategori açan istek başta (missingDataCTAs sıralıyor)
+        — kullanıcı bir şey yapacaksa en verimlisini yapsın.
+      */}
+      {rep.ctas?.length > 0 && (
+        <div className="rb-ctas">
+          {rep.ctas.map(c => (
+            <div className="rb-cta" key={c.kind}>
+              <span className="rb-cta-text">
+                {t('rb.cta.' + c.kind, { n: c.count })}
+              </span>
+              {c.route && (
+                <Link href={c.route} className="btn btn-mini btn-primary">
+                  {t('rb.cta.go')}
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
