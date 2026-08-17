@@ -42,143 +42,76 @@ import { typeOf } from '@/lib/assets/model';
   ikincil.
 */
 export function DailyWelcome({ daily, unfinished, personalization,
-                              composer,
+                              composer, starters,
                               t, locale, onResume, onStart, onOpenProject }) {
-  const L = (o) => o?.[locale] || o?.tr || '';
   if (!daily) return null;
+  const { streak, focus } = daily;
 
-  const { streak, focus, since, firstDay } = daily;
+  /*
+    ---------- TEK ODAK ----------
+
+    Eskiden bu ekranda beş blok vardı: seri rozeti, karşılama
+    başlığı, devam kartı, "son ziyaretten beri", diğer işler
+    listesi, composer, hazır başlangıçlar.
+
+    Hepsi aynı anda "şunu yap" diyordu ve kullanıcı hiçbirini
+    yapmıyordu.
+
+    Şimdi ekranın tek işi var: kullanıcı ne istediğini yazsın.
+    Geri kalan her şey ya kalktı ya da sustu.
+
+    KALKANLAR:
+      · "Son gelişinden beri N projeye dokunuldu" — bilgi, eylem değil
+      · "Diğerleri" rozet listesi — sol menüde Projeler zaten var
+      · Büyük karşılama başlıkları — soru zaten başlık
+
+    SUSANLAR:
+      · Seri → tek satır, en altta, rozet değil
+      · Devam → ince şerit, yalnızca gerçekten yarım iş varsa
+  */
+
+  /*
+    Devam şeridi: kullanıcı kararı — "yalnızca gerçekten yarım iş
+    varsa çıksın".
+
+    `fresh-start` zaten yarım iş olmadığı anlamına geliyor.
+    Ayrıca hiç ilerleme kaydedilmemiş (0 sahne hazır) bir projeyi
+    "kaldığın yer" diye göstermek yanıltıcı — o iş başlamamış.
+  */
+  const resumable = focus?.project && focus.kind !== 'fresh-start'
+    && (focus.project.ready?.media > 0 || focus.project.ready?.prompts > 0
+        || focus.project.ready?.text > 0)
+    ? focus.project : null;
 
   return (
-    <div className="dw">
-      {/*
-        ---- 3. NEDEN TEKRAR GELDİM ----
-        Seri en üstte ve küçük. Gurur verici ama ekranın konusu
-        değil — konusu bugün ne yapacağı.
+    <div className="ws">
+      <div className="ws-ask">
+        <h1 className="ws-q">{t('dw.ask')}</h1>
 
-        SERİ YOKSA HİÇ GÖSTERİLMİYOR. "0 gün" yazmak suçluluk
-        üretir (kullanıcının kararı).
-      */}
-      {streak?.active && streak.current > 0 && (
-        <div className="dw-streak">
-          <span className="dw-streak-n">{streak.current}</span>
-          <span className="dw-streak-l">
-            {t('dw.streak', { n: streak.current })}
-            {streak.best > streak.current && ' · ' + t('dw.best', { n: streak.best })}
+        <Composer {...composer} t={t} locale={locale} big />
+
+        {/* Alışkanlık ipucu — kutunun altında, tek satır, sessiz */}
+        <UsualIntent p={personalization} t={t} locale={locale} />
+
+        <Starters items={starters} onPick={composer?.setText}
+          inputRef={composer?.inputRef} t={t} />
+      </div>
+
+      {/* ---- Devam: ince şerit, ekranın dibinde ---- */}
+      {resumable && (
+        <button className="ws-resume"
+          onClick={() => onOpenProject?.(resumable.id)}>
+          <span className="ws-resume-name">{resumable.title}</span>
+          <span className="ws-resume-meta">
+            {t('dw.scenes', { a: resumable.ready.media, b: resumable.ready.total })}
           </span>
-        </div>
+          <span className="ws-resume-go">{t('dw.continue')} &rarr;</span>
+        </button>
       )}
 
-      {/*
-        ---- 1 + 2. BUGÜN NE, NEREDEN ----
-        Ekranın merkezi. Tek eylem, tek düğme.
-      */}
-      {focus?.kind === 'fresh-start' && (
-        <div className="dw-main">
-          <h2 className="dw-title">{t(firstDay ? 'dw.firstTime' : 'dw.freshTitle')}</h2>
-          {/*
-            ÖĞRENİLEN BİLGİ BURADA KULLANILIYOR.
-
-            `usual-intent` TASK-02 Adım 5'te hafızaya eklenmişti ama
-            hiçbir ekranda gösterilmiyordu — TASK-03'teki
-            `feedbackWeights` hatasının aynısını yapmıştım.
-
-            Boş ekranda anlamlı: kullanıcı ne yazacağını
-            düşünüyorsa, geçmişi ona ipucu veriyor.
-
-            Aktif planda göstermiyoruz — orada zaten ne yaptığı
-            belli.
-          */}
-          <UsualIntent p={personalization} t={t} locale={locale} />
-
-          {/*
-            COMPOSER — Sprint 6 / TASK-06.
-
-            Kullanıcı kararı: "Landing'deki fikir kutusu Creator
-            OS'un merkezine taşınacak. Kullanıcı düşünmeden üretime
-            başlayabilmeli."
-
-            Eskiden burada "Yeni bir şey başlat" DÜĞMESİ vardı ve
-            sol kenardaki kutuya odaklanıyordu. İki adım: bas, sonra
-            yaz.
-
-            Şimdi kutu BURADA. Tek adım: yaz.
-          */}
-          <Composer {...composer} t={t} locale={locale} big />
-        </div>
-      )}
-
-      {focus?.kind === 'continue-today' && (
-        <div className="dw-main">
-          <span className="dw-kicker">{t('dw.todayKicker')}</span>
-          <h2 className="dw-title">{focus.project.title}</h2>
-          <div className="dw-meta">
-            <ProgressPill p={focus.project} t={t} />
-          </div>
-          <button className="btn btn-primary dw-go"
-            onClick={() => onOpenProject?.(focus.project.id)}>
-            {t('dw.continue')}
-          </button>
-        </div>
-      )}
-
-      {focus?.kind === 'resume' && (
-        <div className="dw-main">
-          {/* Bekleme süresi SUÇLAMA DEĞİL, bilgi. "3 gündür
-              dokunmadın" değil, "3 gündür bekliyor". */}
-          <span className="dw-kicker">
-            {focus.idleDays != null && focus.idleDays > 0
-              ? t('dw.waiting', { n: focus.idleDays })
-              : t('dw.resumeKicker')}
-          </span>
-          <h2 className="dw-title">{focus.project.title}</h2>
-          <div className="dw-meta">
-            <ProgressPill p={focus.project} t={t} />
-          </div>
-          <button className="btn btn-primary dw-go"
-            onClick={() => onOpenProject?.(focus.project.id)}>
-            {t('dw.continue')}
-          </button>
-        </div>
-      )}
-
-      {/*
-        ---- SON ZİYARETTEN BERİ ----
-        Yalnızca gerçekten bir şey değiştiyse. "0 değişiklik"
-        yazmak gürültü.
-      */}
-      {since?.total > 0 && (
-        <p className="dw-since">{t('dw.since', { n: since.total })}</p>
-      )}
-
-      {/*
-        ---- İKİNCİL: diğer yarım işler ----
-        En fazla 3. Ana eylem zaten seçildi; bunlar alternatif.
-      */}
-      {unfinished?.length > 1 && (
-        <div className="dw-others">
-          <span className="dw-others-label">{t('dw.others')}</span>
-          {unfinished
-            .filter(p => p.id !== focus?.project?.id)
-            .slice(0, 3)
-            .map(p => (
-              <button className="dw-other" key={p.id}
-                onClick={() => onOpenProject?.(p.id)}>
-                {p.title}
-              </button>
-            ))}
-        </div>
-      )}
-
-      {/*
-        Devam edilecek iş varken composer İKİNCİL — küçük ve altta.
-        Ana eylem "devam et"; yeni fikir yazmak da mümkün ama
-        ekranın konusu o değil.
-      */}
-      {focus?.kind !== 'fresh-start' && (
-        <div className="dw-composer-slot">
-          <Composer {...composer} t={t} locale={locale} />
-        </div>
+      {/* ---- Seri: tek satır, rozet değil ---- */}
+      {streak?.active && streak.current > 1 && (
+        <p className="ws-streak">{t('dw.streak', { n: streak.current })}</p>
       )}
     </div>
   );
@@ -206,49 +139,6 @@ function UsualIntent({ p, t, locale }) {
   );
 }
 
-
-/*
-  AKTİF PLANDA GÜNLÜK BAĞLAM — tek satır.
-
-  Adım 2'de karşılama yalnızca boş durumda görünüyordu. Plan
-  üzerinde çalışan kullanıcı günlük bağlamı hiç görmüyordu.
-
-  Ama aktif planda ekran zaten dolu. Bu yüzden karşılama değil,
-  TEK SATIR: "5 gün sonra döndün" ya da "3. günün".
-
-  Söylenecek bir şey yoksa hiç görünmüyor.
-*/
-export function DailyContext({ ctx, t }) {
-  if (!ctx) return null;
-
-  return (
-    <span className={'dc dc-' + ctx.kind}>
-      {ctx.kind === 'welcome-back' && t('dc.back', { n: ctx.days })}
-      {ctx.kind === 'continue-streak' && t('dc.continue', { n: ctx.days })}
-      {ctx.kind === 'streak-today' && t('dc.today', { n: ctx.days })}
-    </span>
-  );
-}
-
-
-
-/* İlerleme rozeti — sayı değil, durum. "9/14 sahne" bilgi verir
-   ama "%64" soyut kalır. */
-function ProgressPill({ p, t }) {
-  if (!p?.ready?.total) return null;
-  return (
-    <span className="dw-pill">
-      {t('dw.scenes', { a: p.ready.media, b: p.ready.total })}
-    </span>
-  );
-}
-
-/*
-  TASK-05 Adım 2'de taşındı: CreatorView 900 satırı aştı.
-
-  İkisi de SAF ÇİZİM — oturum durumunu değiştirmiyorlar, aldıkları
-  geri çağrıyı çağırıyorlar.
-*/
 
 /*
   COMPOSER — tek giriş noktası.
@@ -350,5 +240,42 @@ export function Composer({ text, setText, preview, onStart, inputRef,
       )}
     </div>
     </DropZone>
+  );
+}
+
+
+/*
+  HAZIR BAŞLANGIÇLAR — R4.
+
+  Ne yazacağını bilmeyen kullanıcı için. Tıklayınca metin
+  Composer'a giriyor ve imleç oraya gidiyor — kullanıcı isterse
+  düzenleyip Başla'ya basıyor.
+
+  NAVIGATION YOK. Bu bilinçli: eski davranışta hazır başlangıçlar
+  kullanıcıyı başka sayfalara götürüyordu ve akış kopuyordu.
+*/
+function Starters({ items, onPick, inputRef, t }) {
+  if (!items?.length) return null;
+
+  /*
+    Rozet değil, metin bağlantısı. Rozetler tıklanabilir "kart"
+    gibi görünüp ekranı bölüyordu; bunlar bir cümlenin parçası
+    gibi duruyor ve kutuya hizmetçi kalıyor.
+  */
+  return (
+    <p className="ws-starters">
+      {items.slice(0, 3).map((it, i) => (
+        <span key={it.id}>
+          {i > 0 && <span className="ws-dot">&middot;</span>}
+          <button type="button" className="ws-starter"
+            onClick={() => {
+              onPick?.(it.text);
+              requestAnimationFrame(() => inputRef?.current?.focus());
+            }}>
+            {it.text}
+          </button>
+        </span>
+      ))}
+    </p>
   );
 }

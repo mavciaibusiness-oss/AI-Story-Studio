@@ -1,7 +1,25 @@
 'use client';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useT, useI18n } from '@/lib/i18n';
 import { useStudio } from '@/lib/store';
+/*
+  DIŞ VİDEO ANALİZİ.
+
+  Kullanıcı kararı: "video sağlığı bölümüne 'video ekle' bölümü
+  eklersen yeterli".
+
+  YENİ MOTOR YAZILMADI. Rebuilder (lib/rebuild/) zaten gerçek
+  video okuyor: kare çıkarma, sahne tespiti, tekrar eden çekimler.
+  Sonunda `analyzeRebuild` aynı sağlık motorundan geçiriyor
+  (analyzeStoryboard + filterForVideo).
+
+  Buradaki tek iş: o zinciri Sağlık sayfasından da başlatmak.
+*/
+import { scanVideo, probeVideo } from '@/lib/rebuild/extract';
+import { ScoreBlock } from '@/app/studio/yeniden/RebuildView';
+import { buildStoryboardFromVideo } from '@/lib/rebuild/build';
+import { estimateFrameCount } from '@/lib/rebuild/analyze';
+import { analyzeRebuild } from '@/lib/rebuild/report';
 import {
   HEALTH_CATEGORIES, SEVERITY_KEYS, healthBand, starsOf,
   projectedGain, issueCountByCategory, sortIssues, groupIssues
@@ -25,6 +43,15 @@ export default function HealthView() {
   const t = useT();
   const { locale } = useI18n();
   const { episodeId, storyboard, profile, spendCredits } = useStudio();
+
+  /* Dış video: dosya, ölçüm, tarama ilerlemesi */
+  const [extFile, setExtFile] = useState(null);
+  const [extInfo, setExtInfo] = useState(null);
+  const [extBusy, setExtBusy] = useState(false);
+  const [extProgress, setExtProgress] = useState(null);
+  const [extReport, setExtReport] = useState(null);
+  const [extErr, setExtErr] = useState(null);
+  const extInputRef = useRef(null);
 
   const [report, setReport] = useState(null);
   const [history, setHistory] = useState([]);
@@ -88,6 +115,48 @@ export default function HealthView() {
     finally { setRewriting(false); }
   }
 
+  /*
+    ---------- DIŞ VİDEO: SEÇ ve ANALİZ ET ----------
+
+    Kredi harcanmıyor: bu analiz tamamen tarayıcıda çalışıyor
+    (kare okuma + kural motoru). AI çağrısı yok.
+  */
+  async function pickExternal(file) {
+    if (!file) return;
+    setExtErr(null); setExtReport(null); setExtFile(file);
+    try {
+      setExtInfo(await probeVideo(file));
+    } catch (e) {
+      setExtInfo(null);
+      setExtErr(String(e?.message || e));
+    }
+  }
+
+  async function runExternal() {
+    if (!extFile) return;
+    setExtBusy(true); setExtErr(null);
+    setExtProgress({ done: 0, total: estimateFrameCount(extInfo?.duration) });
+    try {
+      const scan = await scanVideo(extFile, {
+        onProgress: (done, total) => setExtProgress({ done, total })
+      });
+      /*
+        Senaryo metni YOK: kullanıcı yalnızca videoyu yükledi.
+        Bu durumda metne dayalı kategoriler (hikâye, karakter,
+        duygu) ölçülemiyor — `filterForVideo` onları bastırıyor
+        ve rapor "ölçülmedi" diyor. Uydurma puan üretilmiyor.
+      */
+      const built = buildStoryboardFromVideo(scan, {
+        language: locale === 'en' ? 'English' : 'Türkçe'
+      });
+      setExtReport(analyzeRebuild(scan, built));
+    } catch (e) {
+      setExtErr(String(e?.message || e));
+    } finally {
+      setExtBusy(false); setExtProgress(null);
+    }
+  }
+
   /* Onayla: metni storyboard'a yaz. */
   async function applyRewrite() {
     setRewriting(true); setErr(null);
@@ -130,6 +199,78 @@ export default function HealthView() {
       <EpisodeBar />
 
       {!episodeId && <p className="hint">{t('vh.noEpisode')}</p>}
+
+      {/*
+        ---------- DIŞARIDAN VİDEO ----------
+
+        İki kaynak da aynı motordan geçiyor:
+          AI videosu  → storyboard → analyzeStoryboard
+          dış video   → kare tarama → storyboard → analyzeStoryboard
+
+        Bölüm her zaman görünüyor; bölüm seçilmemiş olsa da
+        kullanıcı elindeki videoyu analiz edebilmeli.
+      */}
+      <div className="card vh-ext">
+        <div className="vh-ext-head">
+          <div>
+            <div className="entry-label">{t('vh.extTitle')}</div>
+            <p className="hint">{t('vh.extHint')}</p>
+          </div>
+          <input ref={extInputRef} type="file" accept="video/*" hidden
+            onChange={e => pickExternal(e.target.files?.[0])} />
+          <button className="btn btn-mini" disabled={extBusy}
+            onClick={() => extInputRef.current?.click()}>
+            {t('vh.extPick')}
+          </button>
+        </div>
+
+        {/* Dosya seçildi: ölçüm bilgisi + analiz düğmesi.
+            İki aşama bilinçli — kullanıcı yanlış dosya seçtiyse
+            pahalı taramayı başlatmadan görüyor. */}
+        {extFile && (
+          <div className="vh-ext-file">
+            <span className="vh-ext-name">{extFile.name}</span>
+            {extInfo?.duration > 0 && (
+              <span className="vh-ext-meta">
+                {Math.round(extInfo.duration)} sn
+                {extInfo.width ? ' · ' + extInfo.width + '×' + extInfo.height : ''}
+              </span>
+            )}
+            <button className="btn btn-primary btn-mini" disabled={extBusy}
+              onClick={runExternal}>
+              {extBusy ? t('vh.extScanning') : t('vh.extRun')}
+            </button>
+          </div>
+        )}
+
+        {extProgress && (
+          <p className="hint">
+            {t('vh.extProgress', { a: extProgress.done, b: extProgress.total })}
+          </p>
+        )}
+        {extErr && <span className="err">{extErr}</span>}
+
+        {/*
+          SONUÇ.
+
+          `analyzeRebuild` çıktısında alan adı `health` — `report`
+          DEĞİL. İlk sürümde `extReport?.report` kontrol ediliyordu
+          ve o hiçbir zaman doğru olmadığı için tarama bitiyor ama
+          ekranda hiçbir şey çıkmıyordu.
+
+          `ok: false` durumu da gösteriliyor: sahne bulunamadıysa
+          kullanıcı sessiz boş ekran değil, sebebini görüyor.
+        */}
+        {extReport && !extReport.ok && (
+          <p className="hint vh-ext-empty">{t('vh.extNoShots')}</p>
+        )}
+
+        {extReport?.health && (
+          <div className="vh-ext-result">
+            <ScoreBlock rep={extReport} projection={null} t={t} />
+          </div>
+        )}
+      </div>
 
       {episodeId && (
         <div className="vh-layout">

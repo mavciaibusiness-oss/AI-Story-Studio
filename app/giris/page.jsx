@@ -45,7 +45,20 @@ function googleHata(msg) {
 function GirisFormu() {
   const t = useT();
   const params = useSearchParams();
-  const next = params.get('next') || '/studio';
+  /*
+    R3: VARSAYILAN HEDEF Creator OS.
+
+    Eskiden `/studio` (Dashboard) idi — kullanıcı giriş yapınca
+    rapor ekranına düşüyor ve nereden başlayacağını bulamıyordu.
+
+    `?next=` KORUNUYOR: landing'den fikirle gelen, şifre
+    sıfırlayan ya da belirli bir sayfaya davet edilen kullanıcı
+    oraya gitmeye devam ediyor.
+
+    Dashboard silinmedi — menüden erişilebilir, sadece varsayılan
+    giriş noktası değil.
+  */
+  const next = params.get('next') || '/studio/creator';
 
   /*
     Sprint-6 TASK-01 Adım 3: landing'de yazılan fikri göster.

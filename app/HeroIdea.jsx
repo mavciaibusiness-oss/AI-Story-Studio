@@ -111,11 +111,23 @@ export default function HeroIdea() {
 
   return (
     <header className="lp-hero">
-      <h1 className="lp-claim">
-        {t('lp.claim1')}
-        <span className="lp-claim-2">{t('lp.claim2')}</span>
-      </h1>
-      <p className="lp-sub">{t('lp.sub')}</p>
+      {/*
+        ---------- AÇILIŞ: TEK SORU ----------
+
+        Eskiden burada iki satırlık pazarlama başlığı ve altında
+        açıklama paragrafı vardı ("Tek cümleyle fikrini söyle /
+        Creator OS gerisini planlasın" + "Artık onlarca araç
+        arasında geçiş yapmana gerek yok...").
+
+        Kullanıcı briefi: ChatGPT / Gemini tarzı açılış. Orada da
+        tek soru var, açıklama yok — ürünün ne yaptığını kutuya
+        yazınca öğreniyorsun.
+
+        Aynı soru giriş sonrası ekranda da duruyor: kullanıcı
+        girmeden önce ve girdikten sonra AYNI şeyi görüyor.
+        Tanıdıklık burada güven kuruyor.
+      */}
+      <h1 className="lp-ask">{t('dw.ask')}</h1>
 
       {/* ---- Fikir kutusu ---- */}
       <div className="lp-box">

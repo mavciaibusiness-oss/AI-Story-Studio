@@ -21,7 +21,9 @@ export async function GET(request) {
   const code = searchParams.get('code');
   const tokenHash = searchParams.get('token_hash');
   const type = searchParams.get('type');
-  const next = searchParams.get('next') || '/studio';
+  /* R3: varsayılan Creator OS. Google girişi ve e-posta onayı
+     buradan geçiyor; `?next=` verilmişse ona saygı duyuluyor. */
+  const next = searchParams.get('next') || '/studio/creator';
 
   // Supabase hata döndürdüyse doğrudan mesajı taşı
   const errorDescription = searchParams.get('error_description');

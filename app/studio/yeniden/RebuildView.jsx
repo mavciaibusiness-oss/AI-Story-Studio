@@ -299,7 +299,10 @@ function ScriptBox({ script, setScript, onApply, caps, locked, t, busy }) {
   verilemediğini yazıyoruz ve ölçülen kategorileri ayrı ayrı
   gösteriyoruz — kullanıcı elindeki gerçek bilgiyi görsün.
 */
-function ScoreBlock({ rep, projection, t }) {
+/* Sağlık sayfası da bu bloğu kullanıyor (dış video analizi) —
+   iki yerde iki ayrı skor kartı çizmek ikisinin ayrışmasına yol
+   açardı. */
+export function ScoreBlock({ rep, projection, t }) {
   const h = rep.health;
   const measured = h.coverage.measured;
 

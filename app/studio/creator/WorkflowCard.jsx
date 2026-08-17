@@ -2,8 +2,22 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { live } from '@/lib/creator/live';
-import { normalizeStatus } from '@/lib/creator/state';
-import { TASKS } from '@/lib/creator/workflow';
+/*
+  R1: bu dosya TASK-08 Adım 2'de CreatorView'dan ayrıldı ve
+  import'lar taşınmadı — `progressEvidence is not defined` çöküşü
+  buradan geliyordu.
+*/
+import { progressEvidence } from '@/lib/creator/detect';
+/*
+  STATES — görev durumu etiketleri (Bekliyor / Aktif / Tamamlandı…).
+
+  DİKKAT: iki farklı STATES var. `workstate.js`'teki ÇALIŞMA
+  durumu (no-plan, blocked, complete) ve `label` alanı yok.
+  Buradaki `st` normalizeStatus'tan geliyor, yani GÖREV durumu →
+  doğru kaynak state.js.
+*/
+import { normalizeStatus, warningsFor, STATES } from '@/lib/creator/state';
+import { TASKS, availableToAdd } from '@/lib/creator/workflow';
 /* Görev sinyalleri — TaskRow ile birlikte taşındı (TASK-08 Adım 2).
    Taşırken import unutulmuştu; build geçiyordu, tıklayınca
    patlardı. */
@@ -11,6 +25,7 @@ import { trackTask } from '@/lib/intel/track';
 /* TASK-08 Adım 4: plan açıkken de içerik eklenebiliyor */
 import { AddMenu, AssetStrip, UrlInput, FilePicker } from './AssetParts';
 import { typeOf } from '@/lib/assets/model';
+import { decisionSummary } from '@/lib/creator/decide';
 import { PlanBrief, SmartWarning, EventLog,
          AmbiguityPicker, IntentFallback } from './WorkspaceParts';
 
@@ -27,6 +42,7 @@ import { PlanBrief, SmartWarning, EventLog,
 export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
                         storyboard, memChanges, brief, aiContext,
                         planAssets, onAddFiles, onAddUrl, onRemoveAsset,
+                        decisions,
                         onUpdate, onBack, onDiscard }) {
   const wf = session.workflow;
   const L = (o) => o?.[locale] || o?.tr || '';
@@ -108,17 +124,43 @@ export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
           İlk iş bitince karşılama kayboluyor. */}
       {/* AI bağlamı — bu planda hangi içerikler kullanılıyor.
           Kullanıcı neyle çalışıldığını görsün. */}
-      <ContextBar ctx={aiContext} assets={planAssets} t={t} locale={locale}
-        onAddFiles={onAddFiles} onAddUrl={onAddUrl}
-        onRemove={onRemoveAsset} />
+      {/* R5: AI'ın verdiği üretim kararları — BİLGİ, form değil. */}
+      {/*
+        ---------- PLAN AYRINTILARI KATLANDI ----------
 
-      <PlanBrief brief={brief} t={t} locale={locale}
-        fresh={status?.done === 0}
-        nextTask={status?.suggestion?.task || null}
-        onStart={() => {
-          const task = status?.suggestion?.task;
-          if (task?.route) openTask(task);
-        }} />
+        Kullanıcı briefi: "her açılan sayfada sadece yapacağı
+        bölümü görsün".
+
+        AI planı, içerik ekleme ve plan özeti aynı anda ekranda
+        duruyordu — üçü de "bak bana" diyordu ama hiçbiri o an
+        yapılacak iş değildi.
+
+        Şimdi tek satır: "Plan ayrıntıları". Merak eden açıyor.
+      */}
+      <details className="cos-details">
+        <summary className="cos-details-head">{t('cos.planDetails')}</summary>
+        <div className="cos-details-body">
+          <AiPlan decisions={decisions} t={t} />
+          <ContextBar ctx={aiContext} assets={planAssets} t={t} locale={locale}
+            onAddFiles={onAddFiles} onAddUrl={onAddUrl}
+            onRemove={onRemoveAsset} />
+
+          {/*
+            Plan özeti buraya taşındı.
+
+            Eskiden ekranın ortasında duruyordu ve içinde "Seni
+            anladım... Senaryo ile başla" karşılaması vardı — o
+            düğme SIRADAKİ ADIM kartındaki düğmenin BİREBİR
+            tekrarıydı.
+
+            `fresh={false}` ile karşılama kapatıldı; özet
+            (adım/ekran sayısı, gerekli araçlar) duruyor.
+          */}
+          <PlanBrief brief={brief} t={t} locale={locale}
+            fresh={false} nextTask={null} />
+        </div>
+      </details>
+
 
       {/* KİŞİSELLEŞTİRME RAPORU — spec: kullanıcı kontrolü kaybetmemeli.
           Hafıza yol haritasını değiştirdiyse ne yaptığını söylüyoruz. */}
@@ -152,21 +194,51 @@ export function WorkflowCard({ session, status, t, locale, showAdd, setShowAdd,
         </div>
       )}
 
-      {/* TEK ÖNERİ — gerekçesiyle. Spec kuralı: menü değil, tek adım. */}
+      {/*
+        ---------- SIRADAKİ ADIM: TEK ŞEY ----------
+
+        Ekranın tek işi bu. Başlık, açıklama, düğme.
+
+        SENARYO ADIMINDA İKİ YOL: kullanıcı ya AI'a yazdırıyor ya
+        kendi metnini getiriyor. Bu gerçek bir çatal — ikisi farklı
+        ekrana gidiyor ve kullanıcının kararı.
+
+        Diğer adımlarda tek düğme; orada seçim yok, iş var.
+      */}
       {sg?.task && (
         <div className="cos-next">
           <div className="cos-next-label">{t('cos.nextStep')}</div>
-          <div className="cos-next-body">
-            <div>
-              <div className="cos-next-title">{L(sg.task.label)}</div>
-              <p className="cos-next-desc">{L(sg.task.desc)}</p>
-              <p className="cos-next-why">{(() => { const r = reasonKey(sg); return t(r.key, r.vars); })()}</p>
+          <div className="cos-next-title">{L(sg.task.label)}</div>
+          <p className="cos-next-desc">{L(sg.task.desc)}</p>
+
+          {sg.task.key === 'script' ? (
+            <div className="cos-fork">
+              <Link href={sg.task.route + '?mode=ai'} className="cos-path cos-path-ai"
+                onClick={(e) => { if (!openTask(sg.task)) e.preventDefault(); }}>
+                <span className="cos-path-title">{t('cos.pathAi')}</span>
+                <span className="cos-path-sub">{t('cos.pathAiSub')}</span>
+              </Link>
+              {/*
+                Senaryo sayfasında `own` modu zaten var (satır 63):
+                kullanıcı kendi metnini yapıştırıyor, sistem
+                sahnelere bölüyor.
+
+                `?mode=` ile doğrudan o ekrana iniyoruz —
+                kullanıcı bir kez daha "hangi yol?" diye
+                sorulmuyor.
+              */}
+              <Link href={sg.task.route + '?mode=own'} className="cos-path"
+                onClick={(e) => { if (!openTask(sg.task)) e.preventDefault(); }}>
+                <span className="cos-path-title">{t('cos.pathOwn')}</span>
+                <span className="cos-path-sub">{t('cos.pathOwnSub')}</span>
+              </Link>
             </div>
-            <Link href={sg.task.route} className="btn btn-primary"
+          ) : (
+            <Link href={sg.task.route} className="btn btn-primary cos-next-go"
               onClick={(e) => { if (!openTask(sg.task)) e.preventDefault(); }}>
               {t('cos.go')}
             </Link>
-          </div>
+          )}
         </div>
       )}
 
@@ -432,6 +504,43 @@ function ContextBar({ ctx, assets, t, locale, onAddFiles, onAddUrl, onRemove }) 
           })}
         </p>
       )}
+    </div>
+  );
+}
+
+
+/*
+  AI PLANI — R5.
+
+  ---------------------------------------------------------------
+  BİLGİ, FORM DEĞİL
+
+  Kullanıcı kararı: "AI kararları görünmez olmak zorunda değil...
+  Ama bunlar editable form alanları olmamalı."
+
+  Bu yüzden burada hiçbir <select>, <input> yok. Yalnızca ne
+  kararlaştırıldığı yazıyor.
+
+  KAYNAK AYRIMI: kullanıcının kendi söylediği ("3 dakikalık")
+  farklı işaretleniyor — sistemin kendi kararını kullanıcıya
+  "senin isteğin" diye sunmuyoruz, tersi de geçerli.
+  ---------------------------------------------------------------
+*/
+function AiPlan({ decisions, t }) {
+  const parts = decisionSummary(decisions);
+  if (!parts?.length) return null;
+
+  return (
+    <div className="aiplan">
+      <span className="aiplan-label">{t('ap.title')}</span>
+      <span className="aiplan-list">
+        {parts.map(p => (
+          <span className={'aiplan-item' + (p.source === 'user' ? ' aiplan-user' : '')}
+            key={p.key} title={t('ap.src.' + p.source)}>
+            {t('ap.' + p.key, { v: p.value })}
+          </span>
+        ))}
+      </span>
     </div>
   );
 }

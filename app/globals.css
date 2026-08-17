@@ -2236,13 +2236,7 @@ button { font-family: var(--body); }
 
 .lp-hero { text-align: center; padding: 56px 0 44px; }
 
-.lp-claim { font-family: var(--display); font-size: 46px; font-weight: 800;
-  color: var(--cream); letter-spacing: -1.6px; line-height: 1.1;
-  margin: 0 0 16px; }
-.lp-claim-2 { display: block; color: var(--lamp); }
 
-.lp-sub { max-width: 600px; margin: 0 auto 30px; color: var(--text-2);
-  font-size: 15.5px; line-height: 1.65; }
 
 /* Fikir kutusu */
 .lp-box { display: flex; gap: 9px; align-items: flex-end;
@@ -2425,67 +2419,6 @@ button { font-family: var(--body); }
 
 
 /* ============================================================
-   GÜNLÜK KARŞILAMA (Sprint 6 / TASK-05)
-   Creator OS'un kalbi: az metin, çok yönlendirme.
-   ============================================================ */
-
-.dw { padding: 30px 0 20px; text-align: center; }
-
-/* Seri — küçük, üstte. Gurur verici ama ekranın konusu değil. */
-.dw-streak { display: inline-flex; align-items: baseline; gap: 8px;
-  padding: 6px 14px; border-radius: 20px; margin-bottom: 26px;
-  background: rgba(255,180,84,.09); border: 1px solid rgba(255,180,84,.24); }
-.dw-streak-n { font-family: var(--display); font-size: 19px; font-weight: 800;
-  color: var(--lamp); line-height: 1; font-variant-numeric: tabular-nums; }
-.dw-streak-l { font-size: 12.5px; color: var(--text-2); }
-
-/* Merkez — tek eylem */
-.dw-main { max-width: 480px; margin: 0 auto; }
-.dw-kicker { display: block; font-family: var(--display); font-size: 10px;
-  font-weight: 700; letter-spacing: 1.3px; text-transform: uppercase;
-  color: var(--muted); margin-bottom: 9px; }
-.dw-title { font-family: var(--display); font-size: 30px; font-weight: 800;
-  color: var(--cream); letter-spacing: -.9px; line-height: 1.2;
-  margin: 0 0 14px; word-break: break-word; }
-.dw-meta { margin-bottom: 20px; }
-.dw-pill { font-size: 12.5px; color: var(--text-2); background: var(--panel);
-  border: 1px solid var(--line); border-radius: 20px; padding: 5px 13px; }
-.dw-go { font-size: 15px; padding: 12px 30px; border-radius: 10px; }
-
-/* Alışkanlık ipucu — boş ekranda, başlığın altında */
-.dw-usual { font-size: 13px; color: var(--muted); margin: -6px 0 18px; }
-
-/* Aktif planda günlük bağlam — durum çubuğunda tek satır */
-.dc { font-size: 12px; color: var(--muted); margin-left: auto;
-  padding-left: 12px; white-space: nowrap; }
-.dc-welcome-back { color: var(--lamp); }
-.dc-continue-streak { color: var(--lamp-soft); }
-
-.dw-since { font-size: 12.5px; color: var(--muted); margin: 22px 0 0; }
-
-/* İkincil — diğer yarım işler */
-.dw-others { margin-top: 30px; padding-top: 20px;
-  border-top: 1px solid var(--line); }
-.dw-others-label { display: block; font-family: var(--display);
-  font-size: 9.5px; font-weight: 700; letter-spacing: 1.1px;
-  text-transform: uppercase; color: var(--dim); margin-bottom: 10px; }
-.dw-other { font-size: 13px; color: var(--text-2); background: var(--panel);
-  border: 1px solid var(--line); border-radius: 18px; padding: 6px 15px;
-  margin: 0 4px 6px; cursor: pointer; transition: border-color .18s, color .18s; }
-.dw-other:hover { border-color: rgba(255,180,84,.4); color: var(--cream); }
-
-.dw-new { display: block; margin: 22px auto 0; background: none; border: none;
-  font-size: 12.5px; color: var(--muted); cursor: pointer; }
-.dw-new:hover { color: var(--lamp); text-decoration: underline; }
-
-@media (max-width: 620px) {
-  .dw { padding: 20px 0 16px; }
-  .dw-title { font-size: 23px; }
-  .dw-go { width: 100%; }
-}
-
-
-/* ============================================================
    COMPOSER — tek giriş noktası (Sprint 6 / TASK-06)
    ============================================================ */
 
@@ -2513,8 +2446,6 @@ button { font-family: var(--body); }
 .cmp-preview-a { color: var(--muted); font-size: 11.5px; }
 
 /* İkincil yuva — devam edilecek iş varken altta */
-.dw-composer-slot { margin-top: 26px; padding-top: 20px;
-  border-top: 1px solid var(--line); }
 
 @media (max-width: 620px) {
   .cmp-row { flex-direction: column; align-items: stretch; }
@@ -2635,4 +2566,203 @@ button { font-family: var(--body); }
 @media (max-width: 620px) {
   .ac-chip { max-width: 100%; }
   .ac-menu { left: auto; right: 0; }
+}
+
+
+
+
+/* AI planı — bilgi şeridi, form değil (R5) */
+.aiplan { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  padding: 9px 14px; border-radius: 9px; margin-bottom: 12px;
+  background: rgba(255,180,84,.06); border: 1px solid rgba(255,180,84,.2); }
+.aiplan-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--lamp); }
+.aiplan-list { display: flex; gap: 7px; flex-wrap: wrap; }
+.aiplan-item { font-size: 12.5px; color: var(--text-2); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 5px; padding: 2px 8px; }
+.aiplan-user { border-color: rgba(255,180,84,.4); color: var(--cream); }
+
+/* Senaryo: plandan gelen parametreler */
+.sc-plan { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.sc-plan-label { font-family: var(--display); font-size: 9.5px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+.sc-plan-list { font-size: 13px; color: var(--text-2); }
+.sc-settings-head { font-size: 12.5px; color: var(--muted); cursor: pointer; }
+.sc-settings-head:hover { color: var(--cream); }
+
+
+/* ============================================================
+   GİRİŞ EKRANI — tek odak
+
+   Kullanıcı briefi: "sadelik ve elit bir tasarım", ChatGPT /
+   Gemini açılışı gibi. Ekranın tek işi var: kullanıcı ne
+   istediğini yazsın.
+
+   Boşluk burada dekorasyon değil, hiyerarşi. Soru ile kutu
+   arasındaki mesafe, kutu ile geri kalan her şey arasındaki
+   mesafeden küçük — göz otomatik olarak kutuya iniyor.
+   ============================================================ */
+
+.ws { min-height: calc(100vh - 180px); display: flex;
+  flex-direction: column; align-items: center; justify-content: center;
+  padding: 40px 0 32px; }
+
+.ws-ask { width: 100%; max-width: 620px; text-align: center; }
+
+/* Soru başlığın kendisi — ayrıca bir başlık yok.
+   Manrope 300: ince ağırlık, büyük punto. Kalın başlık
+   "pazarlama" gibi okunuyordu; ince olan soru gibi okunuyor. */
+.ws-q { font-family: var(--display); font-size: 34px; font-weight: 300;
+  letter-spacing: -.8px; color: var(--cream); line-height: 1.25;
+  margin: 0 0 26px; }
+
+/* Hazır başlangıçlar — rozet değil, cümle parçası */
+.ws-starters { margin: 16px 0 0; font-size: 13px; line-height: 1.9; }
+.ws-starter { background: none; border: none; padding: 0; cursor: pointer;
+  font-family: inherit; font-size: 13px; color: var(--muted);
+  border-bottom: 1px solid transparent; transition: color .18s, border-color .18s; }
+.ws-starter:hover { color: var(--lamp); border-bottom-color: rgba(255,180,84,.4); }
+.ws-dot { color: var(--dim); margin: 0 9px; }
+
+/* Alışkanlık ipucu — kutunun hemen altında, tek satır */
+.dw-usual { font-size: 12.5px; color: var(--dim); margin: 14px 0 0; }
+
+/*
+  Devam şeridi — ekranın dibinde, ince.
+
+  Kart değil şerit: kart "bu da bir seçenek" der ve odağı böler.
+  Şerit "bıraktığın yer burada" der ve yolun kenarında durur.
+*/
+.ws-resume { display: flex; align-items: baseline; gap: 12px;
+  width: 100%; max-width: 620px; margin-top: 56px; padding: 13px 16px;
+  background: none; border: 1px solid var(--line-soft); border-radius: 10px;
+  cursor: pointer; text-align: left;
+  transition: border-color .2s, background .2s; }
+.ws-resume:hover { border-color: rgba(255,180,84,.32);
+  background: rgba(255,180,84,.03); }
+.ws-resume-name { font-size: 14px; color: var(--text-2); font-weight: 500; }
+.ws-resume-meta { font-size: 12px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+.ws-resume-go { margin-left: auto; font-size: 12.5px; color: var(--lamp);
+  white-space: nowrap; }
+
+/* Seri — en altta, tek satır, rozet değil */
+.ws-streak { margin: 22px 0 0; font-size: 12px; color: var(--dim); }
+
+@media (max-width: 620px) {
+  .ws { min-height: auto; padding: 24px 0; justify-content: flex-start; }
+  .ws-q { font-size: 25px; margin-bottom: 20px; }
+  .ws-resume { margin-top: 36px; flex-wrap: wrap; gap: 6px 12px; }
+  .ws-resume-go { margin-left: 0; width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-resume, .ws-starter { transition: none; }
+}
+
+
+/* Landing açılışı — studio ile aynı soru, aynı ağırlık */
+.lp-ask { font-family: var(--display); font-size: 34px; font-weight: 300;
+  letter-spacing: -.8px; color: var(--cream); line-height: 1.25;
+  margin: 0 0 26px; text-align: center; }
+@media (max-width: 620px) { .lp-ask { font-size: 25px; margin-bottom: 20px; } }
+
+
+/* ============================================================
+   ÇALIŞMA EKRANI — tek adım
+   ============================================================ */
+
+/* Plan ayrıntıları — katlanmış, tek satır */
+.cos-details { margin-bottom: 18px; }
+.cos-details-head { font-size: 12.5px; color: var(--muted); cursor: pointer;
+  padding: 8px 0; list-style: none; }
+.cos-details-head::-webkit-details-marker { display: none; }
+.cos-details-head::before { content: '+'; margin-right: 8px; color: var(--dim); }
+.cos-details[open] .cos-details-head::before { content: '−'; }
+.cos-details-head:hover { color: var(--cream); }
+.cos-details-body { padding-top: 10px; }
+
+/* Sıradaki adım — ekranın tek işi */
+.cos-next-go { margin-top: 16px; }
+
+/*
+  İki yol — senaryo adımındaki gerçek çatal.
+
+  Kart değil, iki eşit yol. Biri "önerilen" diye vurgulanmıyor:
+  ikisi de meşru ve kullanıcının durumuna bağlı.
+*/
+.cos-fork { display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  margin-top: 18px; }
+.cos-path { display: flex; flex-direction: column; gap: 5px;
+  padding: 16px 18px; border-radius: 11px;
+  background: var(--panel); border: 1px solid var(--line);
+  text-decoration: none; transition: border-color .2s, background .2s; }
+.cos-path:hover { border-color: rgba(255,180,84,.45);
+  background: var(--panel-2); }
+.cos-path-title { font-family: var(--display); font-size: 15px;
+  font-weight: 600; color: var(--cream); letter-spacing: -.2px; }
+.cos-path-sub { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.cos-path-ai .cos-path-title { color: var(--lamp); }
+
+@media (max-width: 620px) {
+  .cos-fork { grid-template-columns: 1fr; }
+}
+
+/* ============================================================
+   SOL MENÜ — bulunduğun yer belli olsun
+   ============================================================ */
+
+/*
+  Aktif bağlantı zaten vurguluydu ama zayıftı: arka plan + sol
+  çizgi. Kullanıcı "nerede olduğumu göreyim" dedi.
+
+  Eklenen: ikonun çevresinde yumuşak bir hâle. Dönen animasyon
+  değil — sabit ve sessiz. Dönen ışık her adımda dikkat çeker ve
+  ekranın "sade" olma amacına ters düşer.
+*/
+.navlink.active { background: var(--panel-2); color: var(--lamp);
+  font-weight: 600; box-shadow: inset 2px 0 0 var(--lamp),
+  0 0 0 1px rgba(255,180,84,.14); }
+.navlink.active svg,
+.navlink.active .nav-num { filter: drop-shadow(0 0 6px rgba(255,180,84,.55)); }
+
+/* Nefes alan hâle — yalnızca aktif olanda, çok yavaş */
+.navlink.active::after { content: ''; position: absolute; inset: 0;
+  border-radius: 9px; pointer-events: none;
+  box-shadow: 0 0 14px rgba(255,180,84,.18);
+  animation: nav-breathe 3.2s ease-in-out infinite; }
+.navlink { position: relative; }
+
+@keyframes nav-breathe {
+  0%, 100% { opacity: .45 }
+  50% { opacity: 1 }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navlink.active::after { animation: none; opacity: .7 }
+}
+
+
+/* Tek sütun — sağ pano kalktı (sadelik) */
+.ws-body-single { grid-template-columns: 1fr; max-width: 720px;
+  margin: 0 auto; }
+
+
+/* Dış video analizi — Video Sağlığı sayfası */
+.vh-ext { margin-bottom: 18px; }
+.vh-ext-head { display: flex; align-items: flex-start; gap: 16px; }
+.vh-ext-head > div { flex: 1; min-width: 0; }
+.vh-ext-file { display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin-top: 12px; padding: 10px 13px; border-radius: 9px;
+  background: var(--panel-2); border: 1px solid var(--line); }
+.vh-ext-name { font-size: 13px; color: var(--text-2); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 260px; }
+.vh-ext-meta { font-size: 12px; color: var(--dim);
+  font-variant-numeric: tabular-nums; }
+.vh-ext-file .btn { margin-left: auto; }
+.vh-ext-result { margin-top: 14px; }
+
+@media (max-width: 620px) {
+  .vh-ext-head { flex-direction: column; }
+  .vh-ext-file .btn { margin-left: 0; width: 100%; }
 }

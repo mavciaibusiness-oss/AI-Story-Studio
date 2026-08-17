@@ -26,15 +26,17 @@ import { buildLayout, layoutKeys, widgetData, moveWidget } from '@/lib/creator/w
 /* TASK-04 Adım 3: gerçek çalışma durumu */
 import { workState, workSummary } from '@/lib/creator/workstate';
 import { buildQuickActions, onboardingState } from '@/lib/creator/quick';
+/* R5+R6: üretim parametrelerini kullanıcıya sormak yerine niyet
+   ve hafızadan türetiyoruz; plan bunları taşıyor. */
+import { decideProduction, applyDecisions, decisionSummary } from '@/lib/creator/decide';
 /* Workspace görünüm bileşenleri — CreatorView 1123 satıra çıkmıştı,
    çizim katmanı ayrıldı. */
-import { DirectorPanel, StateBar,
-         NotificationBar, Widget, QuickActions, PlanBrief,
+import { QuickActions, PlanBrief,
          SmartWarning, EventLog,
          AmbiguityPicker, IntentFallback } from './WorkspaceParts';
-import { DailyWelcome, DailyContext } from './DailyParts';
+import { DailyWelcome } from './DailyParts';
 /* TASK-05 Adım 2: günlük karşılama — Creator OS'un kalbi */
-import { dailyBrief, activeContext, returnGap } from '@/lib/creator/daily';
+import { dailyBrief, returnGap } from '@/lib/creator/daily';
 /* TASK-08: AI Context — kullanıcının konuşmaya eklediği içerikler */
 import { WorkflowCard } from './WorkflowCard';
 import { makeAsset, detectType } from '@/lib/assets/model';
@@ -85,7 +87,7 @@ import { taskTimings } from '@/lib/creator/timing';
 export default function CreatorView({ userId }) {
   const t = useT();
   const { locale } = useI18n();
-  const { episodeId, storyboard, openEpisode } = useStudio();
+  const { episodeId, storyboard, openEpisode, setStoryboard } = useStudio();
 
   const [text, setText] = useState('');
   const [sessions, setSessions] = useState([]);
@@ -113,6 +115,31 @@ export default function CreatorView({ userId }) {
   /* Hafıza denendi mi — başarılı ya da başarısız. Bekleyen fikri
      başlatmadan önce beklenmesi gereken şey bu; `memory`'nin
      dolması değil (kapalıysa hiç dolmaz). */
+  /*
+    HATA SATIRI.
+
+    JSX bunu okuyor ve `setErr` beş yerde çağrılıyor, ama TANIMI
+    YOKTU — "Creator OS ile başla" düğmesine basınca
+    `err is not defined` ile çöküyordu.
+
+    Bu düzeltme daha önce yapılmıştı ama paket uygulanamadığı için
+    depoya girmemişti; R1–R6 paketi de o commit'ten türetildiği
+    için hata geri gelmişti.
+  */
+  const [err, setErr] = useState(null);
+  /*
+    `note` — JSX bunu okuyor (aşağıda) ama tanımı yoktu:
+    `note is not defined` çöküşü buradan geliyordu.
+
+    `setNote` şu an hiçbir yerde çağrılmıyor, yani değer her zaman
+    null ve o satır çizilmiyor. DAVRANIŞ DEĞİŞMİYOR — yalnızca
+    çökme duruyor.
+
+    Kaldırmak yerine tanımlamayı seçtim: JSX'e dokunmamak istedim,
+    çünkü bu paketin kapsamı sadece bu hatayı düzeltmek.
+  */
+  const [note, setNote] = useState(null);
+
   const [memoryTried, setMemoryTried] = useState(false);
   /* Son açılış — "sen yokken ne oldu" için. Okunduktan SONRA
      güncelleniyor; yoksa her zaman "hiçbir şey" derdik. */
@@ -224,6 +251,38 @@ export default function CreatorView({ userId }) {
     }
 
     s = markSuggested(s);
+
+    /*
+      ---------- AI ÜRETİM KARARLARI (R5 + R6) ----------
+
+      Kullanıcı ne istediğini söyledi. Format, süre, sahne sayısı,
+      tür, stil, dil kararlarını AI veriyor — niyetten, kullanıcı
+      metninden ve hafızadan.
+
+      Bu kararlar OTURUMDA taşınıyor: kullanıcı bir göreve
+      tıklayıp `/studio/senaryo`ya gittiğinde parametreler hazır,
+      tekrar sorulmuyor.
+
+      Kullanıcının açıkça söylediği (3 dakikalık, 5 adet, Reels)
+      `source: 'user'` işaretli — arayüz bunu "AI kararı" diye
+      sunmuyor.
+    */
+    const decisions = decideProduction({
+      intentKey: s.classified?.intent,
+      text: value,
+      memory,
+      locale
+    });
+    s = { ...s, decisions };
+
+    /*
+      Storyboard'a uygula: sonraki adımlar hazır parametrelerle
+      açılsın. Mevcut değerler EZİLMİYOR — eski akıştan gelen bir
+      projede kullanıcının ayarları korunuyor.
+    */
+    if (setStoryboard) {
+      setStoryboard(prev => applyDecisions(prev, decisions));
+    }
 
     /*
       VARLIKLARI PLANA BAĞLA.
@@ -521,6 +580,10 @@ export default function CreatorView({ userId }) {
      hangileri henüz okunamıyor (lib/assets/model.js) */
   const aiContext = contextSummary(planAssets);
 
+  /* Hazır başlangıçlar — hafıza varsa kişiselleştirilmiş, yoksa
+     sabit örnekler (lib/creator/quick.js). */
+  const quickActions = buildQuickActions({ memory, sessions, locale });
+
   const timings = taskTimings(sessions);
   const brief = active
     ? buildBrief({
@@ -592,44 +655,41 @@ export default function CreatorView({ userId }) {
           gösteriyor. İkisi de aynı yeri kaplıyor — kullanıcı her
           zaman aynı noktaya bakıyor. */}
       {/*
-        TASK-06: fikir kutusu MERKEZE taşındı.
+        ---------- TEKRARLAR KALDIRILDI ----------
 
-        Eskiden aktif plan yokken burada EntryPanel duruyordu —
-        kutu sol kenarda, karşılama merkezde. Kullanıcı "yeni
-        başlat"a basınca kenara odaklanıyordu.
+        Plan kurulduktan sonra ekranda YEDİ blok vardı ve dördü
+        aynı şeyi söylüyordu:
 
-        Şimdi kutu karşılamanın içinde. Bu panel yalnızca aktif
-        planda Director'ı gösteriyor; boşta hiç görünmüyor ve
-        merkez tek odak noktası oluyor.
+          "Sıradaki adım: Senaryo"  → 4 yerde
+          "11 adım / %0 / 9 engelli" → 3 yerde
+          "korku hikayesi"           → 3 yerde
+
+        Kaldırılanlar:
+          · DirectorPanel  — "üzerinde çalıştığın" kartı; başlık
+            ve sıradaki adım aşağıda zaten var
+          · StateBar       — "11 adım seni bekliyor"; ilerleme
+            yol haritasında görünüyor
+          · NotificationBar — "Sıradaki adım: Senaryo" ve "4 video
+            bekliyor"; ilki tekrar, ikincisi bu aşamada ilgisiz
+          · Panolar (sağ sütun) — ilerleme, videolar, son planlar
+
+        Hiçbiri kaybolmadı: ilerleme yol haritasında, videolar sol
+        menüdeki Projeler'de, plan ayrıntıları katlanmış kutuda.
+
+        Kullanıcı briefi: "kolaylık ve sadelik bu sitenin en
+        önemli unsuru".
       */}
-      {active && (
-        <section className="ws-director">
-          <DirectorPanel session={active} status={status} t={t} locale={locale}
-            onOpen={() => {}} onBack={() => setActive(null)} />
-        </section>
-      )}
 
-      {/* Çalışma durumu — spec: "Her zaman bir durum gösterecek."
-          Gerçek veriden: kaç adım kaldı, sahnelerin kaçı hazır. */}
-      <StateBar state={state} summary={summary} t={t} locale={locale}
-        extra={<DailyContext ctx={activeContext({ daily })} t={t} />} />
 
-      {/* Bildirimler — Director panelinin hemen altında, dikkat çeksin */}
-      {notifications.length > 0 && (
-        <NotificationBar items={notifications} t={t} locale={locale}
-          onClose={closeNotification}
-          onOpenSession={(id) => {
-            const s = sessions.find(x => x.id === id);
-            if (s) setActive(s);
-          }}
-          onOpenProject={openProject} />
-      )}
+
 
       {err && <span className="err">{err}</span>}
       {note && <p className="cos-note">{note}</p>}
 
       {/* ============ ORTA + SAĞ: iki sütun ============ */}
-      <div className="ws-body">
+      {/* Tek sütun: sağ pano kalktı, orta alan tüm genişliği
+          kullanıyor ve ortada duruyor. */}
+      <div className="ws-body ws-body-single">
         {/* ---- 2. ACTIVE WORKFLOW (orta) ---- */}
         <main className="ws-main">
           {active ? (
@@ -640,6 +700,7 @@ export default function CreatorView({ userId }) {
               memChanges={memChanges}
               brief={brief}
               aiContext={aiContext}
+              decisions={active?.decisions}
               planAssets={planAssets}
               onAddFiles={addFiles} onAddUrl={addUrl}
               onRemoveAsset={dropAsset}
@@ -651,6 +712,9 @@ export default function CreatorView({ userId }) {
               personalization={personalization}
               /* TASK-06: fikir kutusu artık MERKEZDE, kenarda değil.
                  Aynı state; iki kopya olsaydı ayrışırlardı. */
+              /* R4: hazır başlangıçlar karşılamada — navigation
+                 değil, Composer'a metin aktarma. */
+              starters={quickActions?.items || []}
               composer={{ text, setText, preview, onStart: start,
                           inputRef: entryRef,
                           assets, onAddFiles: addFiles, onAddUrl: addUrl,
@@ -661,41 +725,28 @@ export default function CreatorView({ userId }) {
           )}
         </main>
 
-        {/* ---- 3. WIDGET'LAR (sağ) ---- */}
-        <aside className="ws-side">
-          <div className="ws-side-head">
-            <span className="ws-side-title">{t('ws.widgets')}</span>
-            <button className="btn btn-mini" onClick={() => setEditLayout(!editLayout)}>
-              {editLayout ? t('ws.done') : t('ws.arrange')}
-            </button>
-          </div>
+        {/*
+          PANOLAR KALDIRILDI.
 
-          {built.widgets.length === 0 && (
-            <p className="hint">{t('ws.noWidgets')}</p>
-          )}
+          İlerleme, videolar ve son planlar üç ayrı pano hâlinde
+          sağda duruyordu — üçü de aynı ekranda başka yerlerde
+          tekrarlanıyordu.
 
-          {built.widgets.map((w, i) => (
-            <Widget key={w.key} widget={w} data={widgetData(w.key, wsCtx)}
-              t={t} locale={locale} edit={editLayout}
-              first={i === 0} last={i === built.widgets.length - 1}
-              onMove={moveCard}
-              onOpenSession={(id) => {
-                const s = sessions.find(x => x.id === id);
-                if (s) setActive(s);
-              }}
-              onOpenProject={openProject} />
-          ))}
-
-          {editLayout && built.source === 'user' && (
-            <button className="btn btn-mini" onClick={resetCards}>
-              {t('ws.resetCards')}
-            </button>
-          )}
-        </aside>
+          İlerleme yol haritasında görünüyor. Videolar ve planlar
+          sol menüdeki Projeler'de. Burada göstermek kullanıcının
+          gözünü ikiye bölüyordu.
+        */}
       </div>
 
-      {/* ============ 4. QUICK ACTIONS (alt) ============ */}
-      <QuickActions t={t} locale={locale} memory={memory} sessions={sessions} onStart={start} />
+      {/*
+        QUICK ACTIONS AKTİF PLANDA GÖSTERİLMİYOR.
+
+        Kullanıcı bir plan üzerinde çalışırken "yeni bir fikir
+        başlat" önerileri gürültü. Ekranın işi o planı ilerletmek.
+
+        Yeni fikir isterse "← Geri" ile açılış ekranına dönüyor;
+        kutu ve hazır başlangıçlar orada.
+      */}
 
       {loaded && sessions.length > 0 && (
         <p className="hint cos-store-note">{t('cos.storageNote')}</p>

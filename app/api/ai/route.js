@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseServer } from '@/lib/supabase-server';
+/*
+  AI TELEMETRİ — Analytics Adım 1.
+
+  Tüm AI çağrıları buradan geçiyor (8 sayfa → callAI → /api/ai),
+  bu yüzden ölçümün tamamı tek dosyada.
+*/
+import { buildEvent, classifyError } from '@/lib/intel/ai-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +23,26 @@ const MODELS = [
   'claude-haiku-4-5-20251001'
 ].filter(Boolean);
 
+/*
+  Ölçümü SESSİZ yazıyoruz.
+
+  Telemetri yazımı başarısız olursa kullanıcının AI çağrısı
+  etkilenmemeli — ölçüm ürünün işini bozmaz. Migration v12
+  uygulanmamışsa da aynı: sessizce atlanıyor.
+
+  `await` EDİLMİYOR: kullanıcı ölçüm yazılsın diye beklemesin.
+*/
+function record(supabase, payload) {
+  const row = buildEvent(payload);
+  if (!row) return;
+  try {
+    supabase.from('ai_events').insert(row).then(() => {}, () => {});
+  } catch { /* v12 yok ya da yazma hatası */ }
+}
+
 export async function POST(request) {
+  /* Gecikme ölçümü: kullanıcının beklediği süre */
+  const t0 = Date.now();
   try {
     const supabase = getSupabaseServer();
     const { data: { user } } = await supabase.auth.getUser();
@@ -72,6 +98,13 @@ export async function POST(request) {
       if (res.ok) {
         const data = await res.json();
         const text = (data.content || []).filter(i => i.type === 'text').map(i => i.text).join('');
+
+        /* Token sayısı Anthropic yanıtından — eskiden okunmuyordu */
+        record(supabase, {
+          userId: user.id, task, ok: true, model,
+          durationMs: Date.now() - t0, usage: data.usage
+        });
+
         if (unlimited) {
           return NextResponse.json({ text, creditsLeft: null, unlimited: true, model });
         }
@@ -90,6 +123,14 @@ export async function POST(request) {
         429: 'Anthropic hız sınırı. Birkaç saniye bekleyip tekrar dene.',
         529: 'Anthropic aşırı yüklü. Birazdan tekrar dene.'
       };
+      /* Hata SINIFI kaydediliyor — mesajın tamamı DEĞİL.
+         Mesaj kullanıcının prompt'undan parça içerebilir. */
+      record(supabase, {
+        userId: user.id, task, ok: false, model,
+        durationMs: Date.now() - t0,
+        errorKind: classifyError(res.status, lastDetail)
+      });
+
       return NextResponse.json(
         { error: map[res.status] || ('AI servisi yanıt vermedi (' + res.status + ')'), detail: lastDetail.slice(0, 500) },
         { status: 502 }

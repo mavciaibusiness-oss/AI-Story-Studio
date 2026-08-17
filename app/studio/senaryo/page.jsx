@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import WizardFooter from '@/lib/WizardFooter';
 import Link from 'next/link';
 import { useStudio, callAI, parseJSONLoose } from '@/lib/store';
 import { useT } from '@/lib/i18n';
+/* R1: kullanılıyordu ama import edilmemişti */
+import { getSupabaseBrowser } from '@/lib/supabase-browser';
 import EpisodeBar from '@/lib/EpisodeBar';
 import PathChoice from '@/lib/PathChoice';
 import {
@@ -19,6 +21,7 @@ export default function Senaryo() {
   const { storyboard, setStoryboard, episodeId, spendCredits, openEpisode, profile } = useStudio();
   const t = useT();
   const router = useRouter();
+  const params = useSearchParams();
 
   /* episodeId yoksa otomatik proje+video oluştur — kullanıcı "Açık proje yok"
      mesajıyla takılmasın, doğrudan işine devam etsin. */
@@ -58,10 +61,30 @@ export default function Senaryo() {
   /* İki bağımsız akış: 'choose' (yol seçimi) · 'ai' (AI üretimi) · 'own' (kendi metnim).
      Storyboard'da hangi modun seçildiği hatırlanır; iş bitince kullanıcı zaten
      bir sonraki sayfaya gider, ama geri gelirse seçtiği moda döner. */
-  const [mode, setMode] = useState(storyboard.scratch?.mode || 'choose');
+  /*
+    Creator OS çatalından geliyorsa mod URL'de: ?mode=ai | ?mode=own
+
+    Kullanıcı Creator OS'ta zaten seçti; burada tekrar "hangi yol?"
+    diye sormak aynı soruyu iki kez sormak olurdu.
+  */
+  const urlMode = params?.get?.('mode');
+  const [mode, setMode] = useState(
+    (urlMode === 'ai' || urlMode === 'own') ? urlMode
+      : (storyboard.scratch?.mode || 'choose'));
   const chooseMode = (m) => { setMode(m); setStoryboard(s => ({ ...s, scratch: { ...(s.scratch || {}), mode: m } })); };
 
-  const [sceneCount, setSceneCount] = useState(suggestSceneCount(storyboard.duration || 180));
+  /*
+    R6: SAHNE SAYISI PLANDAN.
+
+    Creator OS plan kurarken `plannedScenes` yazıyor
+    (lib/creator/decide.js → applyDecisions). Varsa onu
+    kullanıyoruz; kullanıcıya tekrar sorulmuyor.
+
+    Yoksa süreden türetiliyor — eski davranış korunuyor.
+  */
+  const planned = !!storyboard.plannedScenes;
+  const [sceneCount, setSceneCount] = useState(
+    storyboard.plannedScenes || suggestSceneCount(storyboard.duration || 180));
   const [busy, setBusy] = useState(null);
   const [prog, setProg] = useState(0);
   const [err, setErr] = useState(null);
@@ -249,26 +272,57 @@ export default function Senaryo() {
         <button className="btn btn-mini" style={{ marginBottom: 14 }} onClick={() => chooseMode('choose')}>{t('wchoose.back')}</button>
 
         <div className="card">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14 }}>
-            <div className="field"><label>{t('script.genre')}</label>
-              <select className="select" value={sb.genre} onChange={e => set({ genre: e.target.value })}>
-                {GENRES.map(g => <option key={g}>{g}</option>)}</select></div>
-            <div className="field"><label>{t('script.duration')}</label>
-              <select className="select" value={sb.duration} onChange={e => onDuration(+e.target.value)}>
-                {DURATIONS.map(d => <option key={d.sec} value={d.sec}>{d.l}</option>)}</select></div>
-            <div className="field"><label>{t('script.prodLang')}</label>
-              <select className="select" value={sb.language} onChange={e => set({ language: e.target.value })}>
-                {LANGUAGES.map(l => <option key={l}>{l}</option>)}</select></div>
-            <div className="field"><label>{t('script.style')}</label>
-              <select className="select" value={sb.style} onChange={e => set({ style: e.target.value })}>
-                {STYLES.map(s => <option key={s}>{s}</option>)}</select></div>
-            <div className="field"><label>{t('script.format')}</label>
-              <select className="select" value={sb.format} onChange={e => onFormat(e.target.value)}>
-                {FORMATS.map(f => <option key={f.k} value={f.k}>{f.l}</option>)}</select></div>
-            <div className="field"><label>{t('script.sceneCount')}</label>
-              <input className="input" type="number" min="2" max="120" value={sceneCount}
-                onChange={e => setSceneCount(Math.max(2, Math.min(120, +e.target.value || 12)))} /></div>
-          </div>
+          {/*
+            ---------- R5: ALTI AYAR KALDIRILDI ----------
+
+            Eskiden burada tür, süre, dil, stil, format ve SAHNE
+            SAYISI kutuları vardı. Altısının da cevabı sistemde
+            zaten var: niyet, kullanıcı metni ve Creator Memory.
+
+            Creator OS'tan gelen kullanıcı (planlı) bunları hiç
+            görmüyor — plan zaten belirledi, tekrar sormak
+            kullanıcıyı teknik parametrelerle boğmak olurdu.
+
+            DOĞRUDAN URL ile gelen (plansız) kullanıcı için ayarlar
+            AÇILABİLİR durumda: eski projeler ve ileri kullanım
+            bozulmasın. Ama kapalı başlıyor.
+          */}
+          {planned ? (
+            <div className="sc-plan">
+              <span className="sc-plan-label">{t('script.fromPlan')}</span>
+              <span className="sc-plan-list">
+                {[
+                  t('ap.scenes', { v: sceneCount }),
+                  t('ap.duration', { v: sb.duration }),
+                  sb.format, sb.genre, sb.style, sb.language
+                ].filter(Boolean).join(' · ')}
+              </span>
+            </div>
+          ) : (
+            <details className="sc-settings">
+              <summary className="sc-settings-head">{t('script.settings')}</summary>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 14, marginTop: 12 }}>
+                <div className="field"><label>{t('script.genre')}</label>
+                  <select className="select" value={sb.genre} onChange={e => set({ genre: e.target.value })}>
+                    {GENRES.map(g => <option key={g}>{g}</option>)}</select></div>
+                <div className="field"><label>{t('script.duration')}</label>
+                  <select className="select" value={sb.duration} onChange={e => onDuration(+e.target.value)}>
+                    {DURATIONS.map(d => <option key={d.sec} value={d.sec}>{d.l}</option>)}</select></div>
+                <div className="field"><label>{t('script.prodLang')}</label>
+                  <select className="select" value={sb.language} onChange={e => set({ language: e.target.value })}>
+                    {LANGUAGES.map(l => <option key={l}>{l}</option>)}</select></div>
+                <div className="field"><label>{t('script.style')}</label>
+                  <select className="select" value={sb.style} onChange={e => set({ style: e.target.value })}>
+                    {STYLES.map(s => <option key={s}>{s}</option>)}</select></div>
+                <div className="field"><label>{t('script.format')}</label>
+                  <select className="select" value={sb.format} onChange={e => onFormat(e.target.value)}>
+                    {FORMATS.map(f => <option key={f.k} value={f.k}>{f.l}</option>)}</select></div>
+                <div className="field"><label>{t('script.sceneCount')}</label>
+                  <input className="input" type="number" min="2" max="120" value={sceneCount}
+                    onChange={e => setSceneCount(Math.max(2, Math.min(120, +e.target.value || 12)))} /></div>
+              </div>
+            </details>
+          )}
 
           <div className="field">
             <label>{t('script.idea')}</label>

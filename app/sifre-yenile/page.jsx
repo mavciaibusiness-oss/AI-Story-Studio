@@ -72,9 +72,10 @@ export default function SifreYenile() {
       const { error } = await supabase.auth.updateUser({ password: pass });
       if (error) { setErr(cevirHata(error.message, t)); return; }
       setDone(true);
-      /* Kısa bir onay göster, sonra stüdyoya. Hemen yönlendirmek
-         "oldu mu olmadı mı" belirsizliği bırakır. */
-      setTimeout(() => router.push('/studio'), 1400);
+      /* Kısa bir onay göster, sonra Creator OS'a. Hemen
+         yönlendirmek "oldu mu olmadı mı" belirsizliği bırakır.
+         R3: hedef Dashboard değil, çalışma alanı. */
+      setTimeout(() => router.push('/studio/creator'), 1400);
     } catch (e2) {
       setErr(cevirHata(String(e2?.message || e2), t));
     } finally {
